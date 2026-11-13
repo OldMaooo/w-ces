@@ -31,6 +31,15 @@ const people=(()=>{
   offset.position.set(-(baseBounds.min.x+baseBounds.max.x)/2,-baseBounds.min.y,-(baseBounds.min.z+baseBounds.max.z)/2);offset.add(model);visual.add(offset);visual.scale.setScalar(factor);g.add(visual);p.size=size.multiplyScalar(factor).toArray();
   const mixer=new THREE.AnimationMixer(model),clip=asset.animations.find(c=>clipName(c)===(p.animation||'Idle'))||asset.animations.find(c=>clipName(c)==='Idle');if(clip){mixer.clipAction(clip).play();mixer.update(0);}actors.set(g,{model,mixer,white,shirt,visual});
  }
- function update(dt){for(const [g,a] of actors)if(g.visible)a.mixer.update(dt);}
- return {types,actors,animations,labels,load,build,dispose,update,ready:()=>!!asset,error:()=>error};
+ // Driven people (userData.driven) are skipped here; their owner poses them with pose().
+ function update(dt){for(const [g,a] of actors)if(g.visible&&!g.userData.driven)a.mixer.update(dt);}
+ // Show clip `name` at `time` seconds (looped). Returns what is shown, or null if g has no model yet.
+ function pose(g,name,time){
+  const a=actors.get(g);if(!a)return null;
+  const clip=asset.animations.find(c=>clipName(c)===name)||asset.animations.find(c=>clipName(c)==='Idle');if(!clip)return null;
+  if(a.clip!==clip){a.mixer.stopAllAction();a.action=a.mixer.clipAction(clip);a.action.play();a.clip=clip;}
+  a.action.time=((time%clip.duration)+clip.duration)%clip.duration;a.mixer.update(0);
+  return {name:clipName(clip),time:a.action.time};
+ }
+ return {types,actors,animations,labels,load,build,dispose,update,pose,ready:()=>!!asset,error:()=>error};
 })();

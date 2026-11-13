@@ -229,6 +229,7 @@ const TourPlan=(()=>{
    sec.append(field('名称',textInput(r.name,v=>mutate(()=>{r.name=v.slice(0,40);}))),
     field('走速',numberInput(r.speed,.1,5,.1,v=>mutate(()=>{r.speed=v;})),'倍'),field('眼高',numberInput(r.eyeHeight,1,2.2,.05,v=>mutate(()=>{r.eyeHeight=v;})),'米'));
    sec.append(h('div',{class:'rt-stat'},h('div',null,h('small',null,'时长'),a.ok?fmtDuration(a.total):'—'),h('div',null,h('small',null,'站点'),String(r.stops.length))));
+   if(host.onPreview)sec.append(h('button',{class:'primary rt-wide rt-preview',disabled:!a.ok,title:a.ok?'回到 3D 看游客走一遍':'有走不通的地方，先修好再预览',onclick:()=>{ordering=false;host.onPreview(r.id);}},host.icon('play'),'在 3D 中预览'));
    const list=h('div',{class:'rt-stops'});
    list.append(h('div',{class:'rt-stop fixed'},h('span',{class:'rt-end start'},'入'),h('span',{class:'rt-sname'},'入口')));
    a.stops.forEach((s,i)=>list.append(stopRow(c,r,s,i)));
@@ -398,7 +399,10 @@ const TourPlan=(()=>{
    const c=ctx();fixSelection(c);renderTools();renderLeft(c);renderRight(c);updateHint();drawPlan();
   }
   return {
-   open(){open=true;root.hidden=false;view=null;const c=ctx();selGroup=null;selRoute=null;selObj=null;ordering=false;fixSelection(c);const g=curGroup(c);if(g&&g.routes[0])selRoute=g.routes[0].id;render();},
+   // routeId: reopen on that sub-plan (e.g. coming back from 3D preview); otherwise the first one.
+   open(routeId){open=true;root.hidden=false;view=null;const c=ctx();selGroup=null;selRoute=null;selObj=null;ordering=false;
+    const home=routeId&&c.tour.groups.find(g=>g.routes.some(r=>r.id===routeId));
+    if(home){selGroup=home.id;selRoute=routeId;}else{fixSelection(c);const g=curGroup(c);if(g&&g.routes[0])selRoute=g.routes[0].id;}render();},
    close(){open=false;root.hidden=true;ordering=false;drag=null;pan=null;},
    isOpen:()=>open,
    refresh:render,

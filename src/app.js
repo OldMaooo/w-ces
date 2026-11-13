@@ -146,8 +146,8 @@ function attachWall(o,wall=o.userData.wall||nearestWall(o)){
 function renderList(){
  $('objects').replaceChildren();for(const o of objects){
   const b=document.createElement('button'),name=definitions[o.userData.type].name+' '+o.userData.id;
-  const title=document.createElement('span');title.className='layer-name';title.textContent=({acrylicA4:'A4 立牌',acrylicA5:'A5 立牌'}[o.userData.type]||definitions[o.userData.type].name)+' '+o.userData.id;b.append(title);b.title=name;b.classList.toggle('active',o===selected);
-  const n=document.createElement('small');n.textContent=o.userData.inches?Number(o.userData.inches.toFixed(1))+' 寸':people.types.has(o.userData.type)?people.labels[o.userData.animation||'Idle']:o.userData.size.map(v=>Number(v.toFixed(3))).join(' × ');b.append(n);b.onclick=()=>select(o);
+  const title=document.createElement('span');title.className='layer-name';title.textContent=(['acrylicA4','acrylicA5'].includes(o.userData.type)?'亚克力立牌':definitions[o.userData.type].name)+' '+o.userData.id;b.append(title);b.title=name;b.classList.toggle('active',o===selected);
+  const n=document.createElement('small');const spec=o.userData.inches?Number(o.userData.inches.toFixed(1))+' 寸':o.userData.type==='acrylicA4'?'A4':o.userData.type==='acrylicA5'?'A5':'';if(spec){n.textContent=spec;b.append(n);}b.onclick=()=>select(o);
   const row=document.createElement('div');row.style.cssText='display:flex;gap:4px';b.style.flex='1';const visibility=document.createElement('button');visibility.className='icon-button';visibility.append(icon(o.visible?'eye':'eye-off'));visibility.title=(o.visible?'隐藏':'显示')+name;visibility.setAttribute('aria-label',visibility.title);visibility.setAttribute('aria-pressed',String(o.visible));visibility.onclick=()=>{checkpoint();o.visible=!o.visible;o.userData.visible=o.visible;if(selected===o)select(o);persist();renderList();};row.append(b,visibility);$('objects').append(row);
  }
 }
@@ -231,7 +231,7 @@ renderer.domElement.addEventListener('pointerup',e=>{
  const r=renderer.domElement.getBoundingClientRect();pointer.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(pointer,camera);const hit=ray.intersectObjects(objects.filter(o=>o.visible),true)[0];if(hit){let o=hit.object;while(o.parent&&!objects.includes(o))o=o.parent;select(o);}else{select(null);const c=ray.intersectObjects(venueGroup.children,true).find(h=>{for(let o=h.object;o;o=o.parent)if(o.name==='creator-set'||o.name==='creator-floor')return true;});if(c){$('empty').hidden=true;setCreatorSelected(true);}}
 });
 renderer.domElement.addEventListener('pointercancel',()=>{lookDrag=null;down=null;});
-$('libraryIcon').append(icon('box'));$('libraryClose').append(icon('x'));$('layerResize').append(icon('grip-horizontal'));
+$('libraryIcon').append(icon('box'));$('libraryClose').append(icon('x'));
 function showLibrary(show){$('library').hidden=!show;$('libraryToggle').setAttribute('aria-expanded',String(show));$('libraryToggle').classList.toggle('active',show);}
 $('libraryToggle').onclick=()=>showLibrary($('library').hidden);$('libraryClose').onclick=()=>showLibrary(false);
 const categories={tv:'设备',desk:'展台',robot:'设备',display:'设备',table:'展台',ldesk:'展台',fascia:'展台',laptop:'设备',webcam:'设备',acrylicA4:'展示',acrylicA5:'展示',rollup:'展示',chair:'展台',staff:'人物',visitor:'人物'};
@@ -255,12 +255,14 @@ const editedFields=new WeakMap();
 function checkpointField(id){const field=$(id);if(editedFields.get(field)!==selected){checkpoint();editedFields.set(field,selected);}}
 for(const id of ['personScale','personAnimation','clothesColor'])$(id).onchange=e=>{const live=e?.type==='input';if(!selected||!people.types.has(selected.userData.type))return;const d=selected.userData;if(id==='personScale'){const value=Number($(id).value);if(!Number.isFinite(value)||!$(id).value.trim()){sync();return;}checkpointField(id);d.personScale=clamp(value,.25,3);}else{checkpointField(id);if(id==='personAnimation')d.animation=$(id).value;else d.clothesColor=$(id).value;}geometry(selected);if(!live)$(id).blur();commit();};
 let layerStart=null;
+const layerKey='ces-layer-height';
 function setLayerHeight(value){const h=clamp(value,80,Math.min(560,innerHeight*.6));document.documentElement.style.setProperty('--layer-height',h+'px');$('layerResize').setAttribute('aria-valuenow',String(Math.round(h)));}
 $('layerResize').onpointerdown=e=>{layerStart={y:e.clientY,h:$('objects').offsetHeight};$('layerResize').setPointerCapture(e.pointerId);document.body.style.userSelect='none';};
 $('layerResize').onpointermove=e=>{if(layerStart)setLayerHeight(layerStart.h+e.clientY-layerStart.y);};
-function endLayerResize(){if(!layerStart)return;layerStart=null;document.body.style.userSelect='';persist();}
+function saveLayerHeight(){try{localStorage.setItem(layerKey,String(Math.round($('objects').offsetHeight)));}catch(e){}}
+function endLayerResize(){if(!layerStart)return;layerStart=null;document.body.style.userSelect='';saveLayerHeight();persist();}
 $('layerResize').onpointerup=endLayerResize;$('layerResize').onpointercancel=endLayerResize;
-$('layerResize').onkeydown=e=>{if(e.key==='ArrowUp'||e.key==='ArrowDown'){e.preventDefault();setLayerHeight($('objects').offsetHeight+(e.key==='ArrowUp'?-20:20));persist();}};
+$('layerResize').onkeydown=e=>{if(e.key==='ArrowUp'||e.key==='ArrowDown'){e.preventDefault();setLayerHeight($('objects').offsetHeight+(e.key==='ArrowUp'?-20:20));saveLayerHeight();persist();}};
 function setInches(v){const d=selected.userData;d.inches=clamp(v,10,120);if(d.type==='tv'){const [w,h]=screenSize(d.inches);d.size=[w,h,d.size[2]];}geometry(selected);}
 for(const id of ['x','y','z','w','h','d','rotation','inches','lengthA','widthA','lengthB','widthB'])$(id).onchange=e=>{
  const live=e?.type==='input';
@@ -333,7 +335,7 @@ new ResizeObserver(()=>{renderer.setSize(view.clientWidth,view.clientHeight);cam
 let initial=null,startError='';try{const seed=JSON.parse($('seed').textContent);if(seed)initial=parseWorkspace(seed);}catch(e){startError='内嵌方案无法读取，请保留文件并导入备份';saveBlocked=true;}
 workspaceId=initial?.workspaceId||'default';
 try{const local=localStorage.getItem(storageKey());if(local)initial=parseWorkspace(JSON.parse(local));}catch(e){startError='本机方案无法读取，请导出 JSON 备份';saveBlocked=true;}
-if(initial){plans=initial.plans;activeId=initial.activeId;restore(plans.find(p=>p.id===activeId).layout);document.querySelector('aside').style.width=(initial.panelWidth||264)+'px';setLayerHeight(initial.layerHeight||180);}
+if(initial){plans=initial.plans;activeId=initial.activeId;restore(plans.find(p=>p.id===activeId).layout);document.querySelector('aside').style.width=(initial.panelWidth||264)+'px';setLayerHeight(Number(localStorage.getItem(layerKey))||initial.layerHeight||180);}
 else{buildRoom();make('tv').position.set(.4,1.2,-2.61);make('desk').position.set(-.8,0,1.75);make('robot').position.set(1.4,0,.3);activeId=uid();plans=[{id:activeId,name:'方案 1',layout:layout()}];}
 select(objects[1]||objects[0]||null);renderTabs();$('walk').textContent='步行浏览';$('walk').classList.remove('active');$('helpText').textContent='拖空白转视角 · 滚轮缩放 · WASD 行走 · 空格切换浏览';persist();if(startError)$('saveStatus').textContent=startError;
 let lastTime=performance.now();function animate(now){requestAnimationFrame(animate);const dt=Math.min(.05,(now-lastTime)/1000);lastTime=now;people.update(dt);if(walking&&keys.size){let forward=Number(keys.has('KeyW'))-Number(keys.has('KeyS')),right=Number(keys.has('KeyD'))-Number(keys.has('KeyA'));const length=Math.hypot(forward,right)||1;forward=forward/length*dt*1.6;right=right/length*dt*1.6;camera.position.x+=-Math.sin(yaw)*forward+Math.cos(yaw)*right;camera.position.z+=-Math.cos(yaw)*forward-Math.sin(yaw)*right;camera.position.y=1.75;const bounds=venueGroup.userData.bounds;camera.position.x=clamp(camera.position.x,bounds.minX-1,bounds.maxX+1);camera.position.z=clamp(camera.position.z,bounds.minZ-1,bounds.maxZ+1);}rotationOverlay.style.display=!selected||!selected.visible||walking||placing?'none':'';

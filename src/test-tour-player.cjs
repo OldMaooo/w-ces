@@ -4,7 +4,7 @@ const near=(a,b,eps=1e-3)=>Math.abs(a-b)<=eps;
 (async()=>{const b=await chromium.launch({headless:true,executablePath:'/Users/mao/Library/Caches/ms-playwright/chromium-1234/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing'});
 try{
  const p=await (await b.newContext({viewport:{width:1440,height:900}})).newPage();const errors=[];p.on('pageerror',e=>errors.push(e.message));p.on('dialog',d=>d.dismiss());
- await p.goto('http://127.0.0.1:8876/');await p.waitForFunction(()=>window.editor&&window.editor.tourPlan&&window.editor.tourPlayer);
+ await p.goto('http://127.0.0.1:8876/?builtin');await p.waitForFunction(()=>window.editor&&window.editor.tourPlan&&window.editor.tourPlayer);
  // 准备：电视①、机器人②、前台③；1 个大方案 + 3 个子方案 + 1 条走不通（站位塞在前台里）
  await p.evaluate(()=>{
   const objs=editor.snapshot(),t=TourModel.emptyTour(),poi=(id,name)=>{const x=TourModel.makePoi(t,objs.find(o=>o.id===id),{name});t.pois.push(x);return x;};

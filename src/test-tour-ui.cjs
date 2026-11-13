@@ -4,7 +4,7 @@ const {chromium}=require('/opt/homebrew/lib/node_modules/@playwright/mcp/node_mo
 try{
  const ctx=await b.newContext({viewport:{width:1440,height:900}});const p=await ctx.newPage();const errors=[];p.on('pageerror',e=>errors.push(e.message));p.on('dialog',d=>d.dismiss());
  const ready=()=>p.waitForFunction(()=>window.editor&&window.editor.tourPlan);
- await p.goto('http://127.0.0.1:8876/');await ready();
+ await p.goto('http://127.0.0.1:8876/?builtin');await ready();
  const open=async()=>{if(!(await p.evaluate(()=>editor.tourPlan.isOpen())))await p.locator('#routeBtn').click();await p.waitForSelector('#rtPlan rect.rt-booth');};
  const seqs=()=>p.locator('#rtLeft .rt-row.r .rt-seq').allTextContents();
  const clickObj=async id=>{await p.locator(`#rtPlan [data-o="${id}"]`).last().click();};

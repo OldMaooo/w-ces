@@ -5,7 +5,7 @@ const sample=()=>({pois:[{id:'p1',objectId:1,num:1,name:'电视',dwell:5,stand:[
 (async()=>{const b=await chromium.launch({headless:true,executablePath:'/Users/mao/Library/Caches/ms-playwright/chromium-1234/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing'});
 try{
  const p=await (await b.newContext({viewport:{width:1440,height:960}})).newPage();const errors=[];p.on('pageerror',e=>errors.push(e.message));p.on('dialog',d=>d.dismiss());
- await p.goto('http://127.0.0.1:8876/');await p.waitForFunction(()=>window.editor&&window.editor.validateLayout);
+ await p.goto('http://127.0.0.1:8876/?builtin');await p.waitForFunction(()=>window.editor&&window.editor.validateLayout);
  const S=sample();
  // 1 旧数据没有 tour：能读，layout 里也不多出 tour 字段
  const old=await p.evaluate(()=>{const l=editor.layout();const v=editor.validateLayout({room:l.room,objects:l.objects});return {hasKeyBefore:'tour' in l,hasKey:'tour' in v,n:v.objects.length};});

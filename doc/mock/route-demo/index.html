@@ -1,0 +1,417 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>游客路线 · 可点 demo</title><link rel="stylesheet" href="demo.css"></head><body>
+<div id="demobar"></div>
+<div class="app">
+  <header id="hdr"></header>
+  <main id="main"></main>
+</div>
+<script src="../../../src/vendor/three.js"></script>
+<script src="../../../src/vendor/orbit.js"></script>
+<script src="demo-shared.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const DEFAULTS = () => ({
+  mode: 'plan', groups: clone(GROUPS0), objects: clone(OBJECTS0),
+  selGroup: 'g1', selRoute: 'r2', selPoint: null, tool: 'select', view: null,
+  t: 0, playing: false, rate: 1, cam: 'orbit', yawOff: 0, pitchOff: 0, locked: false, scenario: '',
+});
+let S = DEFAULTS(), undoStack = [], redoStack = [];
+
+// ——— 演示控制条（正式版没有）———
+const SCENARIOS = [
+  { g: '入口', k: 'e0', n: '原展台编辑界面', f: () => { S.mode = 'editor'; } },
+  { g: '图纸', k: 'p1', n: '选中一条路线', f: () => {} },
+  { g: '图纸', k: 'p2', n: '画线中', f: () => { S.selRoute = 'new'; addRoute('g1', '新子方案', [pt(-7, AZ), pt(-1.4, AZ), pt(-1.2, 2.4)]); S.tool = 'draw'; } },
+  { g: '图纸', k: 'p3', n: '选中停留点', f: () => { S.selPoint = 3; } },
+  { g: '图纸', k: 'p4', n: '选看向目标中', f: () => { S.selPoint = 4; route().points[4].lookAt = null; S.tool = 'pick'; } },
+  { g: '图纸', k: 'p5', n: '有穿模警告', f: () => { S.selRoute = 'r3'; } },
+  { g: '图纸', k: 'p6', n: '只选中大方案', f: () => { S.selRoute = null; } },
+  { g: '图纸', k: 'p7', n: '空的大方案', f: () => { S.selGroup = 'g2'; S.selRoute = null; } },
+  { g: '3D', k: 'v1', n: '总览·播放中', f: () => { S.mode = 'play'; S.t = 5; S.playing = true; } },
+  { g: '3D', k: 'v2', n: '总览·停在停留点', f: () => { S.mode = 'play'; S.t = 14; } },
+  { g: '3D', k: 'v3', n: '第一人称', f: () => { S.mode = 'play'; S.cam = 'fp'; S.t = 14; } },
+  { g: '3D', k: 'v4', n: '播完', f: () => { S.mode = 'play'; S.t = 1e9; } },
+  { g: '边界', k: 'b1', n: '看向的物料被删', f: () => { S.objects = S.objects.filter(o => o.id !== 2); S.selPoint = 4; } },
+  { g: '边界', k: 'b2', n: '超长名字', f: () => { const g = S.groups[0]; g.name = '北过道 · 东→西 · 下午人流高峰时段的路过游客'; g.routes[1].name = '先看电视演示，然后被工作人员引到前台做详细洽谈并留资'; } },
+  { g: '边界', k: 'b3', n: '路线只有 1 个点', f: () => { route().points = [pt(-7, AZ)]; } },
+];
+function addRoute(gid, name, points) { const id = 'r' + Math.random().toString(36).slice(2, 7); S.groups.find(g => g.id === gid).routes.push({ id, name, speed: 1, eye: 1.75, points }); S.selGroup = gid; S.selRoute = id; return id; }
+function applyScenario(s) {
+  stopPlay(); const keep = S.view; S = DEFAULTS(); undoStack = []; redoStack = [];
+  if (S.mode === 'plan') S.view = keep;
+  s.f(); S.scenario = s.k; if (S.mode === 'play') S.t = Math.min(S.t, comp().total);
+  render(); if (S.mode === 'play' && S.playing) startPlay();
+}
+function renderDemobar() {
+  const groups = [...new Set(SCENARIOS.map(s => s.g))];
+  $('#demobar').innerHTML = '<span class="tag">🎛 演示控制条 · 正式版没有</span>' + groups.map(g => `<div class="grp"><span>${g}</span>${SCENARIOS.filter(s => s.g === g).map(s => `<button data-s="${s.k}" class="${S.scenario === s.k ? 'on' : ''}">${s.n}</button>`).join('')}</div>`).join('') + '<a href="mock-gallery.html" target="_blank">组件全景页 ↗</a>';
+  document.querySelector('.app').style.top = $('#demobar').offsetHeight + 'px';
+  $('#demobar').querySelectorAll('[data-s]').forEach(b => b.onclick = () => applyScenario(SCENARIOS.find(s => s.k === b.dataset.s)));
+}
+
+// ——— 数据小工具 ———
+const group = () => S.groups.find(g => g.id === S.selGroup);
+const route = () => { for (const g of S.groups) for (const r of g.routes) if (r.id === S.selRoute) return r; return null; };
+const allRoutes = () => S.groups.flatMap(g => g.routes.map(r => ({ g, r })));
+const comp = () => compileRoute(route() || { points: [] }, S.objects);
+function snap() { undoStack.push(JSON.stringify(S.groups)); if (undoStack.length > 40) undoStack.shift(); redoStack = []; }
+function undo() { if (!undoStack.length) return; redoStack.push(JSON.stringify(S.groups)); S.groups = JSON.parse(undoStack.pop()); fixSel(); render(); }
+function redo() { if (!redoStack.length) return; undoStack.push(JSON.stringify(S.groups)); S.groups = JSON.parse(redoStack.pop()); fixSel(); render(); }
+function fixSel() { const r = route(); if (!r) S.selRoute = null; if (!r || S.selPoint >= r.points.length) S.selPoint = null; }
+
+// ——— 渲染总入口 ———
+function render() {
+  renderDemobar();
+  if (S.mode === 'editor') return renderEditor();
+  if (S.mode === 'plan') return renderPlanMode();
+  renderPlayMode();
+}
+
+function renderEditor() {
+  disposeThree();
+  $('#hdr').innerHTML = `<strong>CES 展台草图</strong><span class="crumb">方案 1</span><div class="actions"><button>${ICON.undo}</button><button>${ICON.redo}</button><button id="enter">${ICON.route}路线</button><button>步行浏览</button><button>导出</button></div>`;
+  $('#main').innerHTML = `<aside><h2>物料</h2><div class="muted">（这里是现有的展台编辑界面，demo 里省略）</div></aside><div id="stage" style="display:grid;place-items:center;color:#8a9b92">现有的 3D 编辑画面<br>点右上角「路线」进入路线编辑</div>`;
+  $('#enter').onclick = () => { S.mode = 'plan'; S.scenario = ''; render(); };
+}
+
+// ——— 图纸模式 ———
+function renderPlanMode() {
+  disposeThree();
+  const r = route();
+  $('#hdr').innerHTML = `<strong>CES 展台草图</strong><span class="crumb">/ 路线编辑</span><div class="actions">
+    <button id="to3d" class="primary" ${r && r.points.length > 1 ? '' : 'disabled'}>${ICON.box}在 3D 中预览</button><button id="exit">${ICON.x}退出路线</button></div>`;
+  $('#main').innerHTML = `<aside id="list"></aside><div id="stage"><svg id="plan"></svg>
+    <div class="toolbar">
+      <button id="tSel" class="${S.tool === 'select' ? 'active' : ''}" title="选择 / 拖动">${ICON.pointer}</button>
+      <button id="tDraw" class="${S.tool === 'draw' ? 'active' : ''}" ${r ? '' : 'disabled'} title="接着画">${ICON.pencil}画线</button>
+      <span class="sep"></span>
+      <button id="bUndo" ${undoStack.length ? '' : 'disabled'} title="撤销">${ICON.undo}</button>
+      <button id="bRedo" ${redoStack.length ? '' : 'disabled'} title="重做">${ICON.redo}</button>
+      <span class="sep"></span>
+      <button id="bFit" title="适应画面">${ICON.fit}</button><span class="zoom" id="zoom"></span>
+    </div><div class="hint" id="hint" hidden></div></div><aside class="right" id="props"></aside>`;
+  $('#to3d').onclick = () => { S.mode = 'play'; S.t = 0; S.selPoint = null; S.tool = 'select'; render(); };
+  $('#exit').onclick = () => { S.mode = 'editor'; render(); };
+  $('#tSel').onclick = () => { S.tool = 'select'; render(); };
+  $('#tDraw').onclick = () => { S.tool = 'draw'; S.selPoint = null; render(); };
+  $('#bUndo').onclick = undo; $('#bRedo').onclick = redo;
+  $('#bFit').onclick = () => { S.view = null; drawPlan(); };
+  renderList(); renderProps(); drawPlan();
+}
+
+function renderList() {
+  const el = $('#list');
+  el.innerHTML = `<h2>路线方案<button class="ghost" id="newG" title="新建大方案">${ICON.plus}</button></h2>` + S.groups.map(g => `
+    <div class="group">
+      <div class="row g ${S.selGroup === g.id && !S.selRoute ? 'sel' : ''}" data-g="${g.id}">
+        ${ICON.chev}<span class="name">${esc(g.name)}</span><span class="meta">${g.routes.length}</span>
+        <span class="tools"><button class="ghost" data-act="copyG" title="复制">${ICON.copy}</button><button class="ghost" data-act="delG" title="删除">${ICON.trash}</button></span>
+      </div>
+      <div class="approach">${APPROACH[g.approach]}</div>
+      <div class="subs">${g.routes.map(r => `
+        <div class="row ${S.selRoute === r.id ? 'sel' : ''}" data-r="${r.id}" data-g="${g.id}">
+          <span class="name">${esc(r.name)}</span><span class="meta">${fmt(compileRoute(r, S.objects).total)}</span>
+          <span class="tools"><button class="ghost" data-act="copyR" title="复制">${ICON.copy}</button><button class="ghost" data-act="delR" title="删除">${ICON.trash}</button></span>
+        </div>`).join('') || '<div class="empty">还没有子方案</div>'}
+      </div>
+      <button class="add-sub" data-new="${g.id}">${ICON.plus}新子方案</button>
+    </div>`).join('');
+  el.querySelectorAll('.row').forEach(row => row.onclick = e => {
+    const act = e.target.closest('[data-act]')?.dataset.act, g = S.groups.find(x => x.id === row.dataset.g);
+    if (act === 'delG') { snap(); S.groups = S.groups.filter(x => x !== g); S.selGroup = S.groups[0]?.id; S.selRoute = null; }
+    else if (act === 'copyG') { snap(); const c = clone(g); c.id = 'g' + Date.now(); c.name += ' 副本'; c.routes.forEach(r => r.id = 'r' + Math.random().toString(36).slice(2, 7)); S.groups.splice(S.groups.indexOf(g) + 1, 0, c); }
+    else if (act === 'delR') { snap(); g.routes = g.routes.filter(r => r.id !== row.dataset.r); fixSel(); }
+    else if (act === 'copyR') { snap(); const src = g.routes.find(r => r.id === row.dataset.r), c = clone(src); c.id = 'r' + Math.random().toString(36).slice(2, 7); c.name += ' 副本'; g.routes.splice(g.routes.indexOf(src) + 1, 0, c); S.selRoute = c.id; }
+    else { S.selGroup = g.id; S.selRoute = row.dataset.r || null; }
+    S.selPoint = null; S.tool = 'select'; render();
+  });
+  el.querySelectorAll('[data-new]').forEach(b => b.onclick = () => { snap(); addRoute(b.dataset.new, '新子方案', []); S.tool = 'draw'; S.selPoint = null; render(); });
+  $('#newG').onclick = () => { snap(); const id = 'g' + Date.now(); S.groups.push({ id, name: '新大方案', approach: 'other', routes: [] }); S.selGroup = id; S.selRoute = null; render(); };
+}
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+function renderProps() {
+  const el = $('#props'), r = route(), g = group();
+  if (!r) {
+    if (!g) { el.innerHTML = ''; return; }
+    el.innerHTML = `<section><h2>大方案</h2>
+      <div class="field"><label>名称</label><input type="text" id="gName" value="${esc(g.name)}"></div>
+      <div class="field"><label>来向</label><select id="gAp">${Object.entries(APPROACH).map(([k, v]) => `<option value="${k}" ${g.approach === k ? 'selected' : ''}>${v}</option>`).join('')}</select></div></section>`;
+    $('#gName').onchange = e => { snap(); g.name = e.target.value || '未命名'; renderList(); };
+    $('#gAp').onchange = e => { snap(); g.approach = e.target.value; renderList(); };
+    return;
+  }
+  const c = compileRoute(r, S.objects), bad = checkRoute(r, S.objects), p = S.selPoint != null ? r.points[S.selPoint] : null;
+  let html = '';
+  if (p) {
+    const i = S.selPoint, role = i === 0 ? '起点' : i === r.points.length - 1 ? '终点' : `第 ${i + 1} 个点`;
+    const tg = p.lookAt != null ? S.objects.find(o => o.id === p.lookAt) : null;
+    html += `<section><h2>${role}<button class="ghost" id="delP" title="删除这个点（Delete）">${ICON.trash}</button></h2>
+      <label class="check"><input type="checkbox" id="dw" ${p.dwell > 0 ? 'checked' : ''}>在这里停留</label>
+      ${p.dwell > 0 ? `<div class="field"><label>停留</label><span><input type="number" id="dwS" min="1" step="1" value="${p.dwell}"> 秒</span></div>
+      <div class="field"><label>看向</label></div>
+      ${p.lookAt != null ? (tg ? `<div class="target-chip">${ICON.target}<span class="name">${esc(tg.name)}</span><button class="ghost" id="pickT" title="换一个物料">${ICON.pencil}</button><button class="ghost" id="clrT" title="改回看前方">${ICON.x}</button></div>`
+        : `<div class="target-chip gone">${ICON.alert}<span class="name">目标已删除，改为看前方</span><button class="ghost" id="clrT">${ICON.x}</button></div>`)
+        : `<button id="pickT" class="${S.tool === 'pick' ? 'active' : ''}" style="width:100%;justify-content:center">${ICON.target}${S.tool === 'pick' ? '在图上点一个物料…' : '选看向的物料'}</button><div class="muted" style="margin-top:6px">不选就看前进方向</div>`}` : ''}
+    </section>`;
+  }
+  html += `<section><h2>子方案</h2>
+    <div class="field"><label>名称</label><input type="text" id="rName" value="${esc(r.name)}"></div>
+    <div class="field"><label>走速</label><span><input type="number" id="rSp" min=".2" max="3" step=".1" value="${r.speed}"> 米/秒</span></div>
+    <div class="field"><label>眼高</label><span><input type="number" id="rEye" min="1" max="2.2" step=".05" value="${r.eye}"> 米</span></div>
+    <div class="stat"><div><small>总长</small>${routeLength(r).toFixed(1)} 米</div><div><small>时长</small>${fmt(c.total)}</div><div><small>停留点</small>${c.ticks.length} 个</div><div><small>点数</small>${r.points.length}</div></div>
+    ${bad.map(b => `<div class="warn" data-i="${b.i}">${ICON.alert}<span>第 ${b.i + 1}→${b.i + 2} 段穿过了「${esc(b.name)}」</span></div>`).join('')}
+    ${r.points.length < 2 ? '<div class="muted" style="margin-top:8px">至少画 2 个点才能预览</div>' : ''}
+  </section>`;
+  el.innerHTML = html;
+  const num = (id, f) => { const n = $(id); if (n) n.onchange = e => { const v = parseFloat(e.target.value); if (isFinite(v) && v > 0) { snap(); f(v); } render(); }; };
+  if ($('#rName')) $('#rName').onchange = e => { snap(); r.name = e.target.value || '未命名'; renderList(); };
+  num('#rSp', v => r.speed = v); num('#rEye', v => r.eye = v); num('#dwS', v => p.dwell = v);
+  if ($('#dw')) $('#dw').onchange = e => { snap(); p.dwell = e.target.checked ? 5 : 0; if (!e.target.checked) p.lookAt = null; render(); };
+  if ($('#pickT')) $('#pickT').onclick = () => { S.tool = S.tool === 'pick' ? 'select' : 'pick'; render(); };
+  if ($('#clrT')) $('#clrT').onclick = () => { snap(); p.lookAt = null; render(); };
+  if ($('#delP')) $('#delP').onclick = deletePoint;
+  el.querySelectorAll('.warn').forEach(w => w.onclick = () => { S.selPoint = +w.dataset.i; S.tool = 'select'; render(); });
+}
+function deletePoint() { const r = route(); if (!r || S.selPoint == null) return; snap(); r.points.splice(S.selPoint, 1); S.selPoint = null; render(); }
+
+// —— 坐标换算：北在上、东在右（东是 -X，所以屏幕 x 随世界 x 减小而增大）——
+let W = 0, H = 0;
+const toS = (x, z) => [W / 2 + (S.view.cx - x) * S.view.k, H / 2 + (S.view.cz - z) * S.view.k];
+const toW = (sx, sy) => [S.view.cx - (sx - W / 2) / S.view.k, S.view.cz - (sy - H / 2) / S.view.k];
+function fitView() { const minX = -7.5, maxX = 9.5, minZ = -3.6, maxZ = 7; S.view = { cx: (minX + maxX) / 2, cz: (minZ + maxZ) / 2, k: Math.min(W / (maxX - minX), H / (maxZ - minZ)) * .92 }; }
+function rectS(x, z, w, d, cls, extra = '') { const [a, b] = toS(x + w / 2, z + d / 2); return `<rect class="${cls}" x="${a}" y="${b}" width="${w * S.view.k}" height="${d * S.view.k}" ${extra}/>`; }
+
+function drawPlan() {
+  const svg = $('#plan'); if (!svg) return;
+  W = svg.clientWidth; H = svg.clientHeight; if (!S.view) fitView();
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.classList.toggle('drawing', S.tool === 'draw'); svg.classList.toggle('picking', S.tool === 'pick');
+  const k = S.view.k, bw = ROOM.w, bd = ROOM.d, r = route();
+  let h = '';
+  // 会场背景：周围的块 + 过道
+  h += rectS(0, bd / 2 + AISLE_N + 15, 60, 30, 'v-block') + rectS(bw / 2 + AISLE_W + 15, 0, 30, 60, 'v-block');
+  h += rectS(-bw / 2 - 15, -15 + bd / 2, 30, 30, 'v-block') + rectS(bw / 2 - 15, -bd / 2 - 15, 30 , 30, 'v-block');
+  h += rectS(0, bd / 2 + AISLE_N / 2, 60, AISLE_N, 'v-aisle') + rectS(bw / 2 + AISLE_W / 2, 0, AISLE_W, 60, 'v-aisle');
+  let [lx, ly] = toS(-1.5, bd / 2 + AISLE_N - .4); h += `<text class="v-label" x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="central">北过道</text>`;
+  [lx, ly] = toS(bw / 2 + AISLE_W / 2, -3); h += `<text class="v-label" x="${lx}" y="${ly}" text-anchor="middle">西过道</text>`;
+  // 展台 + 网格 + 墙
+  h += rectS(0, 0, bw, bd, 'booth');
+  for (let x = -bw / 2 + .5; x < bw / 2; x += .5) { const [a, b] = toS(x, bd / 2), [, c] = toS(x, -bd / 2); h += `<line class="grid" x1="${a}" y1="${b}" x2="${a}" y2="${c}"/>`; }
+  for (let z = -bd / 2 + .5; z < bd / 2; z += .5) { const [a, b] = toS(bw / 2, z), [c] = toS(-bw / 2, z); h += `<line class="grid" x1="${a}" y1="${b}" x2="${c}" y2="${b}"/>`; }
+  WALLS.forEach(w => h += rectS(w.x, w.z, w.w, w.d, 'wall'));
+  // 物料
+  const hl = S.tool === 'pick' ? S.hoverObj : null, sp = r && S.selPoint != null ? r.points[S.selPoint] : null;
+  for (const o of S.objects) {
+    const cls = 'obj' + (hl === o.id ? ' hl' : '') + (sp && sp.lookAt === o.id ? ' target' : '');
+    if (o.shape === 'circle') { const [a, b] = toS(o.x, o.z); h += `<circle class="${cls}" data-o="${o.id}" cx="${a}" cy="${b}" r="${o.r * k}"/>`; }
+    else if (o.shape === 'L') h += `<g data-o="${o.id}">` + o.parts.map(p => rectS(o.x + p.x, o.z + p.z, p.w, p.d, cls)).join('') + '</g>';
+    else h += rectS(o.x, o.z, o.w, o.d, cls, `data-o="${o.id}"`);
+    const [a, b] = toS(o.x, o.z); h += `<text class="obj-label" x="${a}" y="${b + (o.d && o.d < .2 ? -10 : 0)}" text-anchor="middle" dominant-baseline="central">${esc(o.name)}</text>`;
+  }
+  // 同一大方案里的其他子方案：灰线，方便对比
+  const g = group();
+  if (g) for (const o of g.routes) if (o !== r && o.points.length > 1) h += `<polyline class="seg dim" points="${o.points.map(p => toS(p.x, p.z).join(',')).join(' ')}"/>`;
+  if (r) {
+    const bad = new Set(checkRoute(r, S.objects).map(b => b.i)), ps = r.points;
+    // 看向虚线
+    ps.forEach((p, i) => { const t = p.dwell > 0 && targetPos(p.lookAt, S.objects); if (t) { const [a, b] = toS(p.x, p.z), [c, d] = toS(t.x, t.z); h += `<line class="look" x1="${a}" y1="${b}" x2="${c}" y2="${d}"/>`; } });
+    for (let i = 0; i < ps.length - 1; i++) {
+      const [a, b] = toS(ps[i].x, ps[i].z), [c, d] = toS(ps[i + 1].x, ps[i + 1].z), mx = (a + c) / 2, my = (b + d) / 2, ang = Math.atan2(d - b, c - a) * 180 / Math.PI;
+      h += `<g class="segwrap"><line class="seg-hit" x1="${a}" y1="${b}" x2="${c}" y2="${d}"/><line class="seg ${bad.has(i) ? 'bad' : ''}" x1="${a}" y1="${b}" x2="${c}" y2="${d}"/>`;
+      if (Math.hypot(c - a, d - b) > 46) h += `<path class="arrow ${bad.has(i) ? 'bad' : ''}" transform="translate(${a + (c - a) * .3},${b + (d - b) * .3}) rotate(${ang})" d="M5 0 L-4 -4.5 L-4 4.5Z"/>`;
+      if (S.tool === 'select') h += `<circle class="mid" data-mid="${i}" cx="${mx}" cy="${my}" r="5"/>`;
+      h += '</g>';
+    }
+    if (S.tool === 'draw' && ps.length && S.mouseW) { const [a, b] = toS(ps.at(-1).x, ps.at(-1).z), [c, d] = toS(...S.mouseW); h += `<line class="seg preview" x1="${a}" y1="${b}" x2="${c}" y2="${d}"/>`; }
+    let n = 0;
+    ps.forEach((p, i) => {
+      const [a, b] = toS(p.x, p.z), sel = S.selPoint === i ? ' sel' : '';
+      if (p.dwell > 0) { n++; h += `<circle class="dwell${sel}" data-p="${i}" cx="${a}" cy="${b}" r="11"/><text class="dwell-n" x="${a}" y="${b}">${n}</text>`; }
+      else h += `<circle class="pt${i === 0 ? ' start' : i === ps.length - 1 && ps.length > 1 ? ' end' : ''}${sel}" data-p="${i}" cx="${a}" cy="${b}" r="${i === 0 || i === ps.length - 1 ? 7 : 5.5}"/>`;
+    });
+  }
+  // 指南针 + 比例尺
+  h += `<g class="compass" transform="translate(${W - 44},${58})"><circle r="20" fill="#fff" stroke="#cfd8d3"/><path d="M0 -15 L5 0 L-5 0Z" fill="#c2410c"/><path d="M0 15 L5 0 L-5 0Z" fill="#9aa79f"/><text y="-28">北</text><text x="29">东</text><text x="-29">西</text></g>`;
+  h += `<g class="scale" transform="translate(${W - 24 - k},${H - 24})"><line x1="0" x2="${k}" stroke="#5d7268" stroke-width="2"/><line x1="0" x2="0" y1="-4" y2="4" stroke="#5d7268"/><line x1="${k}" x2="${k}" y1="-4" y2="4" stroke="#5d7268"/><text x="${k / 2}" y="-8" text-anchor="middle">1 米</text></g>`;
+  svg.innerHTML = h;
+  $('#zoom').textContent = Math.round(k / 40 * 100) + '%';
+  const hint = $('#hint');
+  hint.hidden = !(S.tool === 'draw' || S.tool === 'pick');
+  hint.textContent = S.tool === 'draw' ? '点击加点 · 双击或 Enter 结束 · Esc 退出画线' : '点一个物料作为看向目标 · Esc 取消';
+}
+
+// —— 图纸交互 ——
+let drag = null, pan = null, spaceDown = false, lastClick = null;
+document.addEventListener('pointerdown', e => {
+  const svg = $('#plan'); if (!svg || !svg.contains(e.target)) return;
+  const r = route(), rect = svg.getBoundingClientRect(), sx = e.clientX - rect.left, sy = e.clientY - rect.top;
+  if (e.button === 2 || e.button === 1 || spaceDown) { pan = { x: e.clientX, y: e.clientY, cx: S.view.cx, cz: S.view.cz }; svg.classList.add('panning'); e.preventDefault(); return; }
+  if (S.tool === 'pick') { const o = e.target.closest('[data-o]'); if (o && r && S.selPoint != null) { snap(); r.points[S.selPoint].lookAt = +o.dataset.o; S.tool = 'select'; render(); } return; }
+  if (S.tool === 'draw') { if (!r) return; const now = performance.now(); if (lastClick && now - lastClick.t < 350 && Math.hypot(sx - lastClick.x, sy - lastClick.y) < 6) { lastClick = null; finishDraw(); return; } lastClick = { t: now, x: sx, y: sy }; snap(); const [x, z] = toW(sx, sy); r.points.push(pt(+x.toFixed(2), +z.toFixed(2))); renderProps(); drawPlan(); renderList(); return; }
+  const pEl = e.target.closest('[data-p]'), mEl = e.target.closest('[data-mid]');
+  if (mEl && r) { snap(); const i = +mEl.dataset.mid, a = r.points[i], b = r.points[i + 1]; r.points.splice(i + 1, 0, pt((a.x + b.x) / 2, (a.z + b.z) / 2)); S.selPoint = i + 1; drag = { i: i + 1, moved: true, snapped: true }; renderProps(); drawPlan(); return; }
+  if (pEl && r) { S.selPoint = +pEl.dataset.p; drag = { i: S.selPoint, moved: false, snapped: false }; renderProps(); drawPlan(); return; }
+  if (S.selPoint != null) { S.selPoint = null; renderProps(); drawPlan(); }
+});
+document.addEventListener('pointermove', e => {
+  const svg = $('#plan'); if (!svg) return;
+  const rect = svg.getBoundingClientRect(), sx = e.clientX - rect.left, sy = e.clientY - rect.top;
+  if (pan) { S.view.cx = pan.cx + (e.clientX - pan.x) / S.view.k; S.view.cz = pan.cz + (e.clientY - pan.y) / S.view.k; drawPlan(); return; }
+  if (drag) { const r = route(); if (!drag.snapped) { snap(); drag.snapped = true; } const [x, z] = toW(sx, sy); r.points[drag.i].x = +x.toFixed(2); r.points[drag.i].z = +z.toFixed(2); drag.moved = true; drawPlan(); return; }
+  if (S.tool === 'draw') { S.mouseW = toW(sx, sy); drawPlan(); }
+  if (S.tool === 'pick') { const o = e.target.closest && e.target.closest('[data-o]'); const id = o ? +o.dataset.o : null; if (id !== S.hoverObj) { S.hoverObj = id; drawPlan(); } }
+});
+document.addEventListener('pointerup', () => { if (drag?.moved) { renderProps(); renderList(); } drag = null; if (pan) { pan = null; $('#plan')?.classList.remove('panning'); } });
+document.addEventListener('contextmenu', e => { if ($('#plan')?.contains(e.target)) e.preventDefault(); });
+document.addEventListener('wheel', e => {
+  const svg = $('#plan'); if (!svg || !svg.contains(e.target)) return; e.preventDefault();
+  const rect = svg.getBoundingClientRect(), sx = e.clientX - rect.left, sy = e.clientY - rect.top, [wx, wz] = toW(sx, sy);
+  S.view.k = Math.max(12, Math.min(260, S.view.k * Math.exp(-e.deltaY * .0015)));
+  const [nx, nz] = toW(sx, sy); S.view.cx += wx - nx; S.view.cz += wz - nz; drawPlan();
+}, { passive: false });
+function finishDraw() { S.tool = 'select'; S.mouseW = null; render(); }
+document.addEventListener('keydown', e => {
+  if (e.target.matches('input,select,textarea') || e.isComposing) return;
+  if (S.mode === 'plan') {
+    if (e.code === 'Space') { spaceDown = true; e.preventDefault(); }
+    if (e.key === 'Enter' && S.tool === 'draw') finishDraw();
+    if (e.key === 'Escape' && S.tool !== 'select') finishDraw();
+    if ((e.key === 'Delete' || e.key === 'Backspace') && S.selPoint != null) deletePoint();
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); }
+  } else if (S.mode === 'play' && e.code === 'Space') { e.preventDefault(); togglePlay(); }
+});
+document.addEventListener('keyup', e => { if (e.code === 'Space') spaceDown = false; });
+window.addEventListener('resize', () => { if (S.mode === 'plan') drawPlan(); else if (T) sizeThree(); });
+
+// ——— 3D 播放模式 ———
+let T = null, raf = 0, last = 0;
+function renderPlayMode() {
+  const r = route();
+  $('#hdr').innerHTML = `<strong>CES 展台草图</strong><span class="crumb">/ 路线预览</span><div class="actions"><button id="back">${ICON.map}回到路线图</button><button id="exit">${ICON.x}退出</button></div>`;
+  const opts = S.groups.filter(g => g.routes.length).map(g => `<optgroup label="${esc(g.name)}">${g.routes.map(x => `<option value="${x.id}" ${x.id === S.selRoute ? 'selected' : ''} ${x.points.length < 2 ? 'disabled' : ''}>${esc(x.name)}</option>`).join('')}</optgroup>`).join('');
+  $('#main').innerHTML = `<div style="flex:1;display:flex;flex-direction:column;min-width:0"><div id="stage"><div id="three"></div>
+      <div class="phase" id="phase"></div>
+      <div class="fp-hint" id="fpHint" ${S.cam === 'fp' ? '' : 'hidden'}></div><div class="crosshair" ${S.cam === 'fp' ? '' : 'hidden'}></div></div>
+    <div class="playbar">
+      <select id="pick">${opts}</select>
+      <button id="restart" class="ghost" title="从头">${ICON.back}</button>
+      <button id="pp" class="primary" title="播放/暂停（空格）"></button>
+      <div class="track"><input type="range" id="seek" min="0" step="0.01"><div id="ticks"></div></div>
+      <span class="time" id="time"></span>
+      <div class="seg-btns">${[.5, 1, 2].map(v => `<button data-rate="${v}" class="${S.rate === v ? 'active' : ''}">${v}×</button>`).join('')}</div>
+      <div class="seg-btns"><button data-cam="orbit" class="${S.cam === 'orbit' ? 'active' : ''}">${ICON.box}总览</button><button data-cam="fp" class="${S.cam === 'fp' ? 'active' : ''}">${ICON.eye}第一人称</button></div>
+      <button id="recenter" class="ghost" title="视线归位" ${S.cam === 'fp' ? '' : 'hidden'}>${ICON.reset}</button>
+    </div></div>`;
+  $('#back').onclick = () => { stopPlay(); exitLock(); S.mode = 'plan'; render(); };
+  $('#exit').onclick = () => { stopPlay(); exitLock(); S.mode = 'editor'; render(); };
+  $('#pick').onchange = e => { S.selRoute = e.target.value; S.selGroup = allRoutes().find(x => x.r.id === S.selRoute).g.id; S.t = 0; S.yawOff = S.pitchOff = 0; stopPlay(); buildRoute(); syncBar(); };
+  $('#restart').onclick = () => { S.t = 0; S.yawOff = S.pitchOff = 0; syncBar(); };
+  $('#pp').onclick = togglePlay;
+  const seek = $('#seek');
+  seek.onpointerdown = () => stopPlay();
+  seek.oninput = () => { S.t = +seek.value; S.yawOff = S.pitchOff = 0; syncBar(); };
+  document.querySelectorAll('[data-rate]').forEach(b => b.onclick = () => { S.rate = +b.dataset.rate; document.querySelectorAll('[data-rate]').forEach(x => x.classList.toggle('active', x === b)); });
+  document.querySelectorAll('[data-cam]').forEach(b => b.onclick = () => { S.cam = b.dataset.cam; if (S.cam === 'orbit') exitLock(); renderPlayMode(); });
+  $('#recenter').onclick = () => { S.yawOff = S.pitchOff = 0; syncBar(); };
+  setupThree(); buildRoute(); syncBar();
+}
+function togglePlay() { if (S.playing) stopPlay(); else { if (S.t >= comp().total - .01) S.t = 0; startPlay(); } syncBar(); }
+function startPlay() { S.playing = true; last = performance.now(); cancelAnimationFrame(raf); raf = requestAnimationFrame(tick); }
+function stopPlay() { S.playing = false; cancelAnimationFrame(raf); }
+function tick(now) {
+  if (!S.playing) return;
+  const dt = Math.min(.05, (now - last) / 1000); last = now; S.t += dt * S.rate;
+  const tot = comp().total; if (S.t >= tot) { S.t = tot; stopPlay(); }
+  syncBar(); if (S.playing) raf = requestAnimationFrame(tick);
+}
+window.addEventListener('blur', () => { if (S.playing) { stopPlay(); syncBar(); } });
+
+function syncBar() {
+  if (S.mode !== 'play' || !$('#seek')) return;
+  const c = comp(), seek = $('#seek');
+  seek.max = c.total; seek.value = S.t;
+  $('#pp').innerHTML = S.playing ? ICON.pause + '暂停' : ICON.play + (S.t >= c.total - .01 && c.total ? '重播' : '播放');
+  $('#time').textContent = fmt(S.t) + ' / ' + fmt(c.total);
+  $('#ticks').innerHTML = c.ticks.map(k => `<span class="tick" style="left:calc(7px + (100% - 14px) * ${k.t / c.total})" data-t="${k.t}" title="第 ${k.stop} 个停留点"></span>`).join('');
+  $('#ticks').querySelectorAll('.tick').forEach(el => el.onclick = () => { stopPlay(); S.t = +el.dataset.t + .01; S.yawOff = S.pitchOff = 0; syncBar(); });
+  const s = sampleRoute(c, S.t);
+  $('#phase').textContent = !s ? '' : S.t >= c.total - .01 ? '已走完' : s.phase === 'dwell' ? `第 ${s.seg.stop} 站 · 停留 · 看「${s.seg.tg ? s.seg.tg.name : '前方'}」· 还剩 ${Math.ceil(s.left)} 秒` : s.phase === 'turn' ? '转身' : '行走中';
+  if ($('#fpHint')) $('#fpHint').textContent = S.locked ? '移动鼠标转头 · Esc 释放鼠标并暂停' : '点画面锁定鼠标后转头（或按住拖动）';
+  updateThree(s);
+}
+
+// —— Three.js 场景（演示用方块，正式版用现有模型和人物）——
+function setupThree() {
+  disposeThree();
+  const host = $('#three'), renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(devicePixelRatio); host.appendChild(renderer.domElement);
+  const scene = new THREE.Scene(); scene.background = new THREE.Color(0xeef0ef);
+  const camera = new THREE.PerspectiveCamera(65, 1, .05, 200);
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x9aa79f, .9)); const dl = new THREE.DirectionalLight(0xffffff, .6); dl.position.set(4, 10, 6); scene.add(dl);
+  const plane = (w, d, x, z, color, y = 0) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), new THREE.MeshBasicMaterial({ color })); m.rotation.x = -Math.PI / 2; m.position.set(x, y, z); scene.add(m); return m; };
+  plane(60, 60, 0, 0, 0xc9cfcb, -.01);
+  plane(40, AISLE_N, 0, ROOM.d / 2 + AISLE_N / 2, 0xeef0ef); plane(AISLE_W, 40, ROOM.w / 2 + AISLE_W / 2, 0, 0xeef0ef);
+  plane(ROOM.w, ROOM.d, 0, 0, 0xffffff, .002);
+  const box = (w, h, d, x, y, z, color) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshLambertMaterial({ color })); m.position.set(x, y + h / 2, z); scene.add(m); return m; };
+  WALLS.forEach(w => box(w.w, 2.8, w.d, w.x, 0, w.z, 0xf9faf7));
+  for (const o of S.objects) {
+    const col = o.id === 1 ? 0x222831 : 0xcfd8d3;
+    if (o.shape === 'circle') { const m = new THREE.Mesh(new THREE.CylinderGeometry(o.r, o.r, o.h, 24), new THREE.MeshLambertMaterial({ color: col })); m.position.set(o.x, o.h / 2, o.z); scene.add(m); }
+    else if (o.shape === 'L') o.parts.forEach(p => box(p.w, o.h, p.d, o.x + p.x, 0, o.z + p.z, col));
+    else box(o.w, o.h, o.d, o.x, o.y, o.z, col);
+  }
+  // 游客：胶囊 + 鼻子指示朝向
+  const visitor = new THREE.Group(), mat = new THREE.MeshLambertMaterial({ color: 0x3b82f6 });
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(.18, .2, 1.4, 16), mat); body.position.y = .7; visitor.add(body);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(.14, 16, 12), mat); head.position.y = 1.6; visitor.add(head);
+  const nose = new THREE.Mesh(new THREE.BoxGeometry(.06, .06, .14), new THREE.MeshLambertMaterial({ color: 0x176b55 })); nose.position.set(0, 1.6, -.17); visitor.add(nose);
+  scene.add(visitor);
+  const orbit = new THREE.OrbitControls(camera, renderer.domElement); orbit.target.set(0, .5, 1); camera.position.set(7, 8, 9); orbit.update();
+  T = { renderer, scene, camera, orbit, visitor, routeObj: null, host };
+  sizeThree();
+  // 第一人称：点一下锁定鼠标；锁不上就按住拖动
+  let dragLook = null;
+  renderer.domElement.addEventListener('pointerdown', e => { if (S.cam !== 'fp') return; dragLook = { x: e.clientX, y: e.clientY }; if (!S.locked) { try { renderer.domElement.requestPointerLock()?.catch?.(() => {}); } catch (_) {} } });
+  addEventListener('pointerup', () => dragLook = null);
+  renderer.domElement.addEventListener('pointermove', e => {
+    if (S.cam !== 'fp') return;
+    let mx = 0, my = 0;
+    if (S.locked) { mx = e.movementX; my = e.movementY; } else if (dragLook) { mx = e.clientX - dragLook.x; my = e.clientY - dragLook.y; dragLook = { x: e.clientX, y: e.clientY }; } else return;
+    S.yawOff -= mx * .003; S.pitchOff = Math.max(-1.2, Math.min(1.2, S.pitchOff - my * .003));
+    if (!S.playing) syncBar();
+  });
+  T.onLock = () => { const was = S.locked; S.locked = document.pointerLockElement === renderer.domElement; if (was && !S.locked) stopPlay(); syncBar(); };
+  document.addEventListener('pointerlockchange', T.onLock);
+  const loop = () => { if (!T) return; T.raf = requestAnimationFrame(loop); if (S.cam === 'orbit') T.orbit.update(); T.renderer.render(T.scene, T.camera); };
+  loop();
+}
+function sizeThree() { const w = T.host.clientWidth, h = T.host.clientHeight; T.renderer.setSize(w, h); T.camera.aspect = w / h; T.camera.updateProjectionMatrix(); }
+function exitLock() { if (document.pointerLockElement) document.exitPointerLock(); S.locked = false; }
+function disposeThree() { if (!T) return; cancelAnimationFrame(T.raf); document.removeEventListener('pointerlockchange', T.onLock); T.orbit.dispose(); T.renderer.dispose(); T.renderer.domElement.remove(); T = null; }
+function buildRoute() {
+  if (!T) return; if (T.routeObj) T.scene.remove(T.routeObj);
+  const r = route(), g = new THREE.Group(); if (!r) return;
+  const bad = new Set(checkRoute(r, S.objects).map(b => b.i));
+  for (let i = 0; i < r.points.length - 1; i++) {
+    const a = r.points[i], b = r.points[i + 1], L = Math.hypot(b.x - a.x, b.z - a.z);
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(.08, L), new THREE.MeshBasicMaterial({ color: bad.has(i) ? 0xc2410c : 0x176b55 }));
+    m.rotation.x = -Math.PI / 2; m.rotation.z = Math.atan2(b.x - a.x, b.z - a.z) + Math.PI; m.position.set((a.x + b.x) / 2, .01, (a.z + b.z) / 2); g.add(m);
+  }
+  r.points.forEach(p => { if (p.dwell > 0) { const c = new THREE.Mesh(new THREE.CircleGeometry(.2, 24), new THREE.MeshBasicMaterial({ color: 0x176b55 })); c.rotation.x = -Math.PI / 2; c.position.set(p.x, .012, p.z); g.add(c); } });
+  T.routeObj = g; T.scene.add(g);
+}
+function updateThree(s) {
+  if (!T || !s) return;
+  const r = route();
+  T.visitor.position.set(s.x, 0, s.z); T.visitor.rotation.y = s.yaw; T.visitor.visible = S.cam !== 'fp';
+  if (S.cam === 'fp') {
+    T.orbit.enabled = false;
+    let pitch = 0;
+    if (s.phase === 'dwell' && s.seg.tg) { const tg = s.seg.tg; pitch = Math.atan2(tg.y - r.eye, Math.hypot(tg.x - s.x, tg.z - s.z)); }
+    T.camera.position.set(s.x, r.eye, s.z); T.camera.rotation.set(pitch + S.pitchOff, s.yaw + S.yawOff, 0, 'YXZ');
+  } else if (!T.orbit.enabled) { T.orbit.enabled = true; T.camera.position.set(7, 8, 9); T.orbit.target.set(0, .5, 1); T.orbit.update(); }
+}
+
+render();
+</script></body></html>

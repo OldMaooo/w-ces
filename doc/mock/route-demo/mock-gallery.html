@@ -1,0 +1,95 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"><title>游客路线 · 组件全景页</title><link rel="stylesheet" href="demo.css"></head><body>
+<div id="demobar"><span class="tag">🎛 组件全景页 · 正式版没有</span>
+  <div class="grp"><span>字号</span><button data-fs="12px">小</button><button data-fs="13px" class="on">标准</button><button data-fs="15px">大</button></div>
+  <a href="index.html">← 回可点 demo</a></div>
+<div class="gallery" id="g"></div>
+<script src="demo-shared.js"></script>
+<script>
+const mini = (inner, w = 150, h = 64) => `<svg width="${w}" height="${h}" style="background:#fff;border-radius:5px;display:block">${inner}</svg>`;
+const cs = (body, cap, wide) => `<div class="case${wide ? ' wide' : ''}">${body}<div class="cap">${cap}</div></div>`;
+const area = (t, p, cases) => `<div class="area"><h3>${t}</h3><p>${p}</p><div class="cases">${cases.join('')}</div></div>`;
+const row = (cls, name, meta, w = 230) => `<div style="width:${w}px;background:var(--soft);padding:4px"><div class="row ${cls}"><span class="name">${name}</span><span class="meta">${meta}</span><span class="tools"><button class="ghost">${ICON.copy}</button><button class="ghost">${ICON.trash}</button></span></div></div>`;
+const grow = (cls, name, n) => `<div style="width:230px;background:var(--soft);padding:4px"><div class="row g ${cls}">${ICON.chev}<span class="name">${name}</span><span class="meta">${n}</span><span class="tools"><button class="ghost">${ICON.copy}</button><button class="ghost">${ICON.trash}</button></span></div><div class="approach">北过道 · 东→西</div></div>`;
+const panel = html => `<aside class="right" style="height:auto;border:1px solid var(--line);border-radius:5px">${html}</aside>`;
+const pointPanel = (role, body) => panel(`<section><h2>${role}<button class="ghost">${ICON.trash}</button></h2>${body}</section>`);
+const dwellOn = `<label class="check"><input type="checkbox" checked>在这里停留</label><div class="field"><label>停留</label><span><input type="number" value="8"> 秒</span></div><div class="field"><label>看向</label></div>`;
+const routePanel = extra => panel(`<section><h2>子方案</h2><div class="field"><label>名称</label><input type="text" value="看电视 → 前台洽谈"></div><div class="field"><label>走速</label><span><input type="number" value="1"> 米/秒</span></div><div class="field"><label>眼高</label><span><input type="number" value="1.75"> 米</span></div><div class="stat"><div><small>总长</small>27.3 米</div><div><small>时长</small>0:47</div><div><small>停留点</small>2 个</div><div><small>点数</small>9</div></div>${extra}</section>`);
+const bar = (pp, t, cam) => `<div class="playbar" style="border:1px solid var(--line)"><select><option>看电视 → 前台洽谈</option></select><button class="ghost">${ICON.back}</button><button class="primary">${pp}</button><div class="track"><input type="range" min="0" max="47" value="${t}"><div><span class="tick" style="left:calc(7px + (100% - 14px) * .2)"></span><span class="tick" style="left:calc(7px + (100% - 14px) * .55)"></span></div></div><span class="time">${fmt(t)} / 0:47</span><div class="seg-btns"><button>0.5×</button><button class="active">1×</button><button>2×</button></div><div class="seg-btns"><button class="${cam === 'orbit' ? 'active' : ''}">${ICON.box}总览</button><button class="${cam === 'fp' ? 'active' : ''}">${ICON.eye}第一人称</button></div>${cam === 'fp' ? `<button class="ghost">${ICON.reset}</button>` : ''}</div>`;
+
+document.getElementById('g').innerHTML = `<h1>游客路线 · 组件全景页</h1><div class="muted">和可点 demo 共用同一份样式。这个应用目前没有深色主题，所以只给了字号切换。</div>` +
+area('方案列表', '图纸模式左栏：大方案下面挂子方案。', [
+  grow('', '北过道 · 东→西', 3) + '<div class="cap">大方案 · 默认</div>',
+  grow('sel', '北过道 · 东→西', 3) + '<div class="cap">大方案 · 选中（右栏改名称、来向）</div>',
+  grow('hov', '北过道 · 东→西', 3) + '<div class="cap">大方案 · 悬停：出现复制 / 删除</div>',
+  grow('', '北过道 · 东→西 · 下午人流高峰时段的路过游客', 3) + '<div class="cap">大方案 · 超长名字截断</div>',
+  row('', '看电视 → 前台洽谈', '0:47') + '<div class="cap">子方案 · 默认（右边是时长）</div>',
+  row('sel', '看电视 → 前台洽谈', '0:47') + '<div class="cap">子方案 · 选中</div>',
+  row('hov', '看电视 → 前台洽谈', '0:47') + '<div class="cap">子方案 · 悬停</div>',
+  row('', '先看电视演示，然后被工作人员引到前台做详细洽谈并留资', '1:52') + '<div class="cap">子方案 · 超长名字</div>',
+  row('', '新子方案', '0:00') + '<div class="cap">子方案 · 刚建、还没画</div>',
+  `<div style="width:230px;background:var(--soft);padding:4px"><div class="empty">还没有子方案</div><button class="add-sub">${ICON.plus}新子方案</button></div><div class="cap">大方案下面是空的</div>`,
+].map(x => `<div class="case">${x}</div>`)) +
+area('图纸上的点', '起点绿、终点红、中间白点；带数字的是停留点，数字是第几站。', [
+  cs(mini(`<circle class="pt start" cx="40" cy="32" r="7"/><circle class="pt end" cx="110" cy="32" r="7"/>`), '起点 / 终点'),
+  cs(mini(`<circle class="pt" cx="40" cy="32" r="5.5"/><circle class="pt sel" cx="110" cy="32" r="5.5"/>`), '普通点 / 选中'),
+  cs(mini(`<circle class="dwell" cx="40" cy="32" r="11"/><text class="dwell-n" x="40" y="32">1</text><circle class="dwell sel" cx="110" cy="32" r="11"/><text class="dwell-n" x="110" y="32">2</text>`), '停留点 / 选中'),
+  cs(mini(`<circle class="pt start sel" cx="40" cy="32" r="7"/><circle class="pt end sel" cx="110" cy="32" r="7"/>`), '起点、终点被选中'),
+]) +
+area('图纸上的线', '箭头标走向；红色虚线是穿过了物料或墙。', [
+  cs(mini(`<line class="seg" x1="15" y1="32" x2="135" y2="32"/><path class="arrow" transform="translate(55,32)" d="M5 0 L-4 -4.5 L-4 4.5Z"/>`), '正常一段'),
+  cs(mini(`<line class="seg bad" x1="15" y1="32" x2="135" y2="32"/><path class="arrow bad" transform="translate(55,32)" d="M5 0 L-4 -4.5 L-4 4.5Z"/>`), '穿模的一段'),
+  cs(mini(`<line class="seg" x1="15" y1="32" x2="135" y2="32"/><circle class="mid" style="opacity:1" cx="75" cy="32" r="5"/>`), '悬停时中间出现小圆点，按住拖出新点'),
+  cs(mini(`<circle class="pt" cx="20" cy="32" r="5.5"/><line class="seg preview" x1="20" y1="32" x2="130" y2="20"/>`), '画线中：跟着鼠标的预览线'),
+  cs(mini(`<line class="seg dim" x1="15" y1="20" x2="135" y2="44"/>`), '同一大方案里的其他子方案（灰，方便对比）'),
+  cs(mini(`<circle class="dwell" cx="30" cy="32" r="11"/><text class="dwell-n" x="30" y="32">1</text><line class="look" x1="30" y1="32" x2="110" y2="32"/><rect class="obj target" x="110" y="20" width="30" height="24"/>`), '停留点 → 看向的物料（虚线）'),
+]) +
+area('图纸上的物料和场地', '只画占地轮廓，不能在这里移动物料。', [
+  cs(mini(`<rect class="obj" x="45" y="16" width="60" height="32"/><text class="obj-label" x="75" y="32" text-anchor="middle" dominant-baseline="central">前台</text>`), '默认'),
+  cs(mini(`<rect class="obj hl" x="45" y="16" width="60" height="32"/><text class="obj-label" x="75" y="32" text-anchor="middle" dominant-baseline="central">前台</text>`), '选看向目标时，鼠标移上去'),
+  cs(mini(`<rect class="obj target" x="45" y="16" width="60" height="32"/><text class="obj-label" x="75" y="32" text-anchor="middle" dominant-baseline="central">前台</text>`), '是选中停留点的看向目标'),
+  cs(mini(`<rect class="v-block" x="0" y="0" width="150" height="20"/><rect class="v-aisle" x="0" y="20" width="150" height="22"/><rect class="booth" x="40" y="42" width="70" height="22"/><text class="v-label" x="75" y="31" text-anchor="middle" dominant-baseline="central">北过道</text>`), '隔壁展位 / 过道 / 自家展台'),
+  cs(mini(`<g class="compass" transform="translate(75,34)"><circle r="20" fill="#fff" stroke="#cfd8d3"/><path d="M0 -15 L5 0 L-5 0Z" fill="#c2410c"/><path d="M0 15 L5 0 L-5 0Z" fill="#9aa79f"/><text y="-27">北</text><text x="30">东</text><text x="-30">西</text></g>`, 150, 70), '指南针：北在上、东在右'),
+]) +
+area('图纸工具条和提示', '左上角工具条；提示条只在画线和选目标时出现。', [
+  cs(`<div class="toolbar" style="position:static;display:inline-flex"><button class="active">${ICON.pointer}</button><button>${ICON.pencil}画线</button><span class="sep"></span><button disabled>${ICON.undo}</button><button disabled>${ICON.redo}</button><span class="sep"></span><button>${ICON.fit}</button><span class="zoom">88%</span></div>`, '选择模式，还没改过（撤销灰着）'),
+  cs(`<div class="toolbar" style="position:static;display:inline-flex"><button>${ICON.pointer}</button><button class="active">${ICON.pencil}画线</button><span class="sep"></span><button>${ICON.undo}</button><button disabled>${ICON.redo}</button><span class="sep"></span><button>${ICON.fit}</button><span class="zoom">120%</span></div>`, '画线模式'),
+  cs(`<div class="hint" style="position:static;transform:none;display:inline-block">点击加点 · 双击或 Enter 结束 · Esc 退出画线</div>`, '画线提示'),
+  cs(`<div class="hint" style="position:static;transform:none;display:inline-block">点一个物料作为看向目标 · Esc 取消</div>`, '选目标提示'),
+]) +
+area('右栏属性', '选中大方案、子方案或一个点时显示。', [
+  cs(panel(`<section><h2>大方案</h2><div class="field"><label>名称</label><input type="text" value="北过道 · 东→西"></div><div class="field"><label>来向</label><select>${Object.values(APPROACH).map(v => `<option>${v}</option>`).join('')}</select></div></section>`), '大方案'),
+  cs(routePanel(''), '子方案 · 正常'),
+  cs(routePanel(`<div class="warn">${ICON.alert}<span>第 3→4 段穿过了「前台」</span></div><div class="warn">${ICON.alert}<span>第 4→5 段穿过了「小圆桌」</span></div>`), '子方案 · 有穿模（点一条跳到那段）'),
+  cs(panel(`<section><h2>子方案</h2><div class="stat"><div><small>总长</small>0.0 米</div><div><small>时长</small>0:00</div><div><small>停留点</small>0 个</div><div><small>点数</small>1</div></div><div class="muted" style="margin-top:8px">至少画 2 个点才能预览</div></section>`), '子方案 · 只有 1 个点'),
+  cs(pointPanel('第 4 个点', `<label class="check"><input type="checkbox">在这里停留</label>`), '点 · 不停留'),
+  cs(pointPanel('第 4 个点', dwellOn + `<button style="width:100%;justify-content:center">${ICON.target}选看向的物料</button><div class="muted" style="margin-top:6px">不选就看前进方向</div>`), '点 · 停留，还没选看向'),
+  cs(pointPanel('第 4 个点', dwellOn + `<button class="active" style="width:100%;justify-content:center">${ICON.target}在图上点一个物料…</button>`), '点 · 正在选看向'),
+  cs(pointPanel('第 4 个点', dwellOn + `<div class="target-chip">${ICON.target}<span class="name">前台</span><button class="ghost">${ICON.pencil}</button><button class="ghost">${ICON.x}</button></div>`), '点 · 看向前台（可换、可清除）'),
+  cs(pointPanel('第 4 个点', dwellOn + `<div class="target-chip gone">${ICON.alert}<span class="name">目标已删除，改为看前方</span><button class="ghost">${ICON.x}</button></div>`), '点 · 看向的物料被删了'),
+  cs(pointPanel('起点', `<label class="check"><input type="checkbox">在这里停留</label>`), '起点 / 终点也能设停留'),
+]) +
+area('3D 播放条', '回到 3D 后固定在底部，一行放下。', [
+  cs(bar(ICON.play + '播放', 14, 'orbit'), '暂停中 · 总览', true),
+  cs(bar(ICON.pause + '暂停', 22, 'orbit'), '播放中', true),
+  cs(bar(ICON.play + '重播', 47, 'orbit'), '播完（按钮变重播）', true),
+  cs(bar(ICON.pause + '暂停', 22, 'fp'), '第一人称（多一个「视线归位」）', true),
+]) +
+area('3D 画面上的标签', '右上角显示走到哪了；第一人称时顶部有一行操作提示。', [
+  cs('<div class="phase" style="position:static;display:inline-block">行走中</div>', '行走'),
+  cs('<div class="phase" style="position:static;display:inline-block">转身</div>', '拐角转身'),
+  cs('<div class="phase" style="position:static;display:inline-block">第 1 站 · 停留 · 看「电视」· 还剩 8 秒</div>', '停留'),
+  cs('<div class="phase" style="position:static;display:inline-block">已走完</div>', '走完'),
+  cs('<div class="fp-hint" style="position:static;transform:none;display:inline-block">点画面锁定鼠标后转头（或按住拖动）</div>', '第一人称 · 鼠标没锁'),
+  cs('<div class="fp-hint" style="position:static;transform:none;display:inline-block">移动鼠标转头 · Esc 释放鼠标并暂停</div>', '第一人称 · 鼠标已锁'),
+]) +
+area('通用按钮', '沿用现有编辑器的按钮样式。', [
+  cs(`<button>${ICON.map}回到路线图</button>`, '默认（鼠标移上去变浅绿）'),
+  cs(`<button class="primary">${ICON.box}在 3D 中预览</button>`, '主按钮'),
+  cs(`<button class="primary" disabled>${ICON.box}在 3D 中预览</button>`, '主按钮 · 不可用（少于 2 个点）'),
+  cs(`<button class="ghost">${ICON.trash}</button>`, '图标按钮'),
+  cs(`<div class="seg-btns"><button>0.5×</button><button class="active">1×</button><button>2×</button></div>`, '分段切换'),
+]) +
+`<div class="area checklist"><h3>这些你都看过了吗</h3>
+${['图纸上北在上、东在右，过道和展台一眼能认出来', '起点 / 终点 / 普通点 / 停留点能分清', '穿模的段够醒目，但不吓人', '列表行静止时干净，悬停才出复制删除', '停留点的属性：秒数 + 看向，够用', '看向的物料被删后的提示能看懂', '播放条一行放得下，按钮顺序顺手', '第一人称提示说清了怎么转头'].map(t => `<label><input type="checkbox">${t}</label>`).join('')}</div>`;
+document.querySelectorAll('[data-fs]').forEach(b => b.onclick = () => { document.documentElement.style.setProperty('--fs', b.dataset.fs); document.querySelectorAll('[data-fs]').forEach(x => x.classList.toggle('on', x === b)); });
+</script></body></html>

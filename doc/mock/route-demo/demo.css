@@ -1,0 +1,158 @@
+/* 主 demo 和组件全景页共用这一份样式；颜色、字号沿用现有 editor.html */
+:root{--ink:#263b39;--muted:#708478;--line:#dce2de;--soft:#fafbf9;--bg:#eef0ef;--accent:#176b55;--accent-h:#23846a;--hover:#e5efeb;--hover-b:#8bab9e;--warn:#c2410c;--warn-bg:#fff4ec;--start:#16a34a;--end:#dc2626;--fs:13px}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:var(--fs) -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif}
+button,input,select{font:inherit;color:inherit}
+button{border:1px solid #d7dfdc;background:#fff;border-radius:5px;padding:6px 8px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+button:hover{background:var(--hover);border-color:var(--hover-b)}
+button:disabled{opacity:.35;cursor:default}
+button:disabled:hover{background:#fff;border-color:#d7dfdc}
+button.active,button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+button.active:hover,button.primary:hover{background:var(--accent-h)}
+button.ghost{border-color:transparent;background:transparent;padding:4px}
+button.ghost:hover{background:var(--hover);border-color:transparent}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid #008568;outline-offset:2px}
+input,select{border:1px solid #d7dfdc;border-radius:5px;padding:5px 6px;background:#fff;min-width:0}
+input:hover,select:hover{border-color:var(--hover-b)}
+svg.i{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+[hidden]{display:none!important}
+
+/* 演示控制条（正式版没有） */
+#demobar{position:fixed;top:0;left:0;right:0;min-height:34px;flex-wrap:wrap;padding-top:4px!important;padding-bottom:4px!important;row-gap:4px;background:#1f2a28;color:#cfe0d8;display:flex;align-items:center;gap:10px;padding:0 10px;z-index:50;font-size:12px}
+#demobar .tag{background:#f59e0b;color:#1f2a28;border-radius:3px;padding:2px 6px;font-weight:600;flex-shrink:0}
+#demobar .grp{display:flex;gap:3px;align-items:center;flex-shrink:0}
+#demobar .grp span{color:#8fa79b;margin-right:2px}
+#demobar button{background:#2c3a37;border-color:#3d4f4b;color:#cfe0d8;padding:3px 7px;font-size:12px}
+#demobar button:hover{background:#3a4c48}
+#demobar button.on{background:#f59e0b;color:#1f2a28;border-color:#f59e0b}
+#demobar a{color:#f8c35a;flex-shrink:0}
+
+/* 应用外壳 */
+.app{position:fixed;top:34px;left:0;right:0;bottom:0;display:flex;flex-direction:column}
+header{height:48px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;padding:0 14px;flex-shrink:0}
+header strong{font-size:16px;font-weight:600}
+header .crumb{color:var(--muted)}
+header .actions{margin-left:auto;display:flex;gap:6px}
+main{flex:1;display:flex;min-height:0}
+aside{width:264px;background:var(--soft);overflow:auto;padding:12px;flex-shrink:0;border-right:1px solid var(--line)}
+aside.right{border-right:0;border-left:1px solid var(--line);width:256px}
+h2{font-size:12px;letter-spacing:1px;margin:0 0 8px;color:var(--muted);font-weight:500;display:flex;align-items:center;justify-content:space-between}
+section+section{border-top:1px solid #e0e5e1;margin-top:12px;padding-top:12px}
+
+/* 方案列表 */
+.group{margin-bottom:8px}
+.row{display:flex;align-items:center;gap:6px;padding:5px 6px;border-radius:5px;cursor:pointer;min-height:30px}
+.row:hover{background:var(--hover)}
+.row .name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .meta{color:var(--muted);font-size:11px;flex-shrink:0}
+.row .tools{display:none;gap:2px}
+.row:hover .tools{display:flex}
+.row:hover .meta{display:none}
+.row.g .name{font-weight:500}
+.row.sel{background:var(--accent);color:#fff}
+.row.sel .meta{color:#d3eee4}
+.row.sel button.ghost{color:#fff}
+.row.sel button.ghost:hover{background:var(--accent-h)}
+.approach{font-size:11px;color:var(--muted);padding:0 6px 4px 28px}
+.subs{padding-left:18px}
+.empty{color:#7e9085;font-size:12px;padding:6px 8px}
+.add-sub{color:var(--muted);font-size:12px;padding:4px 8px;margin-left:18px;border:1px dashed #cdd7d2;background:transparent}
+.add-sub:hover{color:var(--accent)}
+
+/* 图纸 */
+#stage{position:relative;flex:1;min-width:0;overflow:hidden;background:#d7dbd8}
+#plan{display:block;width:100%;height:100%;user-select:none}
+#plan.drawing{cursor:crosshair}
+#plan.picking{cursor:cell}
+#plan.panning{cursor:grabbing}
+.toolbar{position:absolute;top:12px;left:12px;display:flex;gap:4px;background:#fff;border:1px solid var(--line);border-radius:7px;padding:3px}
+.toolbar button{border-color:transparent}
+.toolbar .sep{width:1px;background:var(--line);margin:3px 2px}
+.zoom{color:var(--muted);font-size:12px;align-self:center;padding:0 6px;min-width:42px;text-align:center}
+.hint{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);background:#fff;border:1px solid var(--line);border-radius:7px;padding:6px 12px;color:#547064;font-size:12px;pointer-events:none}
+
+/* SVG 元素 */
+.v-aisle{fill:#f2f4f3}
+.v-block{fill:#d7dbd8}
+.v-label{fill:#9aa79f;font-size:12px}
+.booth{fill:#fff;stroke:#b9c4be;stroke-width:1}
+.wall{fill:#7b8a83}
+.grid{stroke:#e3e8e5;stroke-width:1}
+.obj{fill:#e9eeeb;stroke:#8fa197;stroke-width:1.2}
+.obj.hl{fill:#d9efe6;stroke:var(--accent);stroke-width:2}
+.obj.target{fill:#d9efe6;stroke:var(--accent);stroke-width:1.6}
+.obj-label{fill:#4d625a;font-size:11px;pointer-events:none}
+.seg{stroke:var(--accent);stroke-width:3;fill:none;stroke-linecap:round}
+.seg.bad{stroke:var(--warn);stroke-dasharray:7 5}
+.seg-hit{stroke:transparent;stroke-width:14;fill:none}
+.seg.preview{stroke:var(--accent);stroke-dasharray:4 4;opacity:.7}
+.seg.dim{stroke:#a9bab2;stroke-width:2}
+.arrow{fill:var(--accent)}
+.arrow.bad{fill:var(--warn)}
+.mid{fill:#fff;stroke:var(--accent);stroke-width:1.5;cursor:copy;opacity:0}
+g.segwrap:hover .mid{opacity:1}
+.pt{fill:#fff;stroke:var(--accent);stroke-width:2;cursor:grab}
+.pt:hover{stroke-width:3}
+.pt.start{fill:var(--start);stroke:#fff}
+.pt.end{fill:var(--end);stroke:#fff}
+.pt.sel{stroke:#0f172a;stroke-width:3}
+.dwell{fill:var(--accent);stroke:#fff;stroke-width:2;cursor:grab}
+.dwell:hover{stroke-width:3}
+.dwell.sel{stroke:#0f172a;stroke-width:3}
+.dwell-n{fill:#fff;font-size:11px;font-weight:600;text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.look{stroke:var(--accent);stroke-width:1.5;stroke-dasharray:3 4}
+.ring{fill:none;stroke:#0f172a;stroke-width:1.5;stroke-dasharray:3 3}
+.compass text{font-size:11px;fill:#5d7268;text-anchor:middle;dominant-baseline:central}
+.scale text{font-size:11px;fill:#5d7268}
+
+/* 属性栏 */
+.field{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:7px 0}
+.field label{color:var(--muted);font-size:12px}
+.field input[type=number]{width:72px;text-align:right}
+.field input[type=text]{flex:1}
+.stat{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.stat div{background:#fff;border:1px solid var(--line);border-radius:5px;padding:6px 8px}
+.stat small{display:block;color:var(--muted);font-size:11px}
+.check{display:flex;gap:7px;align-items:center;cursor:pointer;margin:8px 0}
+.check:hover{color:var(--accent)}
+.check input{accent-color:var(--accent)}
+.target-chip{display:flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line);border-radius:5px;padding:5px 8px}
+.target-chip .name{flex:1}
+.target-chip.gone{color:var(--warn);border-color:#f3c6a8;background:var(--warn-bg)}
+.warn{display:flex;gap:6px;align-items:flex-start;color:var(--warn);background:var(--warn-bg);border:1px solid #f3c6a8;border-radius:5px;padding:6px 8px;margin-top:6px;font-size:12px;cursor:pointer}
+.warn:hover{border-color:var(--warn)}
+.muted{color:var(--muted);font-size:12px}
+.btnrow{display:flex;gap:6px;margin-top:8px}
+.btnrow button{flex:1;justify-content:center}
+
+/* 3D 播放 */
+#three{position:absolute;inset:0}
+#three canvas{display:block}
+.fp-hint{position:absolute;top:14px;left:50%;transform:translateX(-50%);background:#ffffffe6;border:1px solid var(--line);border-radius:7px;padding:6px 12px;font-size:12px;color:#547064;pointer-events:none}
+.crosshair{position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px;border-radius:50%;background:#fff;box-shadow:0 0 0 1px #0006;pointer-events:none}
+.phase{position:absolute;top:14px;right:14px;background:#fff;border:1px solid var(--line);border-radius:7px;padding:6px 10px;font-size:12px}
+.playbar{height:48px;flex-shrink:0;background:#fff;border-top:1px solid var(--line);display:flex;align-items:center;gap:6px;padding:0 10px}
+.playbar select{max-width:210px}
+.playbar .time{font-variant-numeric:tabular-nums;color:var(--muted);font-size:12px;min-width:84px;text-align:center}
+.track{position:relative;flex:1;min-width:160px;height:28px;display:flex;align-items:center}
+.track input{width:100%;margin:0;accent-color:var(--accent);padding:0;border:0;background:transparent}
+.tick{position:absolute;top:2px;width:10px;height:10px;margin-left:-5px;border-radius:50%;background:var(--accent);border:2px solid #fff;cursor:pointer;box-shadow:0 0 0 1px var(--accent)}
+.tick:hover{transform:scale(1.25)}
+.seg-btns{display:flex;border:1px solid #d7dfdc;border-radius:5px;overflow:hidden}
+.seg-btns button{border:0;border-radius:0}
+.seg-btns button+button{border-left:1px solid #d7dfdc}
+
+/* 全景页 */
+.gallery{max-width:1180px;margin:0 auto;padding:54px 24px 60px}
+.gallery h1{font-size:20px;font-weight:600;margin:0 0 4px}
+.gallery .area{margin-top:28px}
+.gallery .area>h3{font-size:14px;font-weight:600;margin:0 0 2px}
+.gallery .area>p{color:var(--muted);margin:0 0 10px;font-size:12px}
+.cases{display:flex;flex-wrap:wrap;gap:12px}
+.case{background:#fff;border:1px solid var(--line);border-radius:7px;padding:10px;min-width:150px}
+.case .cap{color:var(--muted);font-size:11px;margin-top:8px}
+.case.wide{flex:1 1 100%}
+.checklist label{display:flex;gap:8px;margin:6px 0;cursor:pointer}
+.checklist label:hover{color:var(--accent)}
+/* 全景页用来定格「悬停」状态，主 demo 里由 :hover 触发，样子相同 */
+.row.hov{background:var(--hover)}.row.hov .tools{display:flex}.row.hov .meta{display:none}

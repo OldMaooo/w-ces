@@ -34,7 +34,7 @@ function buildRoom(){
  $('wallA').checked=room.wallA;$('wallB').checked=room.wallB;$('wallAText').textContent='A 左墙 '+d.toFixed(1)+'m';$('wallBText').textContent='B 后墙 '+w.toFixed(1)+'m';
  buildVenue();
 }
-const definitions={tv:{name:'电视',size:[1.218,.685,.09]},desk:{name:'前台',size:[1.6,1,.65]},robot:{name:'机器人',size:[.65,1.5,.5]},display:{name:'闺蜜机',size:[.6,1.5,.45]},table:{name:'小圆桌',size:[.65,.75,.65]},ldesk:{name:'L 型台',size:[2.2,1,1.6]},fascia:{name:'悬空吊楣',size:[3,.6,3]},laptop:{name:'笔记本电脑',size:[.34,.24,.25]},webcam:{name:'电脑摄像头',size:[.10,.08,.06]},acrylic:{name:'桌面亚克力牌',size:[.21,.15,.07]},acrylicA4:{name:'A4 竖版亚克力牌',size:[.21,.297,.07]},acrylicA5:{name:'A5 竖版亚克力牌',size:[.148,.21,.07]},rollup:{name:'易拉宝',size:[.84,2.08,.35]},chair:{name:'听讲椅',size:[.46,.82,.50]},staff:{name:'工作人员',size:[.55,1.75,.35]},visitor:{name:'游客',size:[.55,1.75,.35]}};
+const definitions={tv:{name:'电视',size:[1.218,.685,.09]},desk:{name:'前台',size:[1.6,1,.65]},robot:{name:'机器人',size:[.65,1.5,.5]},display:{name:'闺蜜机',size:[.6,1.5,.45]},table:{name:'小圆桌',size:[.65,.75,.65]},ldesk:{name:'L 型台',size:[2.2,1,1.6]},fascia:{name:'悬空吊楣',size:[3,.6,3]},laptop:{name:'笔记本电脑',size:[.34,.24,.25]},webcam:{name:'电脑摄像头',size:[.10,.08,.06]},acrylic:{name:'桌面亚克力牌',size:[.21,.15,.07]},acrylicA4:{name:'A4 竖版亚克力牌',size:[.21,.297,.07]},acrylicA5:{name:'A5 竖版亚克力牌',size:[.1485,.21,.07]},rollup:{name:'易拉宝',size:[.84,2.08,.35]},chair:{name:'听讲椅',size:[.46,.82,.50]},staff:{name:'工作人员',size:[.55,1.75,.35]},visitor:{name:'游客',size:[.55,1.75,.35]}};
 const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
 const clone=v=>JSON.parse(JSON.stringify(v));
 const uid=()=>typeof crypto.randomUUID==='function'?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2);
@@ -95,7 +95,7 @@ function geometry(g){
   const base=box(g,1,.055,1,0,.0275,0,'#c8e1e4');
   const pane=box(g,.96,.945,.065,0,.5275,0,'#c7e7ec');
   for(const mesh of [base,pane]){mesh.material.transparent=true;mesh.material.opacity=.40;mesh.material.depthWrite=false;mesh.material.roughness=.15;}
-  box(g,.82,.76,.012,0,.49,.039,'#fffdf5');
+  const paperW=.86,paperH=Math.min(.94,paperW*p.size[0]*Math.SQRT2/p.size[1]);box(g,paperW,paperH,.012,0,.5275,.039,'#fffdf5');
   box(g,.52,.038,.006,0,.67,.048,'#48746e');
   for(const y of [.51,.43,.35])box(g,.59,.018,.006,0,y,.048,'#a2b4ab');
   g.scale.set(...p.size);
@@ -156,7 +156,7 @@ function sync(){if(!selected)return;$('place').disabled=!selected.visible;const 
  if(document.activeElement!==$('purpose'))$('purpose').value=d.purpose||'';$('screenFields').hidden=!screen;$('orientationLabel').hidden=d.type!=='display';$('lFields').hidden=!isL;$('orientation').value=d.portrait?'portrait':'landscape';
  for(const [id,value] of Object.entries({x:p.x,y:p.y,z:p.z,w:d.size[0],h:d.size[1],d:d.size[2],rotation:((THREE.MathUtils.radToDeg(selected.rotation.y)%360)+360)%360,inches:d.inches||27,lengthA:d.lengthA||2.2,widthA:d.widthA||.6,lengthB:d.lengthB||1.6,widthB:d.widthB||.55}))if(document.activeElement!==$(id))$(id).value=Number(value.toFixed(['w','h','d'].includes(id)?3:2));
  for(const id of ['w','h','d'])$(id).min=['laptop','webcam','acrylic','acrylicA4','acrylicA5'].includes(d.type)?'.01':'.1';
- $('fasciaFields').hidden=d.type!=='fascia';$('fasciaShape').value=d.shape||'square';if(document.activeElement!==$('fasciaSpan'))$('fasciaSpan').value=d.type==='fascia'?(d.shape==='round'?d.size[0]/2:d.size[0]):3;$('fasciaSpanLabel').firstChild.textContent=d.shape==='round'?'半径（米）':'边长（米）';$('w').disabled=isPerson||screen||isL||d.type==='fascia';$('h').disabled=isPerson||screen;$('d').disabled=isPerson||d.type==='display'||isL||d.type==='fascia';$('wallSnap').checked=!!d.wallSnap;$('snapNote').hidden=!d.wallSnap;
+ $('fasciaFields').hidden=d.type!=='fascia';$('fasciaShape').value=d.shape||'square';if(document.activeElement!==$('fasciaSpan'))$('fasciaSpan').value=d.type==='fascia'?(d.shape==='round'?d.size[0]/2:d.size[0]):3;$('fasciaSpanLabel').firstChild.textContent=d.shape==='round'?'半径（米）':'边长（米）';const stand=['acrylicA4','acrylicA5'].includes(d.type);$('standFields').hidden=!stand;$('paper').value=d.type==='acrylicA5'?'A5':'A4';$('w').disabled=isPerson||screen||isL||d.type==='fascia'||stand;$('h').disabled=isPerson||screen||stand;$('d').disabled=isPerson||d.type==='display'||isL||d.type==='fascia';$('wallSnap').checked=!!d.wallSnap;$('snapNote').hidden=!d.wallSnap;
  document.querySelectorAll('[data-inches]').forEach(b=>b.classList.toggle('active',Number(b.dataset.inches)===d.inches));
  selected.updateMatrixWorld(true);const b=new THREE.Box3().setFromObject(selected);$('status').textContent=b.min.x< -room.width/2-.001||b.max.x>room.width/2+.001||b.min.z< -room.depth/2-.001||b.max.z>room.depth/2+.001?'物料超出地面边界':'';
 }
@@ -278,6 +278,7 @@ $('fasciaSpan').onchange=()=>{if(!selected)return;const v=Number($('fasciaSpan')
 $('purpose').onchange=e=>{if(!selected||e?.isComposing)return;checkpointField('purpose');selected.userData.purpose=$('purpose').value.trim().slice(0,40);geometry(selected);commit();};
 for(const id of ['x','y','z','w','h','d','rotation','inches','lengthA','widthA','lengthB','widthB','purpose','personScale','clothesColor','fasciaSpan']){const field=$(id);field.onfocus=()=>editedFields.delete(field);field.oninput=field.onchange;field.addEventListener('blur',()=>sync());}
 $('purpose').addEventListener('compositionend',()=>$('purpose').oninput({type:'input'}));
+$('paper').onchange=()=>{if(!selected)return;checkpoint();const type=$('paper').value==='A5'?'acrylicA5':'acrylicA4';selected.userData.type=type;selected.userData.size=[...definitions[type].size];geometry(selected);$('title').textContent=definitions[type].name+' '+selected.userData.id;renderList();sync();commit();};
 $('orientation').onchange=()=>{if(!selected)return;checkpoint();selected.userData.portrait=$('orientation').value==='portrait';geometry(selected);commit();};
 $('wallSnap').onchange=()=>{if(!selected)return;checkpoint();selected.userData.wallSnap=$('wallSnap').checked;if(selected.userData.wallSnap)attachWall(selected,nearestWall(selected));else delete selected.userData.wall;commit();};
 for(const b of document.querySelectorAll('[data-axis]'))b.onclick=()=>{if(!selected)return;checkpoint();selected.position[b.dataset.axis]+=Number(b.dataset.delta);selected.position.y=Math.max(0,selected.position.y);commit();};

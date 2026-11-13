@@ -5,8 +5,8 @@ const near=(a,b,t=.001)=>assert.ok(Math.abs(a-b)<t,`${a} ≠ ${b}`);
  const page=await browser.newPage({viewport:{width:1440,height:960},acceptDownloads:true});const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto(process.env.TEST_URL||'http://127.0.0.1:8876/');await page.waitForFunction(()=>window.editor);if(await page.locator('#libraryToggle').count())await page.locator('#libraryToggle').click();
  assert.equal(await page.locator('[data-add=acrylicA4]').count(),1,'A4 add button');
- for(const [type,size] of [['acrylicA4',[.21,.297,.07]],['acrylicA5',[.148,.21,.07]],['rollup',[.84,2.08,.35]]]){
-  await page.locator(`[data-add=${type}]`).click();for(const [i,k] of ['w','h','d'].entries())near(Number(await page.locator('#'+k).inputValue()),size[i]);
+ for(const [type,size] of [['acrylicA4',[.21,.297,.07]],['acrylicA5',[.1485,.21,.07]],['rollup',[.84,2.08,.35]]]){
+  if(type==='acrylicA5'){await page.locator('#paper').selectOption('A5');}else await page.locator(`[data-add=${type==='acrylicA4'?'acrylicA4':type}]`).click();for(const [i,k] of ['w','h','d'].entries())near(Number(await page.locator('#'+k).inputValue()),size[i]);
  }
  // Isolated scene fixture; operations below use the actual UI and canvas events.
  await page.evaluate(()=>{restore({room:roomDefault(),objects:[]});const desk=make('desk');desk.position.set(0,0,0);const laptop=make('laptop');laptop.position.set(1.8,1,0);select(laptop);camera.position.set(3,4,5);orbit.target.set(0,.7,0);orbit.update();});
@@ -32,7 +32,7 @@ const near=(a,b,t=.001)=>assert.ok(Math.abs(a-b)<t,`${a} ≠ ${b}`);
  console.log('PASS 圆桌弧边与 L 台空缺按真实表面放置');
  await page.locator('#place').click();p=await point(-.8,1,-.5);await page.mouse.move(p.x,p.y);await page.mouse.down();await page.mouse.move(p.x+40,p.y+20,{steps:6});await page.mouse.up();assert.equal(await page.locator('#placementHint').isVisible(),true);await page.keyboard.press('Escape');
  // Persist all new catalogue entries + a legacy acrylic, preserving old dimensions.
- if(await page.locator('#library').isHidden())await page.locator('#libraryToggle').click();for(const type of ['acrylicA4','acrylicA5','rollup'])await page.locator(`[data-add=${type}]`).click();
+ if(await page.locator('#library').isHidden())await page.locator('#libraryToggle').click();for(const type of ['acrylicA4','rollup'])await page.locator(`[data-add=${type}]`).click();
  await page.evaluate(()=>{make('acrylic');renderList();persist();});
  const entries=await page.locator('#objects > div > button:first-child').allTextContents();await page.reload();await page.waitForFunction(()=>window.editor);assert.deepEqual(await page.locator('#objects > div > button:first-child').allTextContents(),entries);
  const dp=page.waitForEvent('download');await page.locator('#save').click();await (await dp).saveAs('tmp/placement-export.json');const other=await (await browser.newContext()).newPage();await other.goto('http://127.0.0.1:8876/');await other.waitForFunction(()=>window.editor);await other.locator('#importFile').setInputFiles('tmp/placement-export.json');await other.waitForFunction(()=>document.querySelectorAll('#tabs button').length===2);assert.deepEqual(await other.locator('#objects > div > button:first-child').allTextContents(),entries);

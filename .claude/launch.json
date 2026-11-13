@@ -1,0 +1,31 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "验收-悬浮物料栏与人物",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8876",
+        "--bind",
+        "127.0.0.1"
+      ],
+      "port": 8876
+    },
+    {
+      "name": "验收-Figma台面贴图MVP",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8877",
+        "--bind",
+        "127.0.0.1",
+        "--directory",
+        "tmp/figma-mvp"
+      ],
+      "port": 8877
+    }
+  ]
+}

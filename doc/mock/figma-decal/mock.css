@@ -1,0 +1,67 @@
+/* Figma 贴图草样：主 demo 和全景页共用这一份样式 */
+:root{--ink:#263b39;--muted:#688176;--line:#d7dfdc;--soft:#fafbf9;--accent:#176b55;--accent-soft:#e5efeb;--hl:#2f7cf6;--warn:#9a6a12;--warn-bg:#fff7e6;--err:#b23b2e;--err-bg:#fdeeec}
+#demobar{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;padding:6px 12px;background:#1f2a28;color:#dfe8e4;font:12px -apple-system,"PingFang SC",sans-serif}
+#demobar b{color:#ffd877;font-weight:500}
+#demobar .g{display:flex;gap:4px;align-items:center}
+#demobar .g>span{color:#9fb3ab;margin-right:2px}
+#demobar button{background:#33433f;color:#dfe8e4;border:1px solid #46584f;border-radius:5px;padding:4px 8px;font-size:12px;cursor:pointer}
+#demobar button:hover{background:#41544e}
+#demobar button.on{background:#ffd877;color:#1f2a28;border-color:#ffd877}
+#demobar a{color:#9fd2ff}
+body.has-demobar{box-sizing:border-box;height:100vh;display:flex;flex-direction:column}
+body.has-demobar main{flex:1;min-height:0;height:auto}
+
+/* 拖入时跟着鼠标的提示牌 */
+.dk-tip{position:fixed;z-index:40;pointer-events:none;background:#fff;border:1px solid var(--hl);color:var(--ink);border-radius:6px;padding:5px 9px;font-size:12px;white-space:nowrap;box-shadow:0 4px 14px #1b3a6a22}
+.dk-tip small{color:var(--muted);margin-left:6px}
+.dk-tip.no{border-color:var(--line);color:var(--muted)}
+
+/* 右侧贴图面板 */
+.dk-panel{position:absolute;top:54px;right:14px;width:300px;max-height:calc(100% - 120px);overflow:auto;z-index:7;background:var(--soft);border:1px solid #cad9d0;border-radius:8px;padding:12px;box-shadow:0 6px 22px #23453416;color:var(--ink);font-size:13px}
+.dk-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.dk-head strong{font-weight:500;font-size:14px;flex:1}
+.dk-head small{color:var(--muted)}
+.dk-x{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;padding:0;border:0;background:transparent;border-radius:5px;color:var(--muted);cursor:pointer;font-size:16px;line-height:1}
+.dk-x:hover{background:var(--accent-soft);color:var(--ink)}
+.dk-faces{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px}
+.dk-face{flex:none;padding:4px 8px;border:1px solid var(--line);background:#fff;border-radius:5px;font-size:12px;cursor:pointer;display:inline-flex;gap:4px;align-items:center}
+.dk-face:hover{background:var(--accent-soft);border-color:#8bab9e}
+.dk-face.on{border-color:var(--hl);background:#eef4ff}
+.dk-face i{width:6px;height:6px;border-radius:50%;background:var(--accent);display:inline-block}
+.dk-drop{border:1.5px dashed #a9bdb4;border-radius:7px;padding:16px 10px;text-align:center;color:var(--muted);background:#fff;cursor:pointer;line-height:1.7}
+.dk-drop:hover,.dk-drop.over{border-color:var(--hl);background:#f3f7ff;color:var(--ink)}
+.dk-drop b{color:var(--ink);font-weight:500}
+.dk-thumb{position:relative;background:repeating-conic-gradient(#eef0ee 0 25%,#fff 0 50%) 0 0/12px 12px;border:1px solid var(--line);border-radius:6px;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer}
+.dk-thumb:hover{border-color:#8bab9e}
+.dk-thumb img{display:block;max-width:100%;max-height:100%}
+.dk-thumb span{position:absolute;inset:auto 6px 6px auto;background:#ffffffe6;border-radius:4px;padding:2px 6px;font-size:11px;color:var(--muted);opacity:0;transition:opacity .12s}
+.dk-thumb:hover span{opacity:1}
+.dk-row{display:flex;align-items:center;gap:8px;margin-top:9px}
+.dk-row>label{width:34px;color:var(--muted);font-size:12px;flex:none}
+.dk-row input[type=range]{flex:1;accent-color:var(--accent)}
+.dk-row output{width:38px;text-align:right;font-size:12px;color:var(--muted)}
+.dk-seg{display:flex;flex:1;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.dk-seg button{flex:1;border:0;border-radius:0;background:#fff;padding:5px 4px;font-size:12px;cursor:pointer;color:var(--ink)}
+.dk-seg button+button{border-left:1px solid var(--line)}
+.dk-seg button:hover{background:var(--accent-soft)}
+.dk-seg button.on{background:var(--accent);color:#fff}
+.dk-row select{flex:1;padding:5px;border:1px solid var(--line);border-radius:6px;background:#fff;font-size:12px;color:var(--ink)}
+.dk-btn{border:1px solid var(--line);background:#fff;border-radius:6px;padding:5px 9px;font-size:12px;cursor:pointer;color:var(--ink);display:inline-flex;align-items:center;justify-content:center;gap:4px}
+.dk-btn:hover{background:var(--accent-soft);border-color:#8bab9e}
+.dk-btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.dk-btn.primary:hover{background:#125846}
+.dk-btn.danger:hover{background:var(--err-bg);border-color:#e3aaa2;color:var(--err)}
+.dk-btn:disabled{opacity:.5;cursor:default;background:#fff}
+.dk-note{margin-top:9px;padding:7px 9px;border-radius:6px;font-size:12px;line-height:1.55}
+.dk-note.warn{background:var(--warn-bg);color:var(--warn)}
+.dk-note.err{background:var(--err-bg);color:var(--err)}
+.dk-note.ok{background:var(--accent-soft);color:var(--accent)}
+.dk-link{display:flex;gap:6px}
+.dk-link input{flex:1;min-width:0;padding:6px 8px;border:1px solid var(--line);border-radius:6px;font-size:12px}
+.dk-spin{display:inline-block;width:12px;height:12px;border:2px solid #b9cbc3;border-top-color:var(--accent);border-radius:50%;animation:dkspin .8s linear infinite;vertical-align:-2px;margin-right:5px}
+@keyframes dkspin{to{transform:rotate(1turn)}}
+.dk-foot{display:flex;gap:6px;margin-top:12px;padding-top:10px;border-top:1px solid #e3e9e5}
+.dk-foot .dk-btn{flex:1}
+.dk-hint{position:absolute;left:50%;top:54px;transform:translateX(-50%);z-index:6;background:#fffef3;border:1px solid #b8cabb;border-radius:5px;padding:6px 12px;font-size:12px;color:var(--ink);pointer-events:none}
+.dk-samples{display:flex;gap:6px;align-items:center}
+.dk-btn.primary:disabled{background:var(--accent);color:#fff;opacity:.7}

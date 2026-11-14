@@ -1,4 +1,4 @@
-// Figma 贴图：常规模式选面、贴图模式、右侧贴图面板、3D 贴图平面、本机图片仓库（IndexedDB）、Figma 取图。
+// Figma 贴图：贴图模式（含「管理贴面」）、右侧贴图面板、3D 贴图平面、本机图片仓库（IndexedDB）、Figma 取图。
 // 与 app.js 打包在同一个 <script> 里：直接用 app.js 的全局（objects / room / roomGroup / selected / select / checkpoint / persist / geometry …）。
 // Decals.create() 由 app.js 在界面就绪后调用一次；数据规则在 decal-model.js。
 const Decals=(()=>{
@@ -44,8 +44,8 @@ async function importAssets(assets){for(const [id,a] of Object.entries(assets)){
 function create(){
  const M=DecalModel,NAMES=M.FACE_NAMES;
  const el=(tag,attrs={},...kids)=>{const e=document.createElement(tag);for(const [k,v] of Object.entries(attrs)){if(k==='class')e.className=v;else if(k.startsWith('on'))e[k]=v;else e.setAttribute(k,v);}e.append(...kids);return e;};
- const S={mode:false,owner:null,face:null,error:'',busy:false,relink:false,needToken:false,pendingLink:''};
- let pick=null,hover=null,hlKey=null,pending=0;
+ const S={mode:false,manage:false,owner:null,face:null,error:'',busy:false,relink:false,needToken:false,pendingLink:''};
+ let hover=null,hlKey=null,pending=0;
  const track=p=>{pending++;return Promise.resolve(p).finally(()=>pending--);};
  const key=(owner,face)=>owner+'|'+face;
 
@@ -69,7 +69,7 @@ function create(){
  // ---------- 3D：贴图平面、亮面、悬停高亮 ----------
  const plane=(color,opacity,offset)=>new THREE.Mesh(new THREE.PlaneGeometry(1,1),new THREE.MeshBasicMaterial({color,transparent:true,opacity,depthWrite:false,toneMapped:false,polygonOffset:true,polygonOffsetFactor:offset}));
  const hl=plane(0x2f7cf6,.32,-4);hl.renderOrder=6;hl.userData.hl=true;
- function place(mesh,spec){const round=!!spec.round;if(!!mesh.userData.round!==round){mesh.geometry.dispose();mesh.geometry=round?new THREE.CircleGeometry(.5,64):new THREE.PlaneGeometry(1,1);mesh.userData.round=round;}spec.parent.add(mesh);mesh.position.set(...spec.pos);mesh.rotation.set(...spec.rot);mesh.scale.set(spec.scale[0],spec.scale[1],1);}
+ function place(mesh,spec){const round=!!spec.round;if(mesh.isMesh&&!!mesh.userData.round!==round){mesh.geometry.dispose();mesh.geometry=round?new THREE.CircleGeometry(.5,64):new THREE.PlaneGeometry(1,1);mesh.userData.round=round;}spec.parent.add(mesh);mesh.position.set(...spec.pos);mesh.rotation.set(...spec.rot);mesh.scale.set(spec.scale[0],spec.scale[1],1);}
  function highlight(f){hlKey=f?key(f.owner,f.face):null;hl.parent?.remove(hl);const s=f&&target(f.owner)?.spec(f.face);if(s)place(hl,s);}
  function clear(t,kind){for(const p of t.parents)for(const c of [...p.children])if(c.userData[kind]){p.remove(c);c.geometry.dispose();c.material.map?.dispose();c.material.dispose();}}
  function addDecal(t,face,d){
@@ -85,9 +85,22 @@ function create(){
    m.material.map=tex;m.material.visible=true;m.material.needsUpdate=true;m.userData.size=[c.width,c.height];
   }).catch(()=>{m.userData.missing=true;}));
  }
- const tintFaces=t=>S.mode?facesOn(t):pick?.owner===t.owner?t.allowed.filter(f=>pick.faces.has(f)):[];
+ const tintFaces=t=>S.mode?facesOn(t):[];
  function drawTints(t){clear(t,'tint');for(const f of tintFaces(t)){const s=t.spec(f);if(!s)continue;const m=plane(0x2f7cf6,.24,-3);m.renderOrder=5;m.userData={tint:true,dk:{owner:t.owner,face:f}};place(m,s);}}
- function drawTarget(t){clear(t,'decal');for(const [f,d] of Object.entries(t.data.decals||{}))if(facesOn(t).includes(f))addDecal(t,f,d);drawTints(t);}
+ function drawTarget(t){clear(t,'decal');for(const [f,d] of Object.entries(t.data.decals||{}))if(facesOn(t).includes(f))addDecal(t,f,d);drawTints(t);if(t.owner===S.owner)markCurrent();}
+ // 面板打开着的那一面：一直描一圈蓝框（还没贴图时再铺一层浅蓝），图本身不被盖住
+ const frameMat=new THREE.MeshBasicMaterial({color:0x2f7cf6,toneMapped:false,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-5,side:THREE.DoubleSide});
+ let current=null;
+ function markCurrent(){
+  if(current){current.parent?.remove(current);current.traverse(c=>{if(c.isMesh){c.geometry.dispose();if(c.material!==frameMat)c.material.dispose();}});current=null;}
+  const t=S.mode&&!S.manage&&S.owner&&target(S.owner),sp=t&&facesOn(t).includes(S.face)&&t.spec(S.face);if(!sp)return;
+  const b=Math.min(.03,Math.max(.008,Math.min(...sp.size)*.04)),bx=b/sp.size[0],by=b/sp.size[1];let g;
+  if(sp.round)g=new THREE.RingGeometry(.5-bx,.5,64);
+  else{const sh=new THREE.Shape([[-.5,-.5],[.5,-.5],[.5,.5],[-.5,.5]].map(([x,y])=>new THREE.Vector2(x,y))),hole=new THREE.Path([[-.5+bx,-.5+by],[.5-bx,-.5+by],[.5-bx,.5-by],[-.5+bx,.5-by]].map(([x,y])=>new THREE.Vector2(x,y)));sh.holes.push(hole);g=new THREE.ShapeGeometry(sh);}
+  current=new THREE.Group();current.userData={current:true,key:key(S.owner,S.face)};const frame=new THREE.Mesh(g,frameMat);frame.renderOrder=7;current.add(frame);
+  if(!decalOf(t,S.face)){const fill=plane(0x2f7cf6,.3,-4);fill.renderOrder=6;if(sp.round){fill.geometry.dispose();fill.geometry=new THREE.CircleGeometry(.5,64);}current.add(fill);}
+  place(current,sp);
+ }
  const allTargets=()=>[roomTarget(),...objects.map(objTarget)];
  const drawAllTints=()=>allTargets().forEach(drawTints);
  const redraw=owner=>{const t=target(owner);if(t)drawTarget(t);};
@@ -112,45 +125,33 @@ function create(){
   return best?{owner:t.owner,face:best}:null;
  }
  const probe=new THREE.Object3D(),fn=new THREE.Vector3(),inv=new THREE.Matrix4();
- const pickableAt=(x,y)=>{const f=pick&&faceAt(x,y);return f&&f.owner===pick.owner?f:null;};
- const litAt=(x,y)=>{const f=S.mode&&faceAt(x,y);return f&&facesOn(target(f.owner)).includes(f.face)?f:null;};
+ const litAt=(x,y)=>{const f=S.mode&&!S.manage&&faceAt(x,y);return f&&facesOn(target(f.owner)).includes(f.face)?f:null;};
 
- // ---------- 常规模式：左栏「可贴图的面」+ 选面 ----------
- const faceBox=$('dkFaces'),wallBox=$('dkWalls');
- function renderBox(box,t,title){
-  box.hidden=!t||!t.allowed.length;if(box.hidden){box.replaceChildren();return;}
-  const picking=pick?.owner===t.owner,faces=picking?t.allowed.filter(f=>pick.faces.has(f)):facesOn(t);
-  const chips=faces.map(f=>{const c=el('span',{class:'dk-chip'+(picking?' picking':'')},NAMES[f]);if(!picking){const x=el('button',{class:'icon-button',title:'删除「'+NAMES[f]+'」'+(decalOf(t,f)?'（连同贴图）':''),'aria-label':'删除'+NAMES[f],onclick:()=>removeFace(t.owner,f)});x.append(icon('x'));c.append(x);}return c;});
-  const can=t.parents.some(p=>p.visible);
-  box.replaceChildren(el('div',{class:'sub'},title),...(chips.length?[el('div',{class:'dk-chips'},...chips)]:[]),
-   el('div',{class:'line'},...(picking?[el('button',{class:'primary',onclick:()=>endPick(true)},'保存'),el('button',{onclick:()=>endPick(false)},'取消')]:[Object.assign(el('button',{onclick:()=>startPick(t.owner),title:can?'在物体上点面选中或取消':'先让它显示出来'},'选面'),{disabled:!can})])));
- }
- function renderPickers(){renderBox(faceBox,selected&&objTarget(selected),'可贴图的面');renderBox(wallBox,roomTarget(),'可贴图的墙面');}
- function startPick(owner){
-  if(S.mode)setMode(false);cancelPlacement();if(owner==='room')select(null);
-  const t=target(owner);pick={owner,faces:new Set(facesOn(t))};hover=null;transform.detach();transform.enabled=false;drawTints(t);renderPickers();renderHint();
- }
- function endPick(save){
-  if(!pick)return;const t=target(pick.owner),faces=t?t.allowed.filter(f=>pick.faces.has(f)):[];pick=null;hover=null;highlight(null);renderer.domElement.style.cursor='';
-  transform.enabled=true;if(selected?.visible&&!walking)transform.attach(selected);
-  if(t){if(save&&String(faces)!==String(facesOn(t))){checkpoint();setFaces(t,faces);drawTarget(t);persist();}else drawTints(t);}
-  renderPickers();renderHint();
- }
- function removeFace(owner,f){const t=target(owner);if(!t)return;checkpoint();setFaces(t,facesOn(t).filter(x=>x!==f));drawTarget(t);persist();renderPickers();renderPanel();}
+ // ---------- 管理贴面：在贴图模式里点任意物体 / 墙的面，加上或去掉「可贴图的面」 ----------
+ function toggleFace(f){const t=target(f.owner);if(!t)return;const on=facesOn(t).includes(f.face);
+  const go=()=>{checkpoint();setFaces(t,on?facesOn(t).filter(x=>x!==f.face):t.allowed.filter(x=>x===f.face||facesOn(t).includes(x)));drawTarget(t);persist();renderHint();};
+  if(on&&decalOf(t,f.face))ask(t.name(f.face)+'「'+NAMES[f.face]+'」已经贴了图。去掉这个面会把图一起删掉（可以撤销）。','删除',go);else go();}
+ function setManage(on){if(on===S.manage)return;S.manage=on;closeAsk();Object.assign(S,{owner:null,face:null,error:'',relink:false,needToken:false});hover=null;highlight(null);renderer.domElement.style.cursor='';renderPanel();}
+ // 删除确认：带蒙层的小窗，必须选了才能继续
+ let askBox=null;
+ function closeAsk(){askBox?.remove();askBox=null;}
+ function ask(text,okText,ok){closeAsk();const yes=el('button',{class:'dk-btn danger-fill',onclick:()=>{closeAsk();ok();}},okText),no=el('button',{class:'dk-btn',onclick:closeAsk},'取消');
+  askBox=el('div',{class:'dk-modal',onclick:e=>{if(e.target===askBox)closeAsk();}},el('div',{class:'dk-dialog',role:'alertdialog','aria-modal':'true'},el('p',{},text),el('div',{class:'dk-actions'},no,yes)));document.body.append(askBox);yes.focus();}
 
  // ---------- 贴图模式 ----------
  const modeBtn=$('decalMode');modeBtn.onclick=()=>setMode(!S.mode);
  const panel=el('div',{class:'dk-panel',hidden:''}),hint=el('div',{class:'dk-hint',role:'status',hidden:''});view.append(panel,hint);
  function setMode(on){
   if(on===S.mode)return;
-  if(on){endPick(false);cancelPlacement();setWalking(false);showLibrary(false);}
-  S.mode=on;if(on)select(null);Object.assign(S,{owner:null,face:null,error:'',relink:false,needToken:false});modeBtn.classList.toggle('active',on);
+  if(on){cancelPlacement();setWalking(false);showLibrary(false);}
+  S.mode=on;S.manage=false;closeAsk();if(on)select(null);Object.assign(S,{owner:null,face:null,error:'',relink:false,needToken:false});modeBtn.classList.toggle('active',on);
   highlight(null);renderer.domElement.style.cursor='';drawAllTints();renderPanel();
  }
+ const hintText=el('span'),manageBtn=el('button',{class:'dk-btn',onclick:()=>setManage(!S.manage)});hint.append(hintText,manageBtn);
  function renderHint(){
-  if(pick){hint.hidden=false;hint.textContent=(pick.owner==='room'?'点 A / B 墙内侧选中或取消':'点这个物体的面选中或取消')+' · 保存生效 · Esc 取消';return;}
-  hint.hidden=!S.mode||!!S.owner;if(hint.hidden)return;
-  hint.textContent=allTargets().some(t=>facesOn(t).length)?'贴图模式 · 点亮着的面添加设计图 · Esc 退出':'还没有可贴图的面：退出贴图模式，选中物体后在左栏点「选面」';
+  hint.hidden=!S.mode;if(hint.hidden)return;hint.classList.toggle('managing',S.manage);
+  manageBtn.textContent=S.manage?'完成':'管理贴面';manageBtn.classList.toggle('primary',S.manage);manageBtn.title=S.manage?'回到贴图（Esc）':'点物体的面，加上或去掉可贴图的面';
+  hintText.textContent=S.manage?'管理贴面 · 点物体或墙的面：加上 / 去掉 · Esc 完成':allTargets().some(t=>facesOn(t).length)?'贴图模式 · 点亮着的面添加设计图 · Esc 退出':'还没有可贴图的面：点右边「管理贴面」，在物体上点出要贴图的面';
  }
 
  // ---------- 贴上 / 改 / 删 ----------
@@ -204,12 +205,10 @@ function create(){
   return el('div',{class:'dk-row'},el('label',{},label),r,out);}
  const iconBtn=(name,title,fn,cls='')=>{const b=el('button',{class:'dk-btn dk-icon '+cls,title,'aria-label':title,onclick:fn});b.append(icon(name));return b;};
  const btn=(text,fn,attrs={})=>el('button',{class:'dk-btn',onclick:fn,...attrs},text);
- let flashKey='',flashTimer=0;
- function flash(){const k=S.owner&&S.face?key(S.owner,S.face):'';if(k===flashKey)return;flashKey=k;clearTimeout(flashTimer);highlight(k?{owner:S.owner,face:S.face}:null);if(k)flashTimer=setTimeout(()=>{if(hlKey===k)highlight(null);},700);}
  function renderPanel(){
   const t=S.owner&&target(S.owner);
   if(S.owner&&(!t||!facesOn(t).includes(S.face)))Object.assign(S,{owner:null,face:null,error:''});
-  flash();renderHint();
+  if(current?.userData.key!==(S.owner?key(S.owner,S.face):undefined)||(current&&!current.parent))markCurrent();renderHint();
   panel.hidden=!S.mode||!S.owner;if(panel.hidden){panel.replaceChildren();return;}
   const {owner,face}=S,faces=panelFaces(t,face),d=decalOf(t,face);panel.replaceChildren();
   panel.append(el('div',{class:'dk-head'},el('strong',{},t.name(face)),el('small',{},M.sizeText(t.spec(face).size)),iconBtn('x','关闭（Esc）',close,'dk-x')));
@@ -262,12 +261,12 @@ function create(){
  canvas.addEventListener('dragleave',()=>{if(S.mode)highlight(null);});
  canvas.addEventListener('drop',e=>{if(!filesIn(e))return;e.preventDefault();const f=litAt(e.clientX,e.clientY);if(S.mode)highlight(null);if(f)applyFile(f.owner,f.face,e.dataTransfer.files[0]);});
  canvas.addEventListener('pointermove',e=>{lastPointer={x:e.clientX,y:e.clientY};if(e.buttons)return;
-  if(pick){const f=pickableAt(e.clientX,e.clientY),k=f&&key(f.owner,f.face);if(k!==hover){hover=k;highlight(f);}canvas.style.cursor=f?'pointer':'';}
+  if(S.manage){const f=faceAt(e.clientX,e.clientY),k=f&&key(f.owner,f.face);if(k!==hover){hover=k;highlight(f);}canvas.style.cursor=f?'pointer':'';}
   else if(S.mode)canvas.style.cursor=litAt(e.clientX,e.clientY)?'pointer':'';});
- canvas.addEventListener('pointerleave',()=>{if(pick){hover=null;highlight(null);}});
+ canvas.addEventListener('pointerleave',()=>{if(S.manage){hover=null;highlight(null);}});
  // app.js 的 pointerup 在确认是「单击」后先问这里；返回 true 表示已处理，不再做选中
  function onCanvasClick(e){
-  if(pick){const f=pickableAt(e.clientX,e.clientY);if(f){pick.faces.has(f.face)?pick.faces.delete(f.face):pick.faces.add(f.face);drawTints(target(pick.owner));renderPickers();}return true;}
+  if(S.manage){const f=faceAt(e.clientX,e.clientY);if(f)toggleFace(f);return true;}
   if(S.mode){const f=litAt(e.clientX,e.clientY);if(f)open(f.owner,f.face);else close();return true;}
   return false;
  }
@@ -275,21 +274,18 @@ function create(){
   const f=(lastPointer&&litAt(lastPointer.x,lastPointer.y))||(S.owner&&{owner:S.owner,face:S.face});if(f){e.preventDefault();applyFile(f.owner,f.face,file);}});
  // 捕获阶段先于 app.js 的快捷键：Esc 分层退出；选面时不让 Delete 删掉物体
  window.addEventListener('keydown',e=>{
-  if(e.key==='Escape'){if(pick){endPick(false);e.stopImmediatePropagation();}else if(S.mode){S.owner?close():setMode(false);e.stopImmediatePropagation();}}
-  else if(pick&&(e.key==='Delete'||e.key==='Backspace')&&!['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName))e.stopImmediatePropagation();
+  if(e.key==='Escape'){if(askBox)closeAsk();else if(S.manage)setManage(false);else if(S.mode){S.owner?close():setMode(false);}else return;e.stopImmediatePropagation();}
+  else if(askBox&&!['Tab','Enter',' '].includes(e.key))e.stopImmediatePropagation(); // 确认窗开着时别的快捷键不生效
  },true);
 
- renderPickers();
  return {
-  drawObject(o){drawTarget(objTarget(o));if(o===selected)renderPickers();}, // 吊楣改圆形等会改变可贴面
-  drawRoom:()=>drawTarget(roomTarget()),
-  afterSelect(o){if(pick&&pick.owner!=='room'&&pick.owner!=='obj:'+o?.userData.id)endPick(false);renderPickers();},
-  blocksSelect:()=>S.mode,busy:()=>!!pick,onCanvasClick,
-  exit(){endPick(false);setMode(false);},
-  refresh(){if(pick&&!target(pick.owner))endPick(false);renderPickers();renderPanel();},
+  drawObject:o=>drawTarget(objTarget(o)),drawRoom:()=>drawTarget(roomTarget()),
+  blocksSelect:()=>S.mode,onCanvasClick,
+  exit(){setMode(false);},
+  refresh(){renderPanel();},
   exportAssets,importAssets,
   debug(){const meshes={},tints=[];for(const t of allTargets())for(const p of t.parents)for(const c of p.children){const k=key(c.userData.dk?.owner,c.userData.dk?.face);if(c.userData.decal)meshes[k]={image:!!c.material.map,canvasW:c.userData.size?.[0],canvasH:c.userData.size?.[1]};if(c.userData.tint)tints.push(k);}
-   return {mode:S.mode,owner:S.owner,face:S.face,picking:pick&&{owner:pick.owner,faces:[...pick.faces]},hover,highlight:hlKey,pending,meshes,tints};}
+   return {mode:S.mode,manage:S.manage,owner:S.owner,face:S.face,asking:!!askBox,current:current?.parent?current.userData.key:null,hover,highlight:hlKey,pending,meshes,tints};}
  };
 }
 return {create};

@@ -67,7 +67,6 @@ aside{display:flex;flex-direction:column;overflow:hidden}#layers{flex:none}#insp
 body.routing header .actions>*:not(#routeBtn),body.routing #planbar,body.routing aside,body.routing #resize{display:none!important}body.routing main{height:calc(100dvh - 48px)}
 
 /* Figma 贴图：左栏可贴面、右侧贴图面板、提示（对照样品 doc/mock/figma-decal/） */
-.dk-chips{display:flex;flex-wrap:wrap;gap:4px}.dk-chip{display:inline-flex;align-items:center;gap:1px;height:24px;padding:0 2px 0 8px;border:1px solid #d7dfdc;border-radius:5px;background:#fff;font-size:12px}.dk-chip.picking{padding-right:8px;border-color:#2f7cf6;background:#eef4ff}.dk-chip .icon-button{width:20px;height:20px;color:#688176}.dk-chip .icon-button svg{width:13px;height:13px}.dk-chip .icon-button:hover{color:#b23b2e;background:#fdeeec;border-color:transparent}
 .dk-panel{position:absolute;top:54px;right:14px;width:300px;max-height:calc(100% - 120px);overflow:auto;z-index:7;background:#fafbf9;border:1px solid #cad9d0;border-radius:8px;padding:12px;box-shadow:0 6px 22px #23453416;color:#263b39;font-size:13px}
 .dk-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}.dk-head strong{font-weight:500;font-size:14px;flex:1}.dk-head small{color:#688176}
 .dk-panel .dk-x{width:26px;height:26px;border:0;background:transparent;color:#688176}.dk-panel .dk-x:hover{background:#e5efeb;color:#263b39}
@@ -83,9 +82,10 @@ body.routing header .actions>*:not(#routeBtn),body.routing #planbar,body.routing
 .dk-note{margin-top:9px;padding:7px 9px;border-radius:6px;font-size:12px;line-height:1.55}.dk-note.warn{background:#fff7e6;color:#9a6a12}.dk-note.err{background:#fdeeec;color:#b23b2e}
 .dk-link{display:flex;gap:6px}.dk-link input{flex:1;min-width:0;padding:6px 8px;border:1px solid #d7dfdc;border-radius:6px;font-size:12px}
 .dk-spin{display:inline-block;width:12px;height:12px;border:2px solid #b9cbc3;border-top-color:#176b55;border-radius:50%;animation:dkspin .8s linear infinite;margin-right:2px}@keyframes dkspin{to{transform:rotate(1turn)}}
-.dk-hint{position:absolute;left:50%;top:54px;transform:translateX(-50%);z-index:6;background:#fffef3;border:1px solid #b8cabb;border-radius:5px;padding:6px 12px;font-size:12px;pointer-events:none;white-space:nowrap}
-#dkWalls:not(:empty){margin-top:4px}
-</style></head><body><header><strong>CES / 展台草图</strong><small>v0.1.18 · 米</small><div class="actions"><button id="undo" title="⌘/Ctrl Z">撤销</button><button id="redo" title="⌘/Ctrl Shift Z 或 Ctrl Y">重做</button><button id="routeBtn" title="游客路线：在平面图纸上标兴趣点、排参观顺序"></button><button id="import">导入方案</button><select id="exportScope" aria-label="导出范围"><option value="current">当前方案</option><option value="all">全部方案</option></select><button class="primary" id="save" title="修改会自动保存到本机；导出用于备份或换设备">导出 JSON</button><button id="saveEditor">下载编辑器</button><input id="importFile" type="file" accept=".html,.json" hidden></div></header><div id="planbar"><div id="tabs" role="tablist" aria-label="方案"></div><button id="newPlan">另存方案 +</button><button id="rename">改名</button><span id="saveStatus" role="status"></span></div><main><aside><section id="layers"><h2>图层管理</h2><div class="objects" id="objects"></div><div id="layerResize" role="separator" aria-label="调整图层栏高度" aria-orientation="horizontal" tabindex="0" title="上下拖动调整高度"></div></section><div id="inspectorScroll"><section><h2>选中物料</h2><div id="empty">点击场景或上方列表选择物料</div><div id="creatorPanel" hidden><div id="creatorTitle" style="font-size:14px;font-weight:500;margin-bottom:8px">Creator Space</div><div class="line"><button id="flipCreator" title="讲台、演讲台与座椅整体前后掉头">前后翻转</button></div></div><div id="inspector" hidden><div id="title"></div><div class="fields"><label>左右 X<input id="x" type="number" step="0.1"></label><label>离地高度<input id="y" type="number" min="0" step="0.1"></label><label>前后 Z<input id="z" type="number" step="0.1"></label></div><div id="screenFields" hidden><div class="fields" style="grid-template-columns:1fr"><label>屏幕用途名称<input id="purpose" type="text" maxlength="40" placeholder="例如：产品演示"></label></div><div class="sub">屏幕尺寸（英寸 · 16:9）</div><div class="presets"><button data-inches="48">48 寸</button><button data-inches="55">55 寸</button><button data-inches="65">65 寸</button></div><div class="fields two"><label>自定义英寸<input id="inches" type="number" min="10" max="120" step="1"></label><label id="orientationLabel">屏幕方向<select id="orientation"><option value="landscape">横屏</option><option value="portrait">竖屏</option></select></label></div></div><div id="fasciaFields" hidden><div class="fields two"><label>吊楣形状<select id="fasciaShape"><option value="square">方形</option><option value="round">圆形</option></select></label><label id="fasciaSpanLabel">边长（米）<input id="fasciaSpan" type="number" min="0.15" max="10" step="0.1"></label></div><p class="note">离地高度控制底边悬空高度；整体尺寸的「高」控制吊楣自身高度。</p></div><div id="standFields" hidden><div class="fields" style="grid-template-columns:1fr"><label>纸张尺寸<select id="paper"><option value="A4">A4 · 210 × 297 毫米</option><option value="A5">A5 · 148.5 × 210 毫米</option></select></label></div></div><div id="lFields" hidden><div class="sub">L 台两条边（米）</div><div class="fields two"><label>横边长度<input id="lengthA" type="number" min="0.2" max="10" step="0.1"></label><label>横边宽度<input id="widthA" type="number" min="0.1" max="5" step="0.1"></label><label>纵边长度<input id="lengthB" type="number" min="0.2" max="10" step="0.1"></label><label>纵边宽度<input id="widthB" type="number" min="0.1" max="5" step="0.1"></label></div></div><div id="personFields" hidden><div class="fields two"><label>等比缩放<input id="personScale" type="number" min="0.25" max="3" step="0.05"></label><label>马甲颜色<input id="clothesColor" type="color" value="#165DFF"></label></div><div class="fields" style="grid-template-columns:1fr"><label>动画<select id="personAnimation"></select></label></div></div><div class="sub">整体尺寸（米）</div><div class="fields"><label>宽<input id="w" type="number" min="0.1" max="10" step="0.1"></label><label>高<input id="h" type="number" min="0.1" max="10" step="0.1"></label><label>深<input id="d" type="number" min="0.1" max="10" step="0.1"></label></div><div class="sub">朝向 · 每次 45°</div><div class="fields"><button id="rotateLeft">−45°</button><label><input id="rotation" aria-label="朝向" type="number" step="45"></label><button id="rotate">+45°</button></div><label class="check"><input id="wallSnap" type="checkbox">靠墙吸附</label><p class="note" id="snapNote" hidden>已贴墙；旋转会解除吸附。</p><details><summary>微移 · 每次 0.1 米</summary><div class="nudges"><button data-axis="x" data-delta="-0.1">左 −X</button><button data-axis="y" data-delta="0.1">上 +Y</button><button data-axis="z" data-delta="-0.1">后 −Z</button><button data-axis="x" data-delta="0.1">右 +X</button><button data-axis="y" data-delta="-0.1">下 −Y</button><button data-axis="z" data-delta="0.1">前 +Z</button></div></details><div id="dkFaces" hidden></div><div class="line"><button id="place" title="选中物品后，点击另一物品的水平表面放置">放置</button><button id="ground">落地</button><button id="copy">复制</button><button id="delete" title="Delete / Backspace">删除</button></div><div id="status"></div></div></section><section id="roomPanel"><h2>场地</h2><div id="roomSize"></div><div class="line"><button id="swapWalls">A / B 墙长互换</button></div><div class="line"><label class="check"><input id="wallA" type="checkbox" checked><span id="wallAText"></span></label><label class="check"><input id="wallB" type="checkbox" checked><span id="wallBText"></span></label></div><div id="dkWalls"></div><label class="check"><input id="snap" type="checkbox" checked>移动按 0.1 米对齐</label><p class="note">换墙时地面物料转 90°，间距自动适配。<br>方案自动存本机，导出 JSON 可带走。</p></section></div></aside><div id="resize"></div><div id="view"><div id="viewbar"><button data-view="venue" title="北向上 · 未标注展区按图估算">会场全景</button><button data-view="perspective" class="active">透视</button><button data-view="top">俯视</button><button data-view="front">正视</button><button id="decalMode" title="进入后点亮着的面添加设计图 · Esc 退出">贴图</button><button id="walk">步行浏览</button></div><button id="libraryToggle" aria-expanded="false" aria-controls="library"><span id="libraryIcon"></span>物料</button><section id="library" aria-label="物料库" hidden><div class="library-head"><strong>物料库</strong><button id="libraryClose" class="icon-button" aria-label="关闭物料库" title="关闭物料库"></button></div><p class="library-help">拖入画布添加 · 也可点击添加</p><div class="add"><button data-add="tv">电视 +</button><button data-add="desk">前台 +</button><button data-add="robot">机器人 +</button><button data-add="display">闺蜜机 +</button><button data-add="table">小圆桌 +</button><button data-add="ldesk">L 型台 +</button><button data-add="fascia">悬空吊楣 +</button><button data-add="laptop" title="笔记本电脑">笔记本 +</button><button data-add="webcam" title="电脑摄像头（输入设备）">摄像头 +</button><button data-add="acrylicA4" title="亚克力立牌 · 选中后在左侧切换 A4 / A5">亚克力立牌 +</button><button data-add="rollup" title="80 × 200 厘米画面，含底座总高 2.08 米">易拉宝 +</button><button data-add="chair" title="简易听讲椅 · 46 × 82 × 50 厘米">听讲椅 +</button><button data-add="staff" disabled>工作人员 +</button><button data-add="visitor" disabled>游客 +</button></div><div id="peopleStatus" role="status"></div></section><div id="placementHint" role="status" hidden style="position:absolute;top:54px;left:14px;z-index:3;background:#fffef3;border:1px solid #b8cabb;border-radius:5px;padding:8px 12px;pointer-events:none"></div><div class="badge"><b id="badgeSize"></b><small>周边按图估算 · 非施工图</small></div><div class="help"><span id="helpText">拖空白转视角 · 滚轮缩放 · WASD 行走 · 空格切换浏览</span></div></div><div id="routeEdit" hidden></div></main><script id="seed" type="application/json">null</script>
+.dk-hint{position:absolute;left:50%;top:54px;transform:translateX(-50%);z-index:6;display:flex;align-items:center;gap:10px;background:#fffef3;border:1px solid #b8cabb;border-radius:6px;padding:4px 4px 4px 12px;font-size:12px;pointer-events:none;white-space:nowrap}.dk-hint.managing{background:#eef4ff;border-color:#9dbcf3}
+.dk-hint .dk-btn,.dk-dialog .dk-btn{pointer-events:auto;background:#fff;border-radius:5px;padding:4px 10px;font-size:12px}.dk-hint .dk-btn:hover,.dk-dialog .dk-btn:hover{background:#e5efeb;border-color:#8bab9e}.dk-hint .dk-btn.primary{background:#176b55;border-color:#176b55;color:#fff}.dk-hint .dk-btn.primary:hover{background:#23846a}
+.dk-modal{position:fixed;inset:0;z-index:20;background:#1d2c2a40;display:flex;align-items:center;justify-content:center}.dk-dialog{width:340px;background:#fafbf9;border:1px solid #cad9d0;border-radius:8px;padding:16px;box-shadow:0 10px 30px #1d2c2a30;color:#263b39;font-size:13px;line-height:1.6}.dk-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}.dk-dialog .dk-btn.danger-fill{background:#b23b2e;border-color:#b23b2e;color:#fff}.dk-dialog .dk-btn.danger-fill:hover{background:#c94a3c;border-color:#c94a3c}
+</style></head><body><header><strong>CES / 展台草图</strong><small>v0.1.19 · 米</small><div class="actions"><button id="undo" title="⌘/Ctrl Z">撤销</button><button id="redo" title="⌘/Ctrl Shift Z 或 Ctrl Y">重做</button><button id="routeBtn" title="游客路线：在平面图纸上标兴趣点、排参观顺序"></button><button id="import">导入方案</button><select id="exportScope" aria-label="导出范围"><option value="current">当前方案</option><option value="all">全部方案</option></select><button class="primary" id="save" title="修改会自动保存到本机；导出用于备份或换设备">导出 JSON</button><button id="saveEditor">下载编辑器</button><input id="importFile" type="file" accept=".html,.json" hidden></div></header><div id="planbar"><div id="tabs" role="tablist" aria-label="方案"></div><button id="newPlan">另存方案 +</button><button id="rename">改名</button><span id="saveStatus" role="status"></span></div><main><aside><section id="layers"><h2>图层管理</h2><div class="objects" id="objects"></div><div id="layerResize" role="separator" aria-label="调整图层栏高度" aria-orientation="horizontal" tabindex="0" title="上下拖动调整高度"></div></section><div id="inspectorScroll"><section><h2>选中物料</h2><div id="empty">点击场景或上方列表选择物料</div><div id="creatorPanel" hidden><div id="creatorTitle" style="font-size:14px;font-weight:500;margin-bottom:8px">Creator Space</div><div class="line"><button id="flipCreator" title="讲台、演讲台与座椅整体前后掉头">前后翻转</button></div></div><div id="inspector" hidden><div id="title"></div><div class="fields"><label>左右 X<input id="x" type="number" step="0.1"></label><label>离地高度<input id="y" type="number" min="0" step="0.1"></label><label>前后 Z<input id="z" type="number" step="0.1"></label></div><div id="screenFields" hidden><div class="fields" style="grid-template-columns:1fr"><label>屏幕用途名称<input id="purpose" type="text" maxlength="40" placeholder="例如：产品演示"></label></div><div class="sub">屏幕尺寸（英寸 · 16:9）</div><div class="presets"><button data-inches="48">48 寸</button><button data-inches="55">55 寸</button><button data-inches="65">65 寸</button></div><div class="fields two"><label>自定义英寸<input id="inches" type="number" min="10" max="120" step="1"></label><label id="orientationLabel">屏幕方向<select id="orientation"><option value="landscape">横屏</option><option value="portrait">竖屏</option></select></label></div></div><div id="fasciaFields" hidden><div class="fields two"><label>吊楣形状<select id="fasciaShape"><option value="square">方形</option><option value="round">圆形</option></select></label><label id="fasciaSpanLabel">边长（米）<input id="fasciaSpan" type="number" min="0.15" max="10" step="0.1"></label></div><p class="note">离地高度控制底边悬空高度；整体尺寸的「高」控制吊楣自身高度。</p></div><div id="standFields" hidden><div class="fields" style="grid-template-columns:1fr"><label>纸张尺寸<select id="paper"><option value="A4">A4 · 210 × 297 毫米</option><option value="A5">A5 · 148.5 × 210 毫米</option></select></label></div></div><div id="lFields" hidden><div class="sub">L 台两条边（米）</div><div class="fields two"><label>横边长度<input id="lengthA" type="number" min="0.2" max="10" step="0.1"></label><label>横边宽度<input id="widthA" type="number" min="0.1" max="5" step="0.1"></label><label>纵边长度<input id="lengthB" type="number" min="0.2" max="10" step="0.1"></label><label>纵边宽度<input id="widthB" type="number" min="0.1" max="5" step="0.1"></label></div></div><div id="personFields" hidden><div class="fields two"><label>等比缩放<input id="personScale" type="number" min="0.25" max="3" step="0.05"></label><label>马甲颜色<input id="clothesColor" type="color" value="#165DFF"></label></div><div class="fields" style="grid-template-columns:1fr"><label>动画<select id="personAnimation"></select></label></div></div><div class="sub">整体尺寸（米）</div><div class="fields"><label>宽<input id="w" type="number" min="0.1" max="10" step="0.1"></label><label>高<input id="h" type="number" min="0.1" max="10" step="0.1"></label><label>深<input id="d" type="number" min="0.1" max="10" step="0.1"></label></div><div class="sub">朝向 · 每次 45°</div><div class="fields"><button id="rotateLeft">−45°</button><label><input id="rotation" aria-label="朝向" type="number" step="45"></label><button id="rotate">+45°</button></div><label class="check"><input id="wallSnap" type="checkbox">靠墙吸附</label><p class="note" id="snapNote" hidden>已贴墙；旋转会解除吸附。</p><details><summary>微移 · 每次 0.1 米</summary><div class="nudges"><button data-axis="x" data-delta="-0.1">左 −X</button><button data-axis="y" data-delta="0.1">上 +Y</button><button data-axis="z" data-delta="-0.1">后 −Z</button><button data-axis="x" data-delta="0.1">右 +X</button><button data-axis="y" data-delta="-0.1">下 −Y</button><button data-axis="z" data-delta="0.1">前 +Z</button></div></details><div class="line"><button id="place" title="选中物品后，点击另一物品的水平表面放置">放置</button><button id="ground">落地</button><button id="copy">复制</button><button id="delete" title="Delete / Backspace">删除</button></div><div id="status"></div></div></section><section id="roomPanel"><h2>场地</h2><div id="roomSize"></div><div class="line"><button id="swapWalls">A / B 墙长互换</button></div><div class="line"><label class="check"><input id="wallA" type="checkbox" checked><span id="wallAText"></span></label><label class="check"><input id="wallB" type="checkbox" checked><span id="wallBText"></span></label></div><label class="check"><input id="snap" type="checkbox" checked>移动按 0.1 米对齐</label><p class="note">换墙时地面物料转 90°，间距自动适配。<br>方案自动存本机，导出 JSON 可带走。</p></section></div></aside><div id="resize"></div><div id="view"><div id="viewbar"><button data-view="venue" title="北向上 · 未标注展区按图估算">会场全景</button><button data-view="perspective" class="active">透视</button><button data-view="top">俯视</button><button data-view="front">正视</button><button id="decalMode" title="进入后点亮着的面添加设计图 · Esc 退出">贴图</button><button id="walk">步行浏览</button></div><button id="libraryToggle" aria-expanded="false" aria-controls="library"><span id="libraryIcon"></span>物料</button><section id="library" aria-label="物料库" hidden><div class="library-head"><strong>物料库</strong><button id="libraryClose" class="icon-button" aria-label="关闭物料库" title="关闭物料库"></button></div><p class="library-help">拖入画布添加 · 也可点击添加</p><div class="add"><button data-add="tv">电视 +</button><button data-add="desk">前台 +</button><button data-add="robot">机器人 +</button><button data-add="display">闺蜜机 +</button><button data-add="table">小圆桌 +</button><button data-add="ldesk">L 型台 +</button><button data-add="fascia">悬空吊楣 +</button><button data-add="laptop" title="笔记本电脑">笔记本 +</button><button data-add="webcam" title="电脑摄像头（输入设备）">摄像头 +</button><button data-add="acrylicA4" title="亚克力立牌 · 选中后在左侧切换 A4 / A5">亚克力立牌 +</button><button data-add="rollup" title="80 × 200 厘米画面，含底座总高 2.08 米">易拉宝 +</button><button data-add="chair" title="简易听讲椅 · 46 × 82 × 50 厘米">听讲椅 +</button><button data-add="staff" disabled>工作人员 +</button><button data-add="visitor" disabled>游客 +</button></div><div id="peopleStatus" role="status"></div></section><div id="placementHint" role="status" hidden style="position:absolute;top:54px;left:14px;z-index:3;background:#fffef3;border:1px solid #b8cabb;border-radius:5px;padding:8px 12px;pointer-events:none"></div><div class="badge"><b id="badgeSize"></b><small>周边按图估算 · 非施工图</small></div><div class="help"><span id="helpText">拖空白转视角 · 滚轮缩放 · WASD 行走 · 空格切换浏览</span></div></div><div id="routeEdit" hidden></div></main><script id="seed" type="application/json">null</script>
 <!-- Third-party licenses
 The MIT License
 
@@ -8057,7 +8057,7 @@ const DecalModel=(()=>{
 })();
 if(typeof module!=='undefined'&&module.exports)module.exports=DecalModel;
 
-// Figma 贴图：常规模式选面、贴图模式、右侧贴图面板、3D 贴图平面、本机图片仓库（IndexedDB）、Figma 取图。
+// Figma 贴图：贴图模式（含「管理贴面」）、右侧贴图面板、3D 贴图平面、本机图片仓库（IndexedDB）、Figma 取图。
 // 与 app.js 打包在同一个 <script> 里：直接用 app.js 的全局（objects / room / roomGroup / selected / select / checkpoint / persist / geometry …）。
 // Decals.create() 由 app.js 在界面就绪后调用一次；数据规则在 decal-model.js。
 const Decals=(()=>{
@@ -8103,8 +8103,8 @@ async function importAssets(assets){for(const [id,a] of Object.entries(assets)){
 function create(){
  const M=DecalModel,NAMES=M.FACE_NAMES;
  const el=(tag,attrs={},...kids)=>{const e=document.createElement(tag);for(const [k,v] of Object.entries(attrs)){if(k==='class')e.className=v;else if(k.startsWith('on'))e[k]=v;else e.setAttribute(k,v);}e.append(...kids);return e;};
- const S={mode:false,owner:null,face:null,error:'',busy:false,relink:false,needToken:false,pendingLink:''};
- let pick=null,hover=null,hlKey=null,pending=0;
+ const S={mode:false,manage:false,owner:null,face:null,error:'',busy:false,relink:false,needToken:false,pendingLink:''};
+ let hover=null,hlKey=null,pending=0;
  const track=p=>{pending++;return Promise.resolve(p).finally(()=>pending--);};
  const key=(owner,face)=>owner+'|'+face;
 
@@ -8128,7 +8128,7 @@ function create(){
  // ---------- 3D：贴图平面、亮面、悬停高亮 ----------
  const plane=(color,opacity,offset)=>new THREE.Mesh(new THREE.PlaneGeometry(1,1),new THREE.MeshBasicMaterial({color,transparent:true,opacity,depthWrite:false,toneMapped:false,polygonOffset:true,polygonOffsetFactor:offset}));
  const hl=plane(0x2f7cf6,.32,-4);hl.renderOrder=6;hl.userData.hl=true;
- function place(mesh,spec){const round=!!spec.round;if(!!mesh.userData.round!==round){mesh.geometry.dispose();mesh.geometry=round?new THREE.CircleGeometry(.5,64):new THREE.PlaneGeometry(1,1);mesh.userData.round=round;}spec.parent.add(mesh);mesh.position.set(...spec.pos);mesh.rotation.set(...spec.rot);mesh.scale.set(spec.scale[0],spec.scale[1],1);}
+ function place(mesh,spec){const round=!!spec.round;if(mesh.isMesh&&!!mesh.userData.round!==round){mesh.geometry.dispose();mesh.geometry=round?new THREE.CircleGeometry(.5,64):new THREE.PlaneGeometry(1,1);mesh.userData.round=round;}spec.parent.add(mesh);mesh.position.set(...spec.pos);mesh.rotation.set(...spec.rot);mesh.scale.set(spec.scale[0],spec.scale[1],1);}
  function highlight(f){hlKey=f?key(f.owner,f.face):null;hl.parent?.remove(hl);const s=f&&target(f.owner)?.spec(f.face);if(s)place(hl,s);}
  function clear(t,kind){for(const p of t.parents)for(const c of [...p.children])if(c.userData[kind]){p.remove(c);c.geometry.dispose();c.material.map?.dispose();c.material.dispose();}}
  function addDecal(t,face,d){
@@ -8144,9 +8144,22 @@ function create(){
    m.material.map=tex;m.material.visible=true;m.material.needsUpdate=true;m.userData.size=[c.width,c.height];
   }).catch(()=>{m.userData.missing=true;}));
  }
- const tintFaces=t=>S.mode?facesOn(t):pick?.owner===t.owner?t.allowed.filter(f=>pick.faces.has(f)):[];
+ const tintFaces=t=>S.mode?facesOn(t):[];
  function drawTints(t){clear(t,'tint');for(const f of tintFaces(t)){const s=t.spec(f);if(!s)continue;const m=plane(0x2f7cf6,.24,-3);m.renderOrder=5;m.userData={tint:true,dk:{owner:t.owner,face:f}};place(m,s);}}
- function drawTarget(t){clear(t,'decal');for(const [f,d] of Object.entries(t.data.decals||{}))if(facesOn(t).includes(f))addDecal(t,f,d);drawTints(t);}
+ function drawTarget(t){clear(t,'decal');for(const [f,d] of Object.entries(t.data.decals||{}))if(facesOn(t).includes(f))addDecal(t,f,d);drawTints(t);if(t.owner===S.owner)markCurrent();}
+ // 面板打开着的那一面：一直描一圈蓝框（还没贴图时再铺一层浅蓝），图本身不被盖住
+ const frameMat=new THREE.MeshBasicMaterial({color:0x2f7cf6,toneMapped:false,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-5,side:THREE.DoubleSide});
+ let current=null;
+ function markCurrent(){
+  if(current){current.parent?.remove(current);current.traverse(c=>{if(c.isMesh){c.geometry.dispose();if(c.material!==frameMat)c.material.dispose();}});current=null;}
+  const t=S.mode&&!S.manage&&S.owner&&target(S.owner),sp=t&&facesOn(t).includes(S.face)&&t.spec(S.face);if(!sp)return;
+  const b=Math.min(.03,Math.max(.008,Math.min(...sp.size)*.04)),bx=b/sp.size[0],by=b/sp.size[1];let g;
+  if(sp.round)g=new THREE.RingGeometry(.5-bx,.5,64);
+  else{const sh=new THREE.Shape([[-.5,-.5],[.5,-.5],[.5,.5],[-.5,.5]].map(([x,y])=>new THREE.Vector2(x,y))),hole=new THREE.Path([[-.5+bx,-.5+by],[.5-bx,-.5+by],[.5-bx,.5-by],[-.5+bx,.5-by]].map(([x,y])=>new THREE.Vector2(x,y)));sh.holes.push(hole);g=new THREE.ShapeGeometry(sh);}
+  current=new THREE.Group();current.userData={current:true,key:key(S.owner,S.face)};const frame=new THREE.Mesh(g,frameMat);frame.renderOrder=7;current.add(frame);
+  if(!decalOf(t,S.face)){const fill=plane(0x2f7cf6,.3,-4);fill.renderOrder=6;if(sp.round){fill.geometry.dispose();fill.geometry=new THREE.CircleGeometry(.5,64);}current.add(fill);}
+  place(current,sp);
+ }
  const allTargets=()=>[roomTarget(),...objects.map(objTarget)];
  const drawAllTints=()=>allTargets().forEach(drawTints);
  const redraw=owner=>{const t=target(owner);if(t)drawTarget(t);};
@@ -8171,45 +8184,33 @@ function create(){
   return best?{owner:t.owner,face:best}:null;
  }
  const probe=new THREE.Object3D(),fn=new THREE.Vector3(),inv=new THREE.Matrix4();
- const pickableAt=(x,y)=>{const f=pick&&faceAt(x,y);return f&&f.owner===pick.owner?f:null;};
- const litAt=(x,y)=>{const f=S.mode&&faceAt(x,y);return f&&facesOn(target(f.owner)).includes(f.face)?f:null;};
+ const litAt=(x,y)=>{const f=S.mode&&!S.manage&&faceAt(x,y);return f&&facesOn(target(f.owner)).includes(f.face)?f:null;};
 
- // ---------- 常规模式：左栏「可贴图的面」+ 选面 ----------
- const faceBox=$('dkFaces'),wallBox=$('dkWalls');
- function renderBox(box,t,title){
-  box.hidden=!t||!t.allowed.length;if(box.hidden){box.replaceChildren();return;}
-  const picking=pick?.owner===t.owner,faces=picking?t.allowed.filter(f=>pick.faces.has(f)):facesOn(t);
-  const chips=faces.map(f=>{const c=el('span',{class:'dk-chip'+(picking?' picking':'')},NAMES[f]);if(!picking){const x=el('button',{class:'icon-button',title:'删除「'+NAMES[f]+'」'+(decalOf(t,f)?'（连同贴图）':''),'aria-label':'删除'+NAMES[f],onclick:()=>removeFace(t.owner,f)});x.append(icon('x'));c.append(x);}return c;});
-  const can=t.parents.some(p=>p.visible);
-  box.replaceChildren(el('div',{class:'sub'},title),...(chips.length?[el('div',{class:'dk-chips'},...chips)]:[]),
-   el('div',{class:'line'},...(picking?[el('button',{class:'primary',onclick:()=>endPick(true)},'保存'),el('button',{onclick:()=>endPick(false)},'取消')]:[Object.assign(el('button',{onclick:()=>startPick(t.owner),title:can?'在物体上点面选中或取消':'先让它显示出来'},'选面'),{disabled:!can})])));
- }
- function renderPickers(){renderBox(faceBox,selected&&objTarget(selected),'可贴图的面');renderBox(wallBox,roomTarget(),'可贴图的墙面');}
- function startPick(owner){
-  if(S.mode)setMode(false);cancelPlacement();if(owner==='room')select(null);
-  const t=target(owner);pick={owner,faces:new Set(facesOn(t))};hover=null;transform.detach();transform.enabled=false;drawTints(t);renderPickers();renderHint();
- }
- function endPick(save){
-  if(!pick)return;const t=target(pick.owner),faces=t?t.allowed.filter(f=>pick.faces.has(f)):[];pick=null;hover=null;highlight(null);renderer.domElement.style.cursor='';
-  transform.enabled=true;if(selected?.visible&&!walking)transform.attach(selected);
-  if(t){if(save&&String(faces)!==String(facesOn(t))){checkpoint();setFaces(t,faces);drawTarget(t);persist();}else drawTints(t);}
-  renderPickers();renderHint();
- }
- function removeFace(owner,f){const t=target(owner);if(!t)return;checkpoint();setFaces(t,facesOn(t).filter(x=>x!==f));drawTarget(t);persist();renderPickers();renderPanel();}
+ // ---------- 管理贴面：在贴图模式里点任意物体 / 墙的面，加上或去掉「可贴图的面」 ----------
+ function toggleFace(f){const t=target(f.owner);if(!t)return;const on=facesOn(t).includes(f.face);
+  const go=()=>{checkpoint();setFaces(t,on?facesOn(t).filter(x=>x!==f.face):t.allowed.filter(x=>x===f.face||facesOn(t).includes(x)));drawTarget(t);persist();renderHint();};
+  if(on&&decalOf(t,f.face))ask(t.name(f.face)+'「'+NAMES[f.face]+'」已经贴了图。去掉这个面会把图一起删掉（可以撤销）。','删除',go);else go();}
+ function setManage(on){if(on===S.manage)return;S.manage=on;closeAsk();Object.assign(S,{owner:null,face:null,error:'',relink:false,needToken:false});hover=null;highlight(null);renderer.domElement.style.cursor='';renderPanel();}
+ // 删除确认：带蒙层的小窗，必须选了才能继续
+ let askBox=null;
+ function closeAsk(){askBox?.remove();askBox=null;}
+ function ask(text,okText,ok){closeAsk();const yes=el('button',{class:'dk-btn danger-fill',onclick:()=>{closeAsk();ok();}},okText),no=el('button',{class:'dk-btn',onclick:closeAsk},'取消');
+  askBox=el('div',{class:'dk-modal',onclick:e=>{if(e.target===askBox)closeAsk();}},el('div',{class:'dk-dialog',role:'alertdialog','aria-modal':'true'},el('p',{},text),el('div',{class:'dk-actions'},no,yes)));document.body.append(askBox);yes.focus();}
 
  // ---------- 贴图模式 ----------
  const modeBtn=$('decalMode');modeBtn.onclick=()=>setMode(!S.mode);
  const panel=el('div',{class:'dk-panel',hidden:''}),hint=el('div',{class:'dk-hint',role:'status',hidden:''});view.append(panel,hint);
  function setMode(on){
   if(on===S.mode)return;
-  if(on){endPick(false);cancelPlacement();setWalking(false);showLibrary(false);}
-  S.mode=on;if(on)select(null);Object.assign(S,{owner:null,face:null,error:'',relink:false,needToken:false});modeBtn.classList.toggle('active',on);
+  if(on){cancelPlacement();setWalking(false);showLibrary(false);}
+  S.mode=on;S.manage=false;closeAsk();if(on)select(null);Object.assign(S,{owner:null,face:null,error:'',relink:false,needToken:false});modeBtn.classList.toggle('active',on);
   highlight(null);renderer.domElement.style.cursor='';drawAllTints();renderPanel();
  }
+ const hintText=el('span'),manageBtn=el('button',{class:'dk-btn',onclick:()=>setManage(!S.manage)});hint.append(hintText,manageBtn);
  function renderHint(){
-  if(pick){hint.hidden=false;hint.textContent=(pick.owner==='room'?'点 A / B 墙内侧选中或取消':'点这个物体的面选中或取消')+' · 保存生效 · Esc 取消';return;}
-  hint.hidden=!S.mode||!!S.owner;if(hint.hidden)return;
-  hint.textContent=allTargets().some(t=>facesOn(t).length)?'贴图模式 · 点亮着的面添加设计图 · Esc 退出':'还没有可贴图的面：退出贴图模式，选中物体后在左栏点「选面」';
+  hint.hidden=!S.mode;if(hint.hidden)return;hint.classList.toggle('managing',S.manage);
+  manageBtn.textContent=S.manage?'完成':'管理贴面';manageBtn.classList.toggle('primary',S.manage);manageBtn.title=S.manage?'回到贴图（Esc）':'点物体的面，加上或去掉可贴图的面';
+  hintText.textContent=S.manage?'管理贴面 · 点物体或墙的面：加上 / 去掉 · Esc 完成':allTargets().some(t=>facesOn(t).length)?'贴图模式 · 点亮着的面添加设计图 · Esc 退出':'还没有可贴图的面：点右边「管理贴面」，在物体上点出要贴图的面';
  }
 
  // ---------- 贴上 / 改 / 删 ----------
@@ -8263,12 +8264,10 @@ function create(){
   return el('div',{class:'dk-row'},el('label',{},label),r,out);}
  const iconBtn=(name,title,fn,cls='')=>{const b=el('button',{class:'dk-btn dk-icon '+cls,title,'aria-label':title,onclick:fn});b.append(icon(name));return b;};
  const btn=(text,fn,attrs={})=>el('button',{class:'dk-btn',onclick:fn,...attrs},text);
- let flashKey='',flashTimer=0;
- function flash(){const k=S.owner&&S.face?key(S.owner,S.face):'';if(k===flashKey)return;flashKey=k;clearTimeout(flashTimer);highlight(k?{owner:S.owner,face:S.face}:null);if(k)flashTimer=setTimeout(()=>{if(hlKey===k)highlight(null);},700);}
  function renderPanel(){
   const t=S.owner&&target(S.owner);
   if(S.owner&&(!t||!facesOn(t).includes(S.face)))Object.assign(S,{owner:null,face:null,error:''});
-  flash();renderHint();
+  if(current?.userData.key!==(S.owner?key(S.owner,S.face):undefined)||(current&&!current.parent))markCurrent();renderHint();
   panel.hidden=!S.mode||!S.owner;if(panel.hidden){panel.replaceChildren();return;}
   const {owner,face}=S,faces=panelFaces(t,face),d=decalOf(t,face);panel.replaceChildren();
   panel.append(el('div',{class:'dk-head'},el('strong',{},t.name(face)),el('small',{},M.sizeText(t.spec(face).size)),iconBtn('x','关闭（Esc）',close,'dk-x')));
@@ -8321,12 +8320,12 @@ function create(){
  canvas.addEventListener('dragleave',()=>{if(S.mode)highlight(null);});
  canvas.addEventListener('drop',e=>{if(!filesIn(e))return;e.preventDefault();const f=litAt(e.clientX,e.clientY);if(S.mode)highlight(null);if(f)applyFile(f.owner,f.face,e.dataTransfer.files[0]);});
  canvas.addEventListener('pointermove',e=>{lastPointer={x:e.clientX,y:e.clientY};if(e.buttons)return;
-  if(pick){const f=pickableAt(e.clientX,e.clientY),k=f&&key(f.owner,f.face);if(k!==hover){hover=k;highlight(f);}canvas.style.cursor=f?'pointer':'';}
+  if(S.manage){const f=faceAt(e.clientX,e.clientY),k=f&&key(f.owner,f.face);if(k!==hover){hover=k;highlight(f);}canvas.style.cursor=f?'pointer':'';}
   else if(S.mode)canvas.style.cursor=litAt(e.clientX,e.clientY)?'pointer':'';});
- canvas.addEventListener('pointerleave',()=>{if(pick){hover=null;highlight(null);}});
+ canvas.addEventListener('pointerleave',()=>{if(S.manage){hover=null;highlight(null);}});
  // app.js 的 pointerup 在确认是「单击」后先问这里；返回 true 表示已处理，不再做选中
  function onCanvasClick(e){
-  if(pick){const f=pickableAt(e.clientX,e.clientY);if(f){pick.faces.has(f.face)?pick.faces.delete(f.face):pick.faces.add(f.face);drawTints(target(pick.owner));renderPickers();}return true;}
+  if(S.manage){const f=faceAt(e.clientX,e.clientY);if(f)toggleFace(f);return true;}
   if(S.mode){const f=litAt(e.clientX,e.clientY);if(f)open(f.owner,f.face);else close();return true;}
   return false;
  }
@@ -8334,21 +8333,18 @@ function create(){
   const f=(lastPointer&&litAt(lastPointer.x,lastPointer.y))||(S.owner&&{owner:S.owner,face:S.face});if(f){e.preventDefault();applyFile(f.owner,f.face,file);}});
  // 捕获阶段先于 app.js 的快捷键：Esc 分层退出；选面时不让 Delete 删掉物体
  window.addEventListener('keydown',e=>{
-  if(e.key==='Escape'){if(pick){endPick(false);e.stopImmediatePropagation();}else if(S.mode){S.owner?close():setMode(false);e.stopImmediatePropagation();}}
-  else if(pick&&(e.key==='Delete'||e.key==='Backspace')&&!['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName))e.stopImmediatePropagation();
+  if(e.key==='Escape'){if(askBox)closeAsk();else if(S.manage)setManage(false);else if(S.mode){S.owner?close():setMode(false);}else return;e.stopImmediatePropagation();}
+  else if(askBox&&!['Tab','Enter',' '].includes(e.key))e.stopImmediatePropagation(); // 确认窗开着时别的快捷键不生效
  },true);
 
- renderPickers();
  return {
-  drawObject(o){drawTarget(objTarget(o));if(o===selected)renderPickers();}, // 吊楣改圆形等会改变可贴面
-  drawRoom:()=>drawTarget(roomTarget()),
-  afterSelect(o){if(pick&&pick.owner!=='room'&&pick.owner!=='obj:'+o?.userData.id)endPick(false);renderPickers();},
-  blocksSelect:()=>S.mode,busy:()=>!!pick,onCanvasClick,
-  exit(){endPick(false);setMode(false);},
-  refresh(){if(pick&&!target(pick.owner))endPick(false);renderPickers();renderPanel();},
+  drawObject:o=>drawTarget(objTarget(o)),drawRoom:()=>drawTarget(roomTarget()),
+  blocksSelect:()=>S.mode,onCanvasClick,
+  exit(){setMode(false);},
+  refresh(){renderPanel();},
   exportAssets,importAssets,
   debug(){const meshes={},tints=[];for(const t of allTargets())for(const p of t.parents)for(const c of p.children){const k=key(c.userData.dk?.owner,c.userData.dk?.face);if(c.userData.decal)meshes[k]={image:!!c.material.map,canvasW:c.userData.size?.[0],canvasH:c.userData.size?.[1]};if(c.userData.tint)tints.push(k);}
-   return {mode:S.mode,owner:S.owner,face:S.face,picking:pick&&{owner:pick.owner,faces:[...pick.faces]},hover,highlight:hlKey,pending,meshes,tints};}
+   return {mode:S.mode,manage:S.manage,owner:S.owner,face:S.face,asking:!!askBox,current:current?.parent?current.userData.key:null,hover,highlight:hlKey,pending,meshes,tints};}
  };
 }
 return {create};
@@ -8517,7 +8513,7 @@ function sync(){if(!selected)return;$('place').disabled=!selected.visible;const 
  document.querySelectorAll('[data-inches]').forEach(b=>b.classList.toggle('active',Number(b.dataset.inches)===d.inches));
  selected.updateMatrixWorld(true);const b=new THREE.Box3().setFromObject(selected);$('status').textContent=b.min.x< -room.width/2-.001||b.max.x>room.width/2+.001||b.min.z< -room.depth/2-.001||b.max.z>room.depth/2+.001?'物料超出地面边界':'';
 }
-function select(o){if(o&&decalUI?.blocksSelect())o=null;setCreatorSelected(false);cancelPlacement();if(selected!==o&&document.activeElement===$('purpose'))$('purpose').blur();selected=o;if(o)$('purpose').value=o.userData.purpose||'';transform.detach();$('inspector').hidden=!o;$('empty').hidden=!!o;$('roomPanel').hidden=!!o;if(o){if(!walking&&o.visible)transform.attach(o);$('title').textContent=definitions[o.userData.type].name+' '+o.userData.id;sync();}renderList();decalUI?.afterSelect(o);}
+function select(o){if(o&&decalUI?.blocksSelect())o=null;setCreatorSelected(false);cancelPlacement();if(selected!==o&&document.activeElement===$('purpose'))$('purpose').blur();selected=o;if(o)$('purpose').value=o.userData.purpose||'';transform.detach();$('inspector').hidden=!o;$('empty').hidden=!!o;$('roomPanel').hidden=!!o;if(o){if(!walking&&o.visible)transform.attach(o);$('title').textContent=definitions[o.userData.type].name+' '+o.userData.id;sync();}renderList();}
 function commit(){if(selected?.userData.wallSnap)attachWall(selected);sync();renderList();persist();}
 function storageKey(){return 'ces-workspace-v2:'+workspaceId;}
 function collect(){const p=plans.find(p=>p.id===activeId);if(p)p.layout=layout();return {version:2,workspaceId,activeId,plans:clone(plans),panelWidth:document.querySelector('aside').offsetWidth,layerHeight:$('objects').offsetHeight};}
@@ -8729,8 +8725,8 @@ if(initial){plans=initial.plans;activeId=initial.activeId;restore(plans.find(p=>
 if(!initial&&!new URLSearchParams(location.search).has('builtin')){try{const d=parseWorkspace(JSON.parse($('defaultPlans')?.textContent||'null'));plans=d.plans;activeId=d.activeId;restore(plans.find(p=>p.id===activeId).layout);initial=d;}catch(e){}}
 if(!initial){buildRoom();make('tv').position.set(.4,1.2,-2.61);make('desk').position.set(-.8,0,1.75);make('robot').position.set(1.4,0,.3);activeId=uid();plans=[{id:activeId,name:'方案 1',layout:layout()}];}
 select(objects[1]||objects[0]||null);renderTabs();$('walk').textContent='步行浏览';$('walk').classList.remove('active');$('helpText').textContent='拖空白转视角 · 滚轮缩放 · WASD 行走 · 空格切换浏览';persist();if(!startError&&tourNotice)startError=tourNotice;if(startError)$('saveStatus').textContent=startError;
-let lastTime=performance.now();function animate(now){requestAnimationFrame(animate);const dt=Math.min(.05,(now-lastTime)/1000);lastTime=now;people.update(dt);tourPlayer.update();if(walking&&keys.size){let forward=Number(keys.has('KeyW'))-Number(keys.has('KeyS')),right=Number(keys.has('KeyD'))-Number(keys.has('KeyA'));const length=Math.hypot(forward,right)||1;forward=forward/length*dt*1.6;right=right/length*dt*1.6;camera.position.x+=-Math.sin(yaw)*forward+Math.cos(yaw)*right;camera.position.z+=-Math.cos(yaw)*forward-Math.sin(yaw)*right;camera.position.y=1.75;const bounds=venueGroup.userData.bounds;camera.position.x=clamp(camera.position.x,bounds.minX-1,bounds.maxX+1);camera.position.z=clamp(camera.position.z,bounds.minZ-1,bounds.maxZ+1);}rotationOverlay.style.display=!selected||!selected.visible||walking||placing||decalUI.busy()?'none':'';
-if(selected&&selected.visible&&!walking&&!placing&&!decalUI.busy()){
+let lastTime=performance.now();function animate(now){requestAnimationFrame(animate);const dt=Math.min(.05,(now-lastTime)/1000);lastTime=now;people.update(dt);tourPlayer.update();if(walking&&keys.size){let forward=Number(keys.has('KeyW'))-Number(keys.has('KeyS')),right=Number(keys.has('KeyD'))-Number(keys.has('KeyA'));const length=Math.hypot(forward,right)||1;forward=forward/length*dt*1.6;right=right/length*dt*1.6;camera.position.x+=-Math.sin(yaw)*forward+Math.cos(yaw)*right;camera.position.z+=-Math.cos(yaw)*forward-Math.sin(yaw)*right;camera.position.y=1.75;const bounds=venueGroup.userData.bounds;camera.position.x=clamp(camera.position.x,bounds.minX-1,bounds.maxX+1);camera.position.z=clamp(camera.position.z,bounds.minZ-1,bounds.maxZ+1);}rotationOverlay.style.display=!selected||!selected.visible||walking||placing?'none':'';
+if(selected&&selected.visible&&!walking&&!placing){
  // Project with the same current camera matrix used by the 3D renderer.
  camera.updateMatrixWorld(true);
  const radius=Math.max(.45,Math.min(1.2,Math.max(selected.userData.size[0],selected.userData.size[2])*.65)),points=[];let inFront=true;

@@ -1,19 +1,36 @@
 // Figma 贴图的数据规则：纯函数，不碰 DOM / THREE / 存储。浏览器里是全局 DecalModel，node 里 require。
 // 面的位置都在「物体组」的本地坐标里：前台、易拉宝、立牌的组按 size 缩放，所以它们的 pos 是单位方块里的比例；墙则在墙体自身坐标里（米）。
 const DecalModel=(()=>{
- const FACE_NAMES={front:'正面',back:'背面',left:'左侧',right:'右侧',top:'台面',A:'A 墙内侧',B:'B 墙内侧'};
+ const FACE_NAMES={front:'正面',back:'背面',left:'左侧',right:'右侧',top:'台面',endA:'横边端头',endB:'纵边端头',screen:'屏幕',A:'A 墙内侧',B:'B 墙内侧'};
  const WALL_H=2.8,GAP=.003; // 贴图离面 3 毫米，避免和面打架
  const FITS=['contain','cover'];
  const MIMES=['image/png','image/jpeg'];
  const ID=/^[0-9a-f]{64}$/;
- function facesFor(type){
-  if(type==='desk')return ['front','back','left','right','top'];
+ const SIDES=['front','back','left','right'];
+ // p 是物体自身数据（吊楣形状、L 台各边、屏幕英寸），只有少数物件用得到。
+ function facesFor(type,p={}){
+  if(type==='desk')return [...SIDES,'top'];
+  if(type==='ldesk')return [...SIDES,'endA','endB'];
+  if(type==='fascia')return p.shape==='round'?[]:SIDES; // 圆形吊楣是曲面，不做
+  if(type==='table')return ['top'];
+  if(type==='tv'||type==='display')return ['screen'];
   if(type==='rollup'||type==='acrylic'||type==='acrylicA4'||type==='acrylicA5')return ['front'];
   return [];
  }
- // 物体面：size 是物体整体尺寸 [宽,高,深]（米）。返回 {size:[面宽,面高]（米）,pos,rot,scale}，plane 是 1×1。
- function faceSpec(type,size,face){
-  const [w,h,d]=size,e=a=>GAP/a;
+ const flat=(size,pos,rot)=>({size,pos,rot,scale:size}); // 物体组不缩放时：位置按米，平面直接放大到面尺寸
+ const screenSize=(inches,portrait)=>{const w=inches*.0254*16/Math.sqrt(337),h=w*9/16;return portrait?[h,w]:[w,h];};
+ // 物体面：size 是物体整体尺寸 [宽,高,深]（米）。返回 {size:[面宽,面高]（米）,pos,rot,scale,round?}，plane 是 1×1（round 时是直径 1 的圆）。
+ function faceSpec(type,size,face,p={}){
+  if(!facesFor(type,p).includes(face))return null;
+  const [w,h,d]=size,e=a=>GAP/a,H=Math.PI/2;
+  if(type==='ldesk'){const {lengthA:a,widthA:wa,lengthB:b,widthB:wb}=p,y=h/2;return {
+   back:flat([a,h],[0,y,-b/2-GAP],[0,Math.PI,0]),left:flat([b,h],[-a/2-GAP,y,0],[0,-H,0]),
+   front:flat([a-wb,h],[wb/2,y,-b/2+wa+GAP],[0,0,0]),right:flat([b-wa,h],[-a/2+wb+GAP,y,wa/2],[0,H,0]),
+   endA:flat([wa,h],[a/2+GAP,y,-b/2+wa/2],[0,H,0]),endB:flat([wb,h],[-a/2+wb/2,y,b/2+GAP],[0,0,0])}[face];}
+  if(type==='fascia'){const r=w/2+GAP,y=h/2;return {front:flat([w,h],[0,y,r],[0,0,0]),back:flat([w,h],[0,y,-r],[0,Math.PI,0]),left:flat([w,h],[-r,y,0],[0,-H,0]),right:flat([w,h],[r,y,0],[0,H,0])}[face];}
+  if(type==='table')return {size:[w,d],pos:[0,1+e(h),0],rot:[-H,0,0],scale:[1,1],round:true};
+  if(type==='tv')return flat([w-.036,h-.036],[0,h/2,d/2+.005+GAP],[0,0,0]);
+  if(type==='display'){const s=screenSize(p.inches||27,!!p.portrait);return flat(s,[0,1.22,.03+GAP],[0,0,0]);}
   if(type==='desk')return {scale:[1,1],...{
    front:{size:[w,h],pos:[0,.5,.5+e(d)],rot:[0,0,0]},
    back:{size:[w,h],pos:[0,.5,-.5-e(d)],rot:[0,Math.PI,0]},
@@ -21,7 +38,7 @@ const DecalModel=(()=>{
    right:{size:[d,h],pos:[.5+e(w),.5,0],rot:[0,Math.PI/2,0]},
    top:{size:[w,d],pos:[0,1+e(h),0],rot:[-Math.PI/2,0,0]}}[face]};
   if(type==='rollup'&&face==='front')return {size:[.9524*w,.9615*h],pos:[0,.51925,.016+e(d)],rot:[0,0,0],scale:[.9524,.9615]};
-  if(facesFor(type).includes(face)&&type.startsWith('acrylic')){const ph=Math.min(.94,.86*w*Math.SQRT2/h);return {size:[.86*w,ph*h],pos:[0,.5275,.052+e(d)],rot:[0,0,0],scale:[.86,ph]};}
+  if(type.startsWith('acrylic')){const ph=Math.min(.94,.86*w*Math.SQRT2/h);return {size:[.86*w,ph*h],pos:[0,.5275,.052+e(d)],rot:[0,0,0],scale:[.86,ph]};}
   return null;
  }
  // 墙内侧：坐标在墙体自身（墙厚 .12，中心在墙中间）。A 墙长 = 场地深，B 墙长 = 场地宽。

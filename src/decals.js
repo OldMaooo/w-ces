@@ -50,9 +50,9 @@ function create(){
  const key=(owner,face)=>owner+'|'+face;
 
  // ---------- 贴图的主人：一个物体，或场地（A/B 墙） ----------
- function objTarget(o){const t=o.userData.type;return {owner:'obj:'+o.userData.id,data:o.userData,allowed:M.facesFor(t),parents:[o],
+ function objTarget(o){const t=o.userData.type;return {owner:'obj:'+o.userData.id,data:o.userData,allowed:M.facesFor(t,o.userData),parents:[o],
   name:()=>(t.startsWith('acrylic')?'亚克力立牌':definitions[t].name)+' '+o.userData.id,
-  spec:f=>{const s=M.faceSpec(t,o.userData.size,f);return s&&{parent:o,...s};}};}
+  spec:f=>{const s=M.faceSpec(t,o.userData.size,f,o.userData);return s&&{parent:o,...s};}};}
  const wall=f=>roomGroup.getObjectByName(f==='A'?'wallA':'wallB');
  function roomTarget(){return {owner:'room',data:room,allowed:['A','B'],parents:['A','B'].map(wall).filter(Boolean),
   name:f=>f==='A'?'A 左墙':'B 后墙',spec:f=>wall(f)?{parent:wall(f),...M.wallSpec(room,f)}:null};}
@@ -69,7 +69,7 @@ function create(){
  // ---------- 3D：贴图平面、亮面、悬停高亮 ----------
  const plane=(color,opacity,offset)=>new THREE.Mesh(new THREE.PlaneGeometry(1,1),new THREE.MeshBasicMaterial({color,transparent:true,opacity,depthWrite:false,toneMapped:false,polygonOffset:true,polygonOffsetFactor:offset}));
  const hl=plane(0x2f7cf6,.32,-4);hl.renderOrder=6;hl.userData.hl=true;
- function place(mesh,spec){spec.parent.add(mesh);mesh.position.set(...spec.pos);mesh.rotation.set(...spec.rot);mesh.scale.set(spec.scale[0],spec.scale[1],1);}
+ function place(mesh,spec){const round=!!spec.round;if(!!mesh.userData.round!==round){mesh.geometry.dispose();mesh.geometry=round?new THREE.CircleGeometry(.5,64):new THREE.PlaneGeometry(1,1);mesh.userData.round=round;}spec.parent.add(mesh);mesh.position.set(...spec.pos);mesh.rotation.set(...spec.rot);mesh.scale.set(spec.scale[0],spec.scale[1],1);}
  function highlight(f){hlKey=f?key(f.owner,f.face):null;hl.parent?.remove(hl);const s=f&&target(f.owner)?.spec(f.face);if(s)place(hl,s);}
  function clear(t,kind){for(const p of t.parents)for(const c of [...p.children])if(c.userData[kind]){p.remove(c);c.geometry.dispose();c.material.map?.dispose();c.material.dispose();}}
  function addDecal(t,face,d){
@@ -102,10 +102,16 @@ function create(){
   if(hit.object.name==='wallA')return hit.face.normal.x>.5?{owner:'room',face:'A'}:null;
   if(hit.object.name==='wallB')return hit.face.normal.z>.5?{owner:'room',face:'B'}:null;
   let o=hit.object;while(o.parent&&!objects.includes(o))o=o.parent;if(!objects.includes(o))return null;
-  const n=hit.face.normal,ax=Math.abs(n.x),ay=Math.abs(n.y),az=Math.abs(n.z);
-  const face=az>=ax&&az>=ay?(n.z>0?'front':'back'):ax>=ay?(n.x>0?'right':'left'):(n.y>0?'top':null);
-  return M.facesFor(o.userData.type).includes(face)?{owner:'obj:'+o.userData.id,face}:null;
+  // 点中的位置落在哪个可贴面里：朝向一致、在面的范围内，取离得最近的（L 台有两个面朝同一边）
+  const t=objTarget(o),n=hit.face.normal.clone().transformDirection(hit.object.matrixWorld);let best=null,bestDist=Infinity;
+  for(const f of t.allowed){const sp=t.spec(f);if(!sp)continue;
+   probe.position.set(...sp.pos);probe.rotation.set(...sp.rot);probe.scale.set(sp.scale[0],sp.scale[1],1);probe.updateMatrix();probe.matrixWorld.multiplyMatrices(o.matrixWorld,probe.matrix);
+   if(fn.set(0,0,1).transformDirection(probe.matrixWorld).dot(n)<.7)continue;
+   const q=hit.point.clone().applyMatrix4(inv.copy(probe.matrixWorld).invert());if(Math.abs(q.x)>.52||Math.abs(q.y)>.52)continue;
+   const dist=Math.abs(q.z);if(dist<bestDist){best=f;bestDist=dist;}}
+  return best?{owner:t.owner,face:best}:null;
  }
+ const probe=new THREE.Object3D(),fn=new THREE.Vector3(),inv=new THREE.Matrix4();
  const pickableAt=(x,y)=>{const f=pick&&faceAt(x,y);return f&&f.owner===pick.owner?f:null;};
  const litAt=(x,y)=>{const f=S.mode&&faceAt(x,y);return f&&facesOn(target(f.owner)).includes(f.face)?f:null;};
 
@@ -275,7 +281,8 @@ function create(){
 
  renderPickers();
  return {
-  drawObject:o=>drawTarget(objTarget(o)),drawRoom:()=>drawTarget(roomTarget()),
+  drawObject(o){drawTarget(objTarget(o));if(o===selected)renderPickers();}, // 吊楣改圆形等会改变可贴面
+  drawRoom:()=>drawTarget(roomTarget()),
   afterSelect(o){if(pick&&pick.owner!=='room'&&pick.owner!=='obj:'+o?.userData.id)endPick(false);renderPickers();},
   blocksSelect:()=>S.mode,busy:()=>!!pick,onCanvasClick,
   exit(){endPick(false);setMode(false);},

@@ -11,10 +11,28 @@ function normalOf(rot){let [x,y,z]=[0,0,1];const [rx,ry]=rot;
  if(ry){const c=Math.cos(ry),s=Math.sin(ry);[x,z]=[x*c+z*s,-x*s+z*c];}
  return [x,y,z].map(v=>Math.round(v*1e6)/1e6+0);}
 
-test('哪些物件能贴：前台 5 面，易拉宝 / 立牌只有正面，其他没有',()=>{
+test('哪些物件能贴：前台 5 面、L 台 6 个立面、方吊楣 4 面、圆桌台面、屏幕、易拉宝 / 立牌正面；其他没有',()=>{
  assert.deepEqual(M.facesFor('desk'),['front','back','left','right','top']);
+ assert.deepEqual(M.facesFor('ldesk'),['front','back','left','right','endA','endB']);
+ assert.deepEqual(M.facesFor('fascia',{shape:'square'}),['front','back','left','right']);
+ assert.deepEqual(M.facesFor('fascia',{shape:'round'}),[]);
+ assert.deepEqual(M.facesFor('table'),['top']);
+ for(const t of ['tv','display'])assert.deepEqual(M.facesFor(t),['screen']);
  for(const t of ['rollup','acrylic','acrylicA4','acrylicA5'])assert.deepEqual(M.facesFor(t),['front']);
- for(const t of ['tv','display','table','ldesk','fascia','laptop','chair','staff','robot'])assert.deepEqual(M.facesFor(t),[]);
+ for(const t of ['laptop','webcam','chair','staff','visitor','robot'])assert.deepEqual(M.facesFor(t),[]);
+});
+test('L 台：外侧背面=横边全长、左侧=纵边全长；内侧正面/右侧扣掉另一条边的宽；端头=边宽',()=>{
+ const p={lengthA:2.2,widthA:.6,lengthB:1.6,widthB:.55},s=[2.2,1,1.6],f=k=>M.faceSpec('ldesk',s,k,p);
+ nearArr(f('back').size,[2.2,1]);nearArr(f('left').size,[1.6,1]);nearArr(f('front').size,[1.65,1]);nearArr(f('right').size,[1,1]);nearArr(f('endA').size,[.6,1]);nearArr(f('endB').size,[.55,1]);
+ near(f('front').pos[2],-.8+.6+.003);near(f('front').pos[0],.275);near(f('endA').pos[0],1.1+.003);near(f('endB').pos[2],.8+.003);
+ for(const [k,n] of [['back',[0,0,-1]],['left',[-1,0,0]],['front',[0,0,1]],['right',[1,0,0]],['endA',[1,0,0]],['endB',[0,0,1]]])assert.deepEqual(normalOf(f(k).rot),n,k);
+});
+test('吊楣外侧四面=边长×高；圆桌台面是圆、朝上；电视屏扣掉边框、闺蜜机按英寸和横竖',()=>{
+ const fa=M.faceSpec('fascia',[3,.6,3],'right',{shape:'square'});nearArr(fa.size,[3,.6]);near(fa.pos[0],1.503);assert.equal(M.faceSpec('fascia',[3,.6,3],'front',{shape:'round'}),null);
+ const tb=M.faceSpec('table',[.65,.75,.65],'top');assert.equal(tb.round,true);nearArr(tb.size,[.65,.65]);assert.deepEqual(normalOf(tb.rot),[0,1,0]);
+ nearArr(M.faceSpec('tv',[1.218,.685,.09],'screen').size,[1.182,.649]);
+ const land=M.faceSpec('display',[.6,1.5,.45],'screen',{inches:27}).size,port=M.faceSpec('display',[.6,1.5,.45],'screen',{inches:27,portrait:true}).size;
+ near(Math.hypot(...land),27*.0254,1e-4);nearArr(port,[land[1],land[0]]);
 });
 test('前台各面实际尺寸（米）：正背 宽×高，左右 深×高，台面 宽×深',()=>{
  const s=[1.6,1,.65];

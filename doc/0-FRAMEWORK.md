@@ -92,5 +92,7 @@
 - **Figma**：浏览器直连 `GET api.figma.com/v1/images/:fileKey?ids=:nodeId&format=png`（请求头 `X-Figma-Token`），再下载返回的图片地址进仓库。令牌存 localStorage `ces-figma-token`，不进方案、导出、日志和下载的编辑器。**用真令牌取图未验证**（测试里用假接口）：若图片地址不允许网页读取，面板会报「跨域限制，这个做法走不通」，届时再定方案，不加本机中转。
 - **渲染**：每张贴图是挂在物体组（墙则挂在墙体上）下的一块平面，`geometry()`、`buildRoom()` 重建时从数据重画；按面的实际尺寸画一张画布纹理（摆法、大小、偏移、旋转都在画布里算，不拉伸），sRGB、不受色调映射。面的位置尺寸在 `DecalModel.faceSpec / wallSpec`，离面 3 毫米。
 - **接入 app.js 的点**：`geometry()` 末尾、`buildRoom()` 末尾画贴图；`restore()` 后刷新面板；`select()` 在贴图模式下不选中、选别的物体时结束选面；画布单击先交给 `decalUI.onCanvasClick`；步行、路线、放置会退出贴图模式；导出 / 导入带图片。
-- **验证**：`src/test-decal-model.cjs` 12 项、`src/test-decals-ui.cjs` 8 组全绿；原有定向测试（物料、放置、自动保存、指南针、默认方案、交付回归、路线各项）不退步。`test-venue` 的 `getMatrixAt` 报错、`test.cjs` 的墙长互换旋转断言，改动前的版本上同样失败。截图 tmp/decals/shots/。
+- **可贴范围（2026-11-14 用户追加，盖过确认版「不做圆桌 / L 型台 / 电视屏」）**：`DecalModel.facesFor(type, 物体数据)` 定义——前台 5 面；L 型台 6 个立面（`front/back/left/right/endA/endB`，台面是 L 形不做）；方形吊楣外侧 4 面（圆形是曲面，不做）；小圆桌 `top`（圆形平面，`faceSpec` 返回 `round:true`，用 CircleGeometry，纹理还是方画布）；电视、闺蜜机 `screen`；易拉宝、立牌 `front`。人、电脑、摄像头、椅子、机器人没有。点中哪个面不再靠法线猜，而是看点中的位置落在哪个面的范围里（L 台有两个面朝同一边）。
+- **左栏「场地」区**（id `roomPanel`）只在什么都没选中时显示；选中物件或 Creator Space 时收起。
+- **验证**：`src/test-decal-model.cjs` 14 项、`src/test-decals-ui.cjs` 9 组全绿；原有定向测试（物料、放置、自动保存、指南针、默认方案、交付回归、路线各项）不退步。`test-venue` 的 `getMatrixAt` 报错、`test.cjs` 的墙长互换旋转断言，改动前的版本上同样失败。截图 tmp/decals/shots/。
 - **未验**：真令牌取 Figma 图；真鼠标拖文件进画布的手感（测试里拖文件用合成事件）；Safari。

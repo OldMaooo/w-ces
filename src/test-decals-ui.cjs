@@ -27,7 +27,7 @@ const TOKEN='figd_test_TOKEN_123';
 
  // ---- 1 常规模式：选面 → 保存 / 取消 / Esc ----
  const box=page.locator('#dkFaces');assert.ok((await box.textContent()).includes('可贴图的面'));assert.equal(await box.locator('.dk-chip').count(),0);
- await page.evaluate(()=>select(objects[2]));assert.equal(await box.isVisible(),false,'电视不出现可贴面');await page.evaluate(()=>select(objects[0]));
+ await page.evaluate(()=>select(objects[2]));assert.deepEqual(await texts(box.locator('.sub')),['可贴图的面'],'电视也能选面（屏幕）');await page.evaluate(()=>select(objects[0]));
  const pickBtn=box.locator('button',{hasText:'选面'});
  await pickBtn.click();assert.equal(await box.locator('button',{hasText:'保存'}).isVisible(),true);assert.equal(await page.evaluate(()=>editor.transform.object),undefined,'选面时不能拖动');
  let p=await point(...FRONT);await page.mouse.move(p.x,p.y);assert.equal((await dbg()).hover,'obj:1|front');
@@ -161,6 +161,25 @@ const TOKEN='figd_test_TOKEN_123';
  await other.reload();await other.waitForFunction(()=>window.editor&&editor.decals);await other.waitForFunction(()=>editor.decals.debug().pending===0);
  assert.ok((await other.evaluate(()=>editor.decals.debug().meshes))['obj:1|front']?.image,'刷新后图片从本机仓库读回');
  console.log('PASS 干净浏览器导入后图片都在、刷新还在；坏图片数据整份拒绝、不追加方案');
+
+ // ---- 9 更多物件能选面：L 台 6 个立面（两个朝前的面分得开）、方吊楣 4 面、圆桌台面、电视 / 闺蜜机屏幕；人、电脑等没有。选中物件时左栏不显示「场地」 ----
+ const cases={ldesk:['front','back','left','right','endA','endB'],fascia:['front','back','left','right'],table:['top'],tv:['screen'],display:['screen'],laptop:[],visitor:[]};
+ for(const [type,faces] of Object.entries(cases)){
+  await page.evaluate(t=>{restore({room:{...roomDefault(),wallA:false,wallB:false},objects:[]});const o=make(t);o.position.set(0,t==='fascia'?1:0,0);o.rotation.y=Math.PI/4;o.updateMatrixWorld(true);select(o);},type);
+  assert.equal(await page.locator('#roomPanel').isVisible(),false,type+'：选中时不显示场地');
+  if(!faces.length){assert.equal(await box.isVisible(),false,type+' 没有可贴面');continue;}
+  await box.locator('button',{hasText:'选面'}).click();
+  for(const f of faces){
+   const c=await page.evaluate(f=>{const o=editor.selected(),d=o.userData,sp=DecalModel.faceSpec(d.type,d.size,f,d);const q=new THREE.Object3D();q.position.set(...sp.pos);q.rotation.set(...sp.rot);o.add(q);o.updateMatrixWorld(true);const w=q.getWorldPosition(new THREE.Vector3()),n=new THREE.Vector3(0,0,1).transformDirection(q.matrixWorld);o.remove(q);
+    camera.position.copy(w).addScaledVector(n,3).add(new THREE.Vector3(0,.4,0));orbit.target.copy(w);orbit.update();return [w.x,w.y,w.z];},f);
+   p=await point(...c);await page.mouse.move(p.x,p.y);assert.equal((await dbg()).hover,'obj:1|'+f,type+' 悬停 '+f);await page.mouse.click(p.x,p.y);
+  }
+  await box.locator('button',{hasText:'保存'}).click();
+  assert.deepEqual(await page.evaluate(()=>editor.selected().userData.decalFaces),faces,type+' 保存后的面');
+  if(type==='fascia'){await page.evaluate(()=>{const o=editor.selected();o.userData.shape='round';geometry(o);});assert.equal(await box.isVisible(),false,'圆形吊楣：曲面不能贴');}
+ }
+ await page.evaluate(()=>select(null));assert.equal(await page.locator('#roomPanel').isVisible(),true,'啥都没选：显示场地');
+ console.log('PASS L 台 / 方吊楣 / 圆桌 / 电视 / 闺蜜机都能选面（含转 45° 后）；圆形吊楣、电脑、游客没有；选中物件时左栏隐藏场地');
 
  assert.deepEqual(errors,[]);
 }finally{await browser.close()}})().catch(e=>{console.error(e);process.exitCode=1});

@@ -199,6 +199,12 @@ function create(onMode){
   return el('div',{class:'dk-row'},el('label',{},label),r,out);}
  const iconBtn=(name,title,fn,cls='')=>{const b=el('button',{class:'dk-btn dk-icon '+cls,title,'aria-label':title,onclick:fn});b.append(icon(name));return b;};
  const btn=(text,fn,attrs={})=>el('button',{class:'dk-btn',onclick:fn,...attrs},text);
+ // 把这一面的尺寸复制成 SVG：粘进 Figma 就是一个同比例的空画框
+ async function copyFrame(name,size,b){
+  const svg=M.frameSvg(name,size);
+  try{await navigator.clipboard.writeText(svg);}catch(e){const ta=el('textarea',{style:'position:fixed;opacity:0'});ta.value=svg;document.body.append(ta);ta.select();document.execCommand('copy');ta.remove();} // file:// 等拿不到剪贴板接口时
+  b.replaceChildren(icon('check'));b.title='已复制，到 Figma 里 ⌘V';setTimeout(()=>{if(b.isConnected)b.replaceChildren(icon('copy'));},1500);
+ }
  function renderPanel(){
   const t=S.owner&&target(S.owner);
   if(S.owner&&(!t||!facesOn(t).includes(S.face)))Object.assign(S,{owner:null,face:null,error:''});
@@ -206,7 +212,8 @@ function create(onMode){
   document.body.classList.toggle('decaling',S.mode);side.hidden=!S.mode;side.replaceChildren();if(!S.mode)return;
   if(!S.owner){renderList();return;}
   const panel=side,{owner,face}=S,faces=panelFaces(t,face),d=decalOf(t,face);
-  panel.append(el('div',{class:'dk-head'},el('strong',{},t.name(face)),el('small',{},M.sizeText(t.spec(face).size)),iconBtn('x','返回贴面列表（Esc）',close,'dk-x')));
+  const size=t.spec(face).size,copy=iconBtn('copy','复制为 Figma 画框（'+size.map(v=>Math.round(v*1000)).join(' × ')+'），到 Figma 里 ⌘V',()=>copyFrame(owner==='room'?t.name(face):t.name(face)+' '+NAMES[face],size,copy),'dk-x');
+  panel.append(el('div',{class:'dk-head'},el('strong',{},t.name(face)),el('small',{},M.sizeText(size)),copy,iconBtn('x','返回贴面列表（Esc）',close,'dk-x')));
   if(faces.length>1)panel.append(el('div',{class:'dk-faces'},...faces.map(f=>el('button',{class:'dk-face'+(f===face?' on':''),onclick:()=>open(owner,f)},...(decalOf(t,f)?[el('i')]:[]),NAMES[f]))));
   if(S.error)panel.append(el('div',{class:'dk-note err',role:'alert'},S.error));
   if(!d||S.relink||S.needToken){emptyState(t,face,d);return;}

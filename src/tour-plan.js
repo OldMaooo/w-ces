@@ -422,7 +422,7 @@ const TourPlan=(()=>{
     const po=sh.kind==='circle'&&vis.find(o=>o.id===sh.id&&(o.type==='staff'||o.type==='visitor'));
     if(po){ // 地图上的接待员、游客等人物：顶视人形（肩膀胶囊 + 头 + 两只脚尖），朝向跟物料朝向一致；样式同普通物料
      const [a,bb]=toS(po.position[0],po.position[2]),fx=Math.sin(po.rotation),fz=Math.cos(po.rotation),deg=Math.atan2(-fz,-fx)*180/Math.PI,u=Math.max(k,24);
-     s+=`<g class="${cls(po.id)} rt-person" data-o="${po.id}" transform="translate(${f(a)} ${f(bb)}) rotate(${f(deg)}) scale(${f(u)})"><rect x=".04" y="-.14" width=".2" height=".1" rx=".05"/><rect x=".04" y=".04" width=".2" height=".1" rx=".05"/><rect x="-.12" y="-.25" width=".24" height=".5" rx=".12"/><circle cx="0" cy="0" r=".12"/></g>`;
+     s+=`<g class="${cls(po.id)} rt-person" data-o="${po.id}" transform="translate(${f(a)} ${f(bb)}) rotate(${f(deg)}) scale(${f(u)})"><rect x=".04" y="-.14" width=".2" height=".1" rx=".05"/><rect x=".04" y=".04" width=".2" height=".1" rx=".05"/><rect x="-.08" y="-.25" width=".16" height=".5" rx=".08"/><circle cx="0" cy="0" r=".12"/></g>`;
     }else if(sh.kind==='circle'){const [a,bb]=toS(sh.cx,sh.cz);s+=`<circle class="${cls(sh.id)}" data-o="${sh.id}" cx="${f(a)}" cy="${f(bb)}" r="${f(sh.r*k)}"/>`;}
     else s+=`<polygon class="${cls(sh.id)}" data-o="${sh.id}" points="${poly(sh.pts)}"/>`;
    }

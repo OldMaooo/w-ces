@@ -180,6 +180,7 @@ const TourPlan=(()=>{
    bar={
     restart:bh({id:'tpRestart',class:'ghost',title:'从头','aria-label':'从头',onclick:()=>{pb.t=0;frame(true);}},'skip-back'),
     play:bh({id:'tpPlay',class:'primary',onclick:togglePlay}),
+    next:bh({id:'tpNext',class:'ghost',title:'下一个停留点','aria-label':'下一个停留点',onclick:nextStop},'skip-forward'),
     seek:h('input',{type:'range',id:'tpSeek',min:'0',step:'0.01','aria-label':'进度'}),
     ticks:h('div',{class:'tp-ticks'}),
     time:h('span',{class:'tp-time',id:'tpTime'}),
@@ -188,9 +189,12 @@ const TourPlan=(()=>{
     recenter:bh({id:'tpRecenter',class:'ghost',title:'视线归位','aria-label':'视线归位',onclick:()=>host.view3d.recenter()},'rotate-ccw'),
    };
    bar.cams=h('div',{class:'tp-seg'},...VIEWS.map(([k,ic,txt])=>bh({'data-cam':k,'aria-label':txt,onclick:()=>setView(k)},ic)));
-   bar.seek.onpointerdown=pausePlay;
+   let seekWas=false;
+   bar.seek.onpointerdown=()=>{seekWas=!pb.paused;pausePlay();};
+   const seekEnd=()=>{if(!seekWas)return;seekWas=false;resumePlay();};
+   bar.seek.onpointerup=seekEnd;bar.seek.onpointercancel=seekEnd;
    bar.seek.oninput=()=>{pb.t=Number(bar.seek.value);frame(true);};
-   return h('div',{id:'rtBar',class:'tp-bar'},bar.restart,bar.play,h('div',{class:'tp-track'},bar.seek,bar.ticks),bar.time,bar.rate,bar.dwell,bar.recenter,bar.cams);
+   return h('div',{id:'rtBar',class:'tp-bar'},bar.restart,bar.play,bar.next,h('div',{class:'tp-track'},bar.seek,bar.ticks),bar.time,bar.rate,bar.dwell,bar.recenter,bar.cams);
   }
   // 停留刻度画在进度条里面：每次停留的起点，点一下跳到那一站
   function refreshTicks(){
@@ -225,8 +229,24 @@ const TourPlan=(()=>{
    if(pb.paused){if(pb.t>=pb.total-.01)pb.t=0;pb.paused=false;pb.started=true;pb.last=performance.now();if(vw!=='plan')host.view3d.recenter();syncBar();tick();}
    else pausePlay();
   }
+  // 跳到下一个停留点（没有了就到终点）；播放中继续播，暂停中仍暂停
+  function nextStop(){
+   if(!pb.comp)return;
+   const nx=pb.comp.stops.find(x=>x.t0>pb.t-.001+.011);
+   pb.t=nx?Math.min(nx.t0+.01,pb.total):pb.total;
+   if(pb.t>=pb.total-.01&&!pb.paused){pb.paused=true;cancelAnimationFrame(pb.raf);}
+   pb.last=performance.now();frame(true);
+  }
+  function resumePlay(){if(!pb.paused||!pb.comp||pb.t>=pb.total-.01)return;pb.paused=false;pb.last=performance.now();syncBar();tick();}
   function pausePlay(){if(pb.paused)return;pb.paused=true;cancelAnimationFrame(pb.raf);syncBar();}
   // 选中的子方案 → 时间线。没变就不动（点选兴趣点之类不打断播放）；换了子方案从头；走不通就没有时间线。
+  // 预览里每站最多停 PREVIEW_DWELL_MAX 秒（真实停留几十秒，预览太长）；勾掉「停留」则完全不停。方案里存的真实秒数不变。
+  const PREVIEW_DWELL_MAX=3;
+  function previewCompile(a,r){
+   if(settings.skipDwell)return T.compileRoute(a.legs,a.live.map(()=>0),a.live.map(()=>null),r.speed);
+   const looks=a.live.map(s=>s.obj?{x:s.obj.position[0],z:s.obj.position[2],y:s.obj.position[1]+s.obj.size[1]/2}:null);
+   return T.compileRoute(a.legs,a.live.map(s=>Math.min(s.dwell,PREVIEW_DWELL_MAX)),looks,r.speed);
+  }
   function syncPlayback(c){
    const g=curGroup(c),r=curRoute(g),a=r?analysis(c,g,r):null;
    if(!a||!a.ok||!a.compiled){
@@ -235,7 +255,7 @@ const TourPlan=(()=>{
    }
    if(pb.src===a&&pb.skip===settings.skipDwell)return;
    const same=pb.routeId===r.id,skipFlip=pb.skip!==null&&pb.skip!==settings.skipDwell,frac=pb.total?pb.t/pb.total:0;
-   pb.comp=settings.skipDwell?T.compileRoute(a.legs,a.live.map(()=>0),a.live.map(()=>null),r.speed):a.compiled;
+   pb.comp=previewCompile(a,r);
    pb.total=pb.comp.total;pb.t=!same?0:skipFlip?frac*pb.total:Math.min(pb.t,pb.total);
    if(!same){pausePlay();pb.started=false;}
    Object.assign(pb,{src:a,skip:settings.skipDwell,routeId:r.id,why:'',legs:a.legs,live:a.live,eye:r.eyeHeight});
@@ -439,7 +459,7 @@ const TourPlan=(()=>{
     const mark=(which,pt,txt)=>{const [x,y]=toS(pt[0],pt[1]);return `<g class="rt-ep ${which}${bad(which)?' bad':''}" data-ep="${which}"><circle cx="${f(x)}" cy="${f(y)}" r="11"/><text x="${f(x)}" y="${f(y)}">${txt}</text></g>`;};
     s+=mark('entry',g.entry,'入')+mark('exit',g.exit,'出');
    }
-   if(pb.comp&&pb.started&&vw==='plan'){const p=T.sampleRoute(pb.comp,pb.t),[px,py]=toS(p.x,p.z),dx=-Math.sin(p.lookYaw),dy=-Math.cos(p.lookYaw);const R=1.5*k,ang=Math.atan2(dy,dx),pts=Array.from({length:9},(_,i)=>{const a=ang-Math.PI/4+i*Math.PI/18;return f(px+R*Math.cos(a))+','+f(py+R*Math.sin(a));});s+=`<g class="rt-walker"><path class="fov" d="M${f(px)},${f(py)} L${pts.join(' L')}Z"/><circle cx="${f(px)}" cy="${f(py)}" r="7"/></g>`;}
+   if(pb.comp&&pb.started&&vw==='plan'){const p=T.sampleRoute(pb.comp,pb.t),[px,py]=toS(p.x,p.z),dx=-Math.sin(p.lookYaw),dy=-Math.cos(p.lookYaw);const R=1.5*k,ang=Math.atan2(dy,dx),pts=Array.from({length:9},(_,i)=>{const a=ang-Math.PI/4+i*Math.PI/18;return f(px+R*Math.cos(a))+','+f(py+R*Math.sin(a));});s+=`<g class="rt-walker"><path class="fov" d="M${f(px)},${f(py)} L${pts.join(' L')}Z"/><g transform="translate(${f(px)} ${f(py)}) rotate(${f(ang*180/Math.PI)}) scale(${f(Math.max(k,30)*1.4)})"><rect class="ft" x=".1" y="-.2" width=".26" height=".12" rx=".06"/><rect class="ft" x=".1" y=".08" width=".26" height=".12" rx=".06"/><rect class="sh" x="-.11" y="-.25" width=".22" height=".5" rx=".11"/></g><circle cx="${f(px)}" cy="${f(py)}" r="${f(Math.max(k,30)*1.4*.12)}"/></g>`;}
    s+=`<g class="rt-compass" transform="translate(${W-52},52)"><circle r="38"/><path d="M0 -22 L5 -5 L0 -8 L-5 -5Z" fill="#c45143"/><path d="M0 22 L5 5 L0 8 L-5 5Z" fill="#80968a"/><text y="-30" class="n">北</text><text y="30">南</text><text x="29" font-size="11">东</text><text x="-29" font-size="11">西</text></g>`;
    s+=`<g class="rt-scale" transform="translate(${f(W-24-k)},${H-24})"><line x1="0" x2="${f(k)}" /><line x1="0" x2="0" y1="-4" y2="4"/><line x1="${f(k)}" x2="${f(k)}" y1="-4" y2="4"/><text x="${f(k/2)}" y="-8">1 米</text></g>`;
    svg.setAttribute('viewBox',`0 0 ${W} ${H}`);svg.classList.toggle('picking',ordering);svg.innerHTML=s;
@@ -540,6 +560,7 @@ const TourPlan=(()=>{
    isOpen:()=>open,
    refresh:render,
    state:()=>({selGroup,selRoute,selObj,ordering,view:vw,t:pb.t,total:pb.total,playing:!pb.paused,rate:pb.rate,skipDwell:settings.skipDwell}),
+   previewOf(id){const c=ctx();for(const g of c.tour.groups){const r=g.routes.find(x=>x.id===id);if(r){const a=analysis(c,g,r);return a&&a.ok?previewCompile(a,r):null;}}return null;},
    analysisOf(id){const c=ctx();for(const g of c.tour.groups){const r=g.routes.find(x=>x.id===id);if(r)return analysis(c,g,r);}return null;},
   };
  }

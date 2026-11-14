@@ -85,7 +85,7 @@
 - 作废：手画路线、外部 Agent 文件往返。界面对照样品 doc/mock/route-demo/；技术计划见[计划](plans/2026-11-13-游客路线模拟-计划.md)，派工见[派工 prompt](plans/2026-11-13-游客路线模拟-派工prompt.md)。
 - 未做：路线与物料联动移动、多游客同场、真 Safari 与鼠标锁定手感的真人验收。
 
-## Figma 贴图（2026-11-14，v0.1.18，已实现，分支 claude/figma-decal-ad84dd）
+## Figma 贴图（2026-11-14，v0.1.19，已合并进 main）
 - 需求以 [确认版](plans/2026-11-14-Figma贴图-确认版.md) 为准，界面照可点样品 doc/mock/figma-decal/，但左栏按确认版改成「选面 → 在物体上点面 → 保存 / 取消」。操作见 [使用说明](使用说明.md)。
 - **数据**：物体 `userData.decalFaces`、`userData.decals[face]={source,assetId,fit,scale,ox,oy,rot}`；墙在 `room.decalFaces / room.decals`，键 `A` / `B`。没有可贴面时不写这两个字段。随方案快照，所以撤销、重做、自动保存、复制、导入导出都自动带上；`validateLayout` 用 `DecalModel.cleanDecals` 只保留该物件允许的面，坏的单张贴图丢弃。不升存储版本号。
 - **图片**：IndexedDB 库 `ces-decal-assets`，键是存进去那份图片字节的 SHA-256；长边超过 2048 像素先缩小，SVG / WebP 转 PNG。先存图成功再写引用。导出 JSON 顶层加 `assets:{id:{mime,width,height,base64}}`，只含导出范围用到的；导入时先 `validateAssets` 校验、再写仓库、最后才追加方案。导入文件上限从 12MB 放到 150MB（图片会让文件变大）。

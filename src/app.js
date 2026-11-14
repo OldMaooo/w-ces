@@ -196,7 +196,27 @@ function renderTabs(){const box=$('tabs'),solo=plans.length<2;box.replaceChildre
   t.oncontextmenu=e=>{e.preventDefault();showMenu(e.clientX,e.clientY,[{key:'copy',label:'复制',run:()=>duplicatePlan(p.id)},{key:'rename',label:'重命名',run:()=>renameStart(p.id)},{key:'delete',label:'删除',danger:true,disabled:solo,run:()=>confirmDeletePlan(p.id)}]);};
   t.onpointerdown=e=>tabDragStart(e,p.id,t);
   box.append(t);}
- box.querySelector('.tab.active')?.scrollIntoView({inline:'nearest',block:'nearest'});}
+ layoutTabs();}
+// 标签一行放不下：放不下的藏起来（当前方案永远留在栏里），右边出现下拉箭头，点开列出藏起来的
+function layoutTabs(){
+ const box=$('tabs'),more=$('tabMore'),tabs=[...box.children];tabs.forEach(t=>{t.hidden=false;});more.hidden=true;
+ const w=tabs.map(t=>t.offsetWidth+2);
+ if(w.reduce((a,b)=>a+b,0)-2<=box.clientWidth){if(menuOwner===more)closeMenu();return;}
+ more.hidden=false;const room=box.clientWidth,ai=Math.max(0,plans.findIndex(p=>p.id===activeId)),show=new Set([ai]);let used=w[ai];
+ for(let i=0;i<tabs.length;i++){if(i===ai)continue;if(used+w[i]>room)break;show.add(i);used+=w[i];}
+ tabs.forEach((t,i)=>{t.hidden=!show.has(i);});
+ if(menuOwner===more)openTabMore(true);}
+function openTabMore(refresh=false){
+ const more=$('tabMore');if(refresh!==true&&menuOwner===more){closeMenu();return;}
+ closeMenu();menuOwner=more;menuEl=document.createElement('div');menuEl.className='ctx-menu tab-more';menuEl.setAttribute('role','menu');
+ [...$('tabs').children].forEach(t=>{if(!t.hidden)return;const id=t.dataset.id,p=plans.find(x=>x.id===id),row=document.createElement('div'),b=document.createElement('button'),x=document.createElement('button');
+  row.className='row';b.type='button';b.setAttribute('role','menuitem');b.textContent=p.name;b.title=p.name;b.onclick=()=>{closeMenu();switchPlan(id);};
+  x.type='button';x.className='tab-x';x.title='删除方案';x.setAttribute('aria-label','删除方案 '+p.name);x.append(icon('x'));x.onclick=()=>{closeMenu();confirmDeletePlan(id);};
+  row.append(b,x);menuEl.append(row);});
+ document.body.append(menuEl);const r=more.getBoundingClientRect(),m=menuEl.getBoundingClientRect();
+ menuEl.style.left=Math.max(8,Math.min(r.right-m.width,innerWidth-m.width-8))+'px';menuEl.style.top=(r.bottom+4)+'px';}
+$('tabMore').onclick=()=>openTabMore();
+new ResizeObserver(()=>layoutTabs()).observe($('plans'));
 function renameStart(id){
  const t=$('tabs').querySelector('.tab[data-id="'+id+'"]'),p=plans.find(p=>p.id===id),n=t?.querySelector('.name');if(!n)return;
  const inp=document.createElement('input');inp.className='tab-edit';inp.value=p.name;inp.maxLength=40;inp.setAttribute('aria-label','方案名称');let done=false;
@@ -209,8 +229,8 @@ function tabDragStart(e,id,tab){
  const sx=e.clientX;let moving=false,to=0;const kids=()=>[...$('tabs').children];
  const move=ev=>{
   if(!moving){if(Math.abs(ev.clientX-sx)<5)return;moving=true;tab.classList.add('dragging');document.body.style.userSelect='none';}
-  const all=kids();to=all.length;for(let i=0;i<all.length;i++){const r=all[i].getBoundingClientRect();if(ev.clientX<r.left+r.width/2){to=i;break;}}
-  all.forEach(k=>k.classList.remove('ins-before','ins-after'));if(to<all.length)all[to].classList.add('ins-before');else all[all.length-1].classList.add('ins-after');};
+  const all=kids();to=all.length;for(let i=0;i<all.length;i++){if(all[i].hidden)continue;const r=all[i].getBoundingClientRect();if(ev.clientX<r.left+r.width/2){to=i;break;}}
+  all.forEach(k=>k.classList.remove('ins-before','ins-after'));if(to<all.length)all[to].classList.add('ins-before');else all.filter(k=>!k.hidden).at(-1).classList.add('ins-after');};
  const up=()=>{window.removeEventListener('pointermove',move);window.removeEventListener('pointerup',up);window.removeEventListener('pointercancel',up);document.body.style.userSelect='';
   if(!moving)return;tabDragged=true;setTimeout(()=>{tabDragged=false;});
   const from=plans.findIndex(p=>p.id===id),at=to>from?to-1:to;if(at!==from){plans.splice(at,0,...plans.splice(from,1));persist();}renderTabs();};
@@ -393,7 +413,7 @@ $('importFile').onchange=async()=>{const file=$('importFile').files[0];if(!file)
  try{await decalUI.importAssets(assets);}catch(e){throw Error('贴图图片存不进本机（浏览器存储不可用或满了）');}
  if(tourNotice)alert('已导入方案；'+tourNotice);collect();const taken=new Set(plans.map(p=>p.name)),incoming=data.plans.map(p=>{const name=uniqueName(p.name,taken);taken.add(name);return {...p,name,id:uid()};});plans.push(...incoming);switchPlan(incoming[Math.max(0,data.plans.findIndex(p=>p.id===data.activeId))].id);}catch(e){alert('导入失败：'+e.message);}finally{$('importFile').value='';}};
 let resizeStart=null;$('resize').onpointerdown=e=>{resizeStart={x:e.clientX,w:document.querySelector('aside').offsetWidth};$('resize').setPointerCapture(e.pointerId);document.body.style.userSelect='none';};$('resize').onpointermove=e=>{if(resizeStart)document.querySelector('aside').style.width=Math.max(238,Math.min(innerWidth*.55,resizeStart.w+e.clientX-resizeStart.x))+'px';};function endResize(){if(resizeStart){resizeStart=null;document.body.style.userSelect='';persist();}}$('resize').onpointerup=endResize;$('resize').onpointercancel=endResize;
-$('newPlan').append(icon('plus'));$('saveEditor').append(icon('download'));
+$('newPlan').append(icon('plus'));$('tabMore').append(icon('chevron-down'));$('saveEditor').append(icon('download'));
 tourPlan=TourPlan.create({root:$('routeEdit'),icon,
  getObjects:()=>snapshot().map(o=>({...o,name:o.type==='acrylicA4'||o.type==='acrylicA5'?'亚克力立牌':definitions[o.type].name})),
  getRoom:()=>room,getVenue:()=>venueGroup.userData,getTour:()=>tour,checkpoint,persist,

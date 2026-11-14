@@ -21,9 +21,9 @@ const people=(()=>{
   const shirt=white.clone();shirt.vertexColors=true;shirt.color.set('#ffffff');const clothesColor=new THREE.Color(p.clothesColor||(p.type==='staff'?'#165DFF':'#f3f3ef'));
   model.traverse(mesh=>{if(!mesh.isMesh)return;const isShirt=mesh.material.name==='Shirt';mesh.geometry=mesh.geometry.clone();
    if(isShirt){
-    // Existing arm weights keep sleeves white; tint the torso like a vest, without changing the mesh.
-    const {position,skinIndex,skinWeight}=mesh.geometry.attributes,colors=new Float32Array(position.count*3);
-    for(let i=0;i<position.count;i++){let armWeight=0;for(let j=0;j<4;j++)if(/^(UpperArm|LowerArm|Palm)/.test(mesh.skeleton.bones[skinIndex.array[i*4+j]].name))armWeight+=skinWeight.array[i*4+j];const color=armWeight>.5?white.color:clothesColor;color.toArray(colors,i*3);}
+    // 短袖 T 恤：整件衣服（躯干 + 短袖）统一上色，袖子不再留白。
+    const count=mesh.geometry.attributes.position.count,colors=new Float32Array(count*3);
+    for(let i=0;i<count;i++)clothesColor.toArray(colors,i*3);
     mesh.geometry.setAttribute('color',new THREE.BufferAttribute(colors,3));
    }
    mesh.material=isShirt?shirt:white;mesh.castShadow=true;mesh.receiveShadow=true;mesh.frustumCulled=false;});

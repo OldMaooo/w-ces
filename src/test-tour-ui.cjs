@@ -7,15 +7,15 @@ try{
  await p.goto('http://127.0.0.1:8876/?builtin');await ready();
  const open=async()=>{if(!(await p.evaluate(()=>editor.tourPlan.isOpen())))await p.locator('#routeBtn').click();await p.waitForSelector('#rtPlan rect.rt-booth');};
  const seqs=()=>p.locator('#rtLeft .rt-row.r .rt-seq').allTextContents();
- const outside=async fn=>{await p.locator('#routeBtn').click();await fn();await open();};   // 路线模式里没有方案标签：要切方案先退出，再进来
+ const outside=async fn=>{await p.locator('#modeBooth').click();await fn();await open();};   // 先退出路线再做事，做完再进来
  const clickObj=async id=>{await p.locator(`#rtPlan [data-o="${id}"]`).last().click();};
  const addRoute=async()=>{await p.locator('#rtLeft .rt-addroute').first().click();};
 
  // 1 进入 / 退出：图纸盖住 3D，退出后恢复
- await open();assert.equal(await p.locator('#routeBtn').textContent().then(t=>t.trim()),'退出路线');
+ await open();assert.equal(await p.locator('#routeBtn').getAttribute('aria-selected'),'true');
  assert.ok(await p.locator('#rtPlan text.rt-vlabel').count()>=2);assert.ok(await p.locator('#rtPlan g.rt-compass').count()===1);assert.ok(await p.locator('#rtPlan g.rt-scale').count()===1);
  assert.equal(await p.locator('#rtPlan [data-o]').count()>=3,true,'图上应有物料轮廓');
- await p.locator('#routeBtn').click();assert.equal(await p.locator('#routeEdit').isHidden(),true);assert.equal((await p.locator('#routeBtn').textContent()).trim(),'路线');
+ await p.locator('#modeBooth').click();assert.equal(await p.locator('#routeEdit').isHidden(),true);assert.equal(await p.locator('#modeBooth').getAttribute('aria-selected'),'true');
  console.log('PASS 路线按钮进入 / 退出，图纸有过道、物料轮廓、指南针、比例尺');
  // 2 标兴趣点：电视(1)、前台(2)、机器人(3)
  await open();
@@ -86,11 +86,11 @@ try{
  await p.locator('#rtTools button[title="撤销"]').click();assert.equal(await p.locator('#rtPlan circle.rt-stand.bad').count(),0);
  console.log('PASS 站位被挡：站位点标红 + 提示拖一下');
  // 10 失效：删掉电视（在 3D 里）→ 站变「已失效」，路线照算；撤销恢复
- await p.locator('#routeBtn').click();await p.evaluate(()=>editor.select(editor.objects().find(o=>o.userData.id===1)));await p.locator('#delete').click();await open();
+ await p.locator('#modeBooth').click();await p.evaluate(()=>editor.select(editor.objects().find(o=>o.userData.id===1)));await p.locator('#delete').click();await open();
  await p.locator('#rtLeft .rt-row.r').nth(1).click();
  assert.ok((await p.locator('#rtRight .rt-stop.stale').count())>=1);assert.ok((await p.locator('#rtRight .rt-stop.stale').first().textContent()).includes('已失效'));
  assert.equal(await p.locator('#rtLeft .rt-row.r').nth(1).locator('.rt-flag').count(),0,'失效的站跳过，路线照算');
- await p.locator('#routeBtn').click();await p.locator('#undo').click();await open();await p.locator('#rtLeft .rt-row.r').nth(1).click();
+ await p.locator('#modeBooth').click();await p.evaluate(()=>editor.undo());await open();await p.locator('#rtLeft .rt-row.r').nth(1).click();
  assert.equal(await p.locator('#rtRight .rt-stop.stale').count(),0);console.log('PASS 物料被删 → 站「已失效」路线照算，撤销恢复');
  // 11 键盘：路线模式里空格 / WASD 不触发自由步行，Delete 不删物料
  await p.keyboard.press('Space');await p.keyboard.press('KeyW');await p.keyboard.press('Delete');
@@ -99,39 +99,40 @@ try{
  await p.reload();await ready();await open();assert.deepEqual(await seqs(),['入口 → 出口','入口 → 电视 → 机器人 → 出口','入口 → 电视 → 机器人 → 前台洽谈 → 出口']);
  assert.equal((await seqs()).length,3);console.log('PASS 刷新后大方案、子方案、兴趣点都在：',(await seqs()).join(' | '));
  // 13 导出 → 导入：tour 在新方案里，且图纸能打开
- const exp=await p.evaluate(()=>JSON.stringify(editor.exportData('current')));await p.locator('#routeBtn').click();
- await p.locator('#importFile').setInputFiles({name:'x.json',mimeType:'application/json',buffer:Buffer.from(exp)});await p.waitForFunction(()=>document.querySelectorAll('#tabs button').length===2);
+ const exp=await p.evaluate(()=>JSON.stringify(editor.exportData('current')));await p.locator('#modeBooth').click();
+ await p.locator('#importFile').setInputFiles({name:'x.json',mimeType:'application/json',buffer:Buffer.from(exp)});await p.waitForFunction(()=>document.querySelectorAll('#tabs [role=tab]').length===2);
  await open();assert.equal((await seqs()).length,3);assert.equal(await p.locator('#rtPlan g.rt-badge').count(),3);console.log('PASS 导出再导入：新方案里图纸、子方案、编号圆标都在');
  // 14 复制方案 / 切换方案时图纸同步
- await outside(async()=>{await p.locator('#newPlan').click();await p.waitForFunction(()=>document.querySelectorAll('#tabs button').length===3);});assert.equal((await seqs()).length,3);
+ await outside(async()=>{await p.locator('#newPlan').click();await p.waitForFunction(()=>document.querySelectorAll('#tabs [role=tab]').length===3);});assert.equal((await seqs()).length,3);
  await p.locator('#rtLeft .rt-row.g').hover();await p.locator('#rtLeft .rt-row.g button[title="删除"]').click();assert.equal((await seqs()).length,0);assert.ok(await p.locator('#rtLeft .rt-empty:has-text("还没有路线方案")').isVisible());assert.equal(await p.locator('#rtPlan g.rt-ep').count(),0);
- await outside(()=>p.locator('#tabs button').first().click());assert.equal((await seqs()).length,3,'删掉方案 3 的路线，不影响方案 1');
- await outside(()=>p.locator('#tabs button').nth(2).click());assert.equal((await seqs()).length,0,'回到方案 3 仍是空的');
+ await outside(()=>p.locator('#tabs [role=tab]').first().click());assert.equal((await seqs()).length,3,'删掉方案 3 的路线，不影响方案 1');
+ await outside(()=>p.locator('#tabs [role=tab]').nth(2).click());assert.equal((await seqs()).length,0,'回到方案 3 仍是空的');
  console.log('PASS 路线模式下切方案、另存方案，左栏随之刷新');
  // 15 复制 / 删除 / 重命名子方案与大方案
- await outside(()=>p.locator('#tabs button').nth(1).click());
+ await outside(()=>p.locator('#tabs [role=tab]').nth(1).click());
  await p.locator('#rtLeft .rt-row.r').nth(0).hover();await p.locator('#rtLeft .rt-row.r').nth(0).locator('button[title="复制"]').click();assert.equal((await seqs()).length,4);
  await p.locator('#rtLeft .rt-row.r').nth(1).hover();await p.locator('#rtLeft .rt-row.r').nth(1).locator('button[title="删除"]').click();assert.equal((await seqs()).length,3);
  await p.locator('#rtLeft .rt-row.g').click();await p.locator('#rtRight select').selectOption('west-sn');
  assert.equal(await p.evaluate(()=>editor.tour().groups[0].approach),'west-sn');assert.equal((await p.locator('#rtLeft .rt-row.g .rt-name').first().textContent()).trim(),'西过道·南→北');
  console.log('PASS 复制 / 删除子方案、改来向');
  // 16 退出后自由步行、3D 编辑正常
- await p.locator('#routeBtn').click();await p.locator('#walk').click();assert.equal(await p.evaluate(()=>editor.walking()),true);await p.keyboard.press('Escape');assert.equal(await p.evaluate(()=>editor.walking()),false);
+ await p.locator('#modeBooth').click();await p.locator('#walk').click();assert.equal(await p.evaluate(()=>editor.walking()),true);await p.keyboard.press('Escape');assert.equal(await p.evaluate(()=>editor.walking()),false);
  console.log('PASS 退出路线后自由步行、3D 编辑照常');
  // 17 所有能点的元素都有 hover 变化
- await p.locator('#tabs button').nth(1).click();await p.locator('#routeBtn').click();await p.waitForSelector('#rtPlan rect.rt-booth');await p.locator('#rtLeft .rt-row.r').nth(1).click();await p.locator('#rtPlan g.rt-badge').first().click();
+ await p.locator('#tabs [role=tab]').nth(1).click();await p.locator('#routeBtn').click();await p.waitForSelector('#rtPlan rect.rt-booth');await p.locator('#rtLeft .rt-row.r').nth(1).click();await p.locator('#rtPlan g.rt-badge').first().click();
  const probe=async(sel,props,pos)=>{const el=p.locator(sel).first();await p.mouse.move(2,2);const read=()=>el.evaluate((n,ps)=>ps.map(k=>getComputedStyle(n)[k]).join('|'),props);const a=await read();await el.hover(pos?{position:pos}:{});const b=await read();assert.notEqual(a,b,sel+' 悬停没有变化');};
  await probe('#rtTools button[title="适应画面"]',['backgroundColor']);await probe('#rtLeft .rt-row.g',['backgroundColor']);await probe('#rtLeft .rt-addroute',['backgroundColor']);
  await probe('#rtPlan .rt-obj[data-o="2"]',['fill'],{x:4,y:4});await probe('#rtPlan g.rt-badge text',['fill']);await probe('#rtPlan circle.rt-stand:not(.sel)',['strokeWidth']);await probe('#rtPlan g.rt-ep circle',['stroke']);
  await probe('#rtRight .rt-stop:not(.fixed)',['backgroundColor']);await probe('#rtRight .rt-field input',['borderColor']);await probe('#rtBar #tpPlay',['backgroundColor']);
  console.log('PASS 工具条、列表行、虚线按钮、物料、编号圆标、站位点、入口出口点、站行、输入框、按钮悬停都有变化');
 
- // 18 进入路线编辑：顶栏只剩「退出路线」，没有方案标签条
+ // 18 进入路线编辑：顶栏方案标签、三模式标签、导入导出都在，只是左侧栏收起；点「展台」退出
  await p.evaluate(()=>{localStorage.removeItem('ces-route-panel-w');});
- const chrome=await p.evaluate(()=>{const vis=e=>e&&getComputedStyle(e).display!=='none'&&e.getClientRects().length>0;return {header:[...document.querySelectorAll('header .actions>*')].filter(vis).map(e=>e.id),planbar:vis(document.getElementById('planbar')),tabs:vis(document.getElementById('tabs')),aside:vis(document.querySelector('aside'))};});
- assert.deepEqual(chrome.header,['routeBtn']);assert.equal(chrome.planbar,false);assert.equal(chrome.tabs,false);assert.equal(chrome.aside,false);
- await p.locator('#routeBtn').click();const back=await p.evaluate(()=>[...document.querySelectorAll('header .actions>*')].filter(e=>getComputedStyle(e).display!=='none').length);assert.ok(back>=6,'退出路线后顶栏按钮回来');assert.equal(await p.locator('#planbar').isVisible(),true);await open();
- console.log('PASS 路线编辑里顶栏只剩「退出路线」，方案标签条和左侧栏收起，退出后都回来');
+ const chrome=await p.evaluate(()=>{const vis=e=>e&&getComputedStyle(e).display!=='none'&&e.getClientRects().length>0;return {tabs:vis(document.getElementById('tabs')),modes:vis(document.getElementById('modes')),imp:vis(document.getElementById('import')),aside:vis(document.querySelector('aside')),planbar:!!document.getElementById('planbar')};});
+ assert.equal(chrome.tabs,true);assert.equal(chrome.modes,true);assert.equal(chrome.imp,true);assert.equal(chrome.aside,false);assert.equal(chrome.planbar,false);
+ assert.equal(await p.locator('#routeBtn').getAttribute('aria-selected'),'true');assert.equal(await p.locator('#modeBooth').getAttribute('aria-selected'),'false');
+ await p.locator('#modeBooth').click();assert.equal(await p.locator('aside').isVisible(),true);await open();
+ console.log('PASS 路线编辑里顶栏标签和导入导出还在，左侧栏收起，点「展台」退出后回来');
  // 19 左栏可拖宽，宽度记在本机
  const w0=await p.locator('#rtLeft').evaluate(e=>e.offsetWidth);const bar=await p.locator('#routeEdit .rt-split').first().boundingBox();
  await p.mouse.move(bar.x+3,300);await p.mouse.down();await p.mouse.move(bar.x+3+90,300,{steps:5});await p.mouse.up();

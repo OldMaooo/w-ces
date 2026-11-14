@@ -26,17 +26,17 @@ const TOKEN='figd_test_TOKEN_123';
  async function drag(xyz,b64,{name='red.png',type='image/png',drop=true}={}){const p=await point(...xyz);return page.evaluate(([x,y,b64,name,type,drop])=>{const bin=atob(b64),u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);const dt=new DataTransfer();dt.items.add(new File([u],name,{type}));let eff='unset';Object.defineProperty(dt,'dropEffect',{get:()=>eff,set:v=>{eff=v;}}); /* 手造的 DataTransfer 不认 dropEffect，记下代码设的值 */const o={clientX:x,clientY:y,dataTransfer:dt,bubbles:true,cancelable:true},c=renderer.domElement;const over=new DragEvent('dragover',o);c.dispatchEvent(over);const effect=dt.dropEffect;if(drop)c.dispatchEvent(new DragEvent('drop',o));return {prevented:over.defaultPrevented,effect};},[p.x,p.y,b64,name,type,drop]);}
 
  // ---- 1 选面只在贴图模式里：「管理贴面」点一下加、再点一下去掉 ----
- const manageBtn=()=>page.locator('.dk-hint button',{hasText:'管理贴面'}),doneBtn=()=>page.locator('.dk-hint button',{hasText:'完成'});
- assert.equal(await page.locator('#dkFaces,#dkWalls').count(),0,'左栏没有选面');assert.ok(!(await page.locator('aside').textContent()).includes('可贴图的面'));
- await page.locator('#decalMode').click();assert.ok((await page.locator('.dk-hint').textContent()).includes('还没有可贴图的面'));
- await manageBtn().click();assert.equal((await dbg()).manage,true);assert.ok((await page.locator('.dk-hint').textContent()).includes('管理贴面'));
+ const manageBtn=()=>page.locator('#decalSide .dk-top button',{hasText:'管理贴面'}),doneBtn=()=>page.locator('#decalSide .dk-top button',{hasText:'保存并退出管理模式'}),listed=()=>page.locator('#decalSide .dk-top').count();
+ assert.equal(await page.locator('#dkFaces,#dkWalls').count(),0,'左栏没有选面');assert.equal(await page.locator('#decalSide').isVisible(),false);
+ await page.locator('#decalMode').click();assert.equal(await page.locator('#viewbar').isVisible(),false);assert.equal(await page.locator('#layers').isVisible(),false,'物料模式左栏不显示图层');assert.equal(await page.locator('#roomPanel').isVisible(),false);assert.ok((await page.locator('#decalSide .dk-explain').first().textContent()).includes('先选面'));assert.equal(await page.locator('.dk-hint').count(),0,'画布里没有管理贴面按钮');
+ await manageBtn().click();assert.equal((await dbg()).manage,true);assert.equal((await page.locator('#decalSide .dk-top button').textContent()).trim(),'保存并退出管理模式');
  let p=await point(...FRONT);await page.mouse.move(p.x,p.y);assert.equal((await dbg()).hover,'obj:1|front');
  p=await point(...ROLLUP);await page.mouse.move(p.x,p.y);assert.equal((await dbg()).hover,'obj:2|front','任何物体的面都能点');
  await clickAt(...FRONT);await clickAt(...TOP);assert.deepEqual((await desk()).faces,['front','top']);
  await clickAt(...TV);assert.deepEqual(await page.evaluate(()=>editor.objects()[2].userData.decalFaces),['screen']);await clickAt(...TV);assert.equal(await page.evaluate(()=>editor.objects()[2].userData.decalFaces),undefined,'再点一下去掉');
  assert.deepEqual((await dbg()).tints.sort(),['obj:1|front','obj:1|top']);assert.equal(await page.evaluate(()=>editor.selected()),null,'管理贴面时点物体不选中');
  await clickAt(...TOP);assert.deepEqual((await desk()).faces,['front'],'没贴图的面直接去掉');assert.equal((await dbg()).asking,false);await clickAt(...TOP);
- await page.locator('#undo').click();assert.deepEqual((await desk()).faces,['front']);await page.locator('#redo').click();assert.deepEqual((await desk()).faces,['front','top']);
+ await page.evaluate(()=>editor.undo());assert.deepEqual((await desk()).faces,['front']);await page.evaluate(()=>editor.redo());assert.deepEqual((await desk()).faces,['front','top']);
  let r=await drag(FRONT,png[0]);assert.equal(r.effect,'none','管理贴面时不接图片');
  await page.keyboard.press('Escape');assert.deepEqual([(await dbg()).manage,(await dbg()).mode],[false,true],'Esc 先退出管理贴面');
  await manageBtn().click();await doneBtn().click();assert.equal((await dbg()).manage,false,'「完成」也能退出');
@@ -44,14 +44,14 @@ const TOKEN='figd_test_TOKEN_123';
  console.log('PASS 选面只在贴图模式里：管理贴面点一下加 / 再点去掉、任何物体都能点、撤销重做、Esc / 完成退出');
 
  // ---- 2 常规模式下拖图片：没反应 ----
- r=await drag(FRONT,png[0]);assert.equal(r.effect,'none');assert.equal((await desk()).decals,undefined);assert.equal(await page.locator('.dk-panel').isVisible(),false);
+ r=await drag(FRONT,png[0]);assert.equal(r.effect,'none');assert.equal((await desk()).decals,undefined);assert.equal(await page.locator('#decalSide .dk-head').isVisible(),false);
  console.log('PASS 常规模式拖图片到画布：不接受、不贴');
 
  // ---- 3 贴图模式：只认亮面；拖入贴图；面板调整 ----
  await page.locator('#decalMode').click();assert.equal(await page.evaluate(()=>editor.selected()),null);
- assert.deepEqual((await dbg()).tints.sort(),['obj:1|front','obj:1|top']);assert.ok((await page.locator('.dk-hint').textContent()).includes('贴图模式'));
- await clickAt(...TV);assert.equal(await page.evaluate(()=>editor.selected()),null,'贴图模式点物体不选中');assert.equal(await page.locator('.dk-panel').isVisible(),false);
- r=await drag(ROLLUP,png[0]);assert.equal(r.effect,'none');assert.equal(await page.locator('.dk-panel').isVisible(),false);
+ assert.deepEqual((await dbg()).tints.sort(),['obj:1|front','obj:1|top']);assert.equal((await page.locator('#decalSide .dk-top button').textContent()).trim(),'管理贴面');
+ await clickAt(...TV);assert.equal(await page.evaluate(()=>editor.selected()),null,'贴图模式点物体不选中');assert.equal(await page.locator('#decalSide .dk-head').isVisible(),false);
+ r=await drag(ROLLUP,png[0]);assert.equal(r.effect,'none');assert.equal(await page.locator('#decalSide .dk-head').isVisible(),false);
  r=await drag(FRONT,png[0],{drop:false});assert.equal(r.effect,'copy');assert.equal((await dbg()).highlight,'obj:1|front');
  await drag(FRONT,png[0]);await settle();
  let d=await desk();assert.match(d.decals.front.assetId,/^[0-9a-f]{64}$/);assert.deepEqual(d.decals.front.source,{kind:'file'});
@@ -66,8 +66,8 @@ const TOKEN='figd_test_TOKEN_123';
  await page.locator('button[title="顺时针转 90°"]').click();assert.equal((await desk()).decals.front.rot,90);await page.locator('button[title="逆时针转 90°"]').click();await page.locator('button[title="逆时针转 90°"]').click();assert.equal((await desk()).decals.front.rot,270);
  await page.locator('.dk-row button',{hasText:'复位'}).click();d=await desk();assert.deepEqual([d.decals.front.scale,d.decals.front.ox,d.decals.front.oy,d.decals.front.rot],[1,0,0,0]);
  // 一次拖动滑块只记一次撤销
- await page.locator('.dk-row:has-text("大小") input[type=range]').fill('120');await page.locator('#undo').click();d=await desk();near(d.decals.front.scale,1);
- assert.equal(await page.locator('.dk-panel').isVisible(),true,'撤销后面板还在');
+ await page.locator('.dk-row:has-text("大小") input[type=range]').fill('120');await page.evaluate(()=>editor.undo());d=await desk();near(d.decals.front.scale,1);
+ assert.equal(await page.locator('#decalSide .dk-head').isVisible(),true,'撤销后面板还在');
  // 挪到台面
  await page.locator('.dk-row:has-text("挪到") select').selectOption('top');await settle();d=await desk();assert.equal(d.decals.front,undefined);assert.equal(d.decals.top.assetId,redId);
  m=(await dbg()).meshes;assert.equal(m['obj:1|front'],undefined);assert.ok(m['obj:1|top'].image);near(m['obj:1|top'].canvasW/m['obj:1|top'].canvasH,1.6/.65);
@@ -78,15 +78,15 @@ const TOKEN='figd_test_TOKEN_123';
  d=await desk();assert.notEqual(d.decals.top.assetId,redId);const blueId=d.decals.top.assetId;
  // 删除，撤销回来
  await page.locator('button[title="删除贴图"]').click();assert.equal((await desk()).decals?.top,undefined);assert.ok(await page.locator('.dk-link input').isVisible(),'删除后回到空面板');
- await page.locator('#undo').click();await settle();assert.equal((await desk()).decals.top.assetId,blueId);
+ await page.evaluate(()=>editor.undo());await settle();assert.equal((await desk()).decals.top.assetId,blueId);
  // 空面：选文件上传 + 坏文件报错
  await page.locator('.dk-face',{hasText:'正面'}).click();assert.ok(await page.locator('.dk-link input').isVisible());
  const fc2=page.waitForEvent('filechooser');await page.locator('.dk-drop').click();await (await fc2).setFiles(redFile);await page.waitForFunction(()=>editor.objects()[0].userData.decals.front);await settle();assert.equal((await desk()).decals.front.assetId,redId,'同一张图按内容去重');
  await page.locator('.dk-face',{hasText:'台面'}).click();await drag(TOP,Buffer.from('hello').toString('base64'),{name:'a.txt',type:'text/plain'});
  assert.ok((await page.locator('.dk-note.err').textContent()).includes('不是图片'));assert.equal((await desk()).decals.top.assetId,blueId);
  // 点没亮的地方关面板；Esc 先关面板再退出
- await clickAt(...TV);assert.equal(await page.locator('.dk-panel').isVisible(),false);
- await clickAt(...FRONT);assert.equal(await page.locator('.dk-panel').isVisible(),true);await page.keyboard.press('Escape');assert.equal(await page.locator('.dk-panel').isVisible(),false);assert.equal((await dbg()).mode,true);assert.equal((await dbg()).current,null,'关面板后不再亮');
+ await clickAt(...TV);assert.equal(await page.locator('#decalSide .dk-head').isVisible(),false);
+ await clickAt(...FRONT);assert.equal(await page.locator('#decalSide .dk-head').isVisible(),true);await page.keyboard.press('Escape');assert.equal(await page.locator('#decalSide .dk-head').isVisible(),false);assert.equal((await dbg()).mode,true);assert.equal((await dbg()).current,null,'关面板后不再亮');
  await page.keyboard.press('Escape');assert.equal((await dbg()).mode,false);assert.deepEqual((await dbg()).tints,[]);
  console.log('PASS 贴图模式：只认亮面、拖入贴上、摆法 / 大小 / 位置 / 方向 / 复位、挪面、换图、删除可撤销、去重、坏文件报错、Esc 两段退出');
 
@@ -99,7 +99,7 @@ const TOKEN='figd_test_TOKEN_123';
  assert.equal(await page.evaluate(()=>editor.layout().room.decals.B.assetId),blueId);assert.equal(await page.locator('.dk-head strong').textContent(),'B 后墙');assert.equal(await page.locator('.dk-head small').textContent(),'6.1 × 2.8 米');
  // 墙长互换后贴图跟着重画
  await page.keyboard.press('Escape');await page.keyboard.press('Escape');await page.locator('#swapWalls').click();await settle();m=(await dbg()).meshes['room|B'];near(m.canvasW/m.canvasH,5.5/2.8);
- await page.locator('#undo').click();await settle();
+ await page.evaluate(()=>editor.undo());await settle();
  console.log('PASS 墙面只认 A/B 内侧、⌘V 粘贴到鼠标下的亮面、墙长互换贴图跟着重画');
 
  // ---- 5 改尺寸、复制、隐藏：贴图跟着走 ----
@@ -117,7 +117,7 @@ const TOKEN='figd_test_TOKEN_123';
  await clickAt(...FRONT);await page.keyboard.press('Escape');assert.equal((await dbg()).asking,false);assert.equal((await dbg()).manage,true,'Esc 只关确认窗');assert.deepEqual((await desk()).faces,['front','top']);
  await clickAt(...FRONT);await page.locator('.dk-dialog button',{hasText:'删除'}).click();
  d=await desk();assert.deepEqual(d.faces,['top']);assert.equal(d.decals.front,undefined);assert.equal((await dbg()).meshes['obj:1|front'],undefined);
- await page.locator('#undo').click();await settle();d=await desk();assert.deepEqual(d.faces,['front','top']);assert.equal(d.decals.front.assetId,redId);
+ await page.evaluate(()=>editor.undo());await settle();d=await desk();assert.deepEqual(d.faces,['front','top']);assert.equal(d.decals.front.assetId,redId);
  await page.keyboard.press('Escape');await page.keyboard.press('Escape');assert.equal((await dbg()).mode,false);
  console.log('PASS 改尺寸重画、复制带贴图、转向后朝向正确、去掉已贴图的面先确认（取消 / Esc 不删）、确认后连图一起删且可撤销');
 
@@ -147,7 +147,7 @@ const TOKEN='figd_test_TOKEN_123';
  // ---- 7 数据：validateLayout 不丢；令牌不进导出和下载编辑器 ----
  const kept=await page.evaluate(()=>{const l=editor.layout(),v=editor.validateLayout(JSON.parse(JSON.stringify(l))),pick=x=>({faces:x.decalFaces,decals:x.decals});return [[pick(l.room),...l.objects.map(pick)],[pick(v.room),...v.objects.map(pick)]];});
  assert.deepEqual(kept[1],kept[0],'validateLayout 原样保留贴图字段');assert.ok(kept[0].filter(x=>x.decals).length>=2);
- const [dl]=await Promise.all([page.waitForEvent('download'),page.locator('#save').click()]);const jsonFile=path.join(dir,'export.json');await dl.saveAs(jsonFile);
+ const [dl]=await Promise.all([page.waitForEvent('download'),page.locator('#save').click().then(()=>page.locator('.ctx-menu [data-key=current]').click())]);const jsonFile=path.join(dir,'export.json');await dl.saveAs(jsonFile);
  const text=fs.readFileSync(jsonFile,'utf8'),exp=JSON.parse(text);
  assert.deepEqual(Object.keys(exp.assets).sort(),[redId,blueId].sort());assert.equal(exp.assets[redId].mime,'image/png');assert.equal(exp.assets[redId].base64,png[0]);
  assert.ok(!text.includes(TOKEN)&&!text.includes('figd_'),'导出不带令牌');
@@ -158,9 +158,9 @@ const TOKEN='figd_test_TOKEN_123';
  const other=await (await browser.newContext({viewport:{width:1440,height:960}})).newPage();other.on('pageerror',e=>errors.push(e.message));other.on('dialog',dd=>{alerts.push(dd.message());dd.dismiss();});
  await other.goto(BASE);await other.waitForFunction(()=>window.editor&&editor.decals);
  const badFile=path.join(dir,'bad.json');fs.writeFileSync(badFile,JSON.stringify({...exp,assets:{[redId]:{mime:'text/html',width:1,height:1,base64:'AA=='}}}));
- const tabs=await other.locator('#tabs button').count();await other.locator('#importFile').setInputFiles(badFile);await other.waitForFunction(()=>true);await other.waitForTimeout(300);
- assert.equal(await other.locator('#tabs button').count(),tabs,'坏图片数据：不追加方案');assert.ok(alerts.some(a=>a.includes('导入失败')));
- await other.locator('#importFile').setInputFiles(jsonFile);await other.waitForFunction(n=>document.querySelectorAll('#tabs button').length>n,tabs);
+ const tabs=await other.locator('#tabs [role=tab]').count();await other.locator('#importFile').setInputFiles(badFile);await other.waitForFunction(()=>true);await other.waitForTimeout(300);
+ assert.equal(await other.locator('#tabs [role=tab]').count(),tabs,'坏图片数据：不追加方案');assert.ok(alerts.some(a=>a.includes('导入失败')));
+ await other.locator('#importFile').setInputFiles(jsonFile);await other.waitForFunction(n=>document.querySelectorAll('#tabs [role=tab]').length>n,tabs);
  await other.waitForFunction(()=>editor.decals.debug().pending===0);const om=await other.evaluate(()=>editor.decals.debug().meshes);
  assert.ok(om['obj:1|front']?.image&&om['obj:1|top']?.image&&om['room|B']?.image,'导入后 3D 里图片都在');
  assert.equal(await other.evaluate(()=>localStorage.getItem('ces-figma-token')),null);
@@ -170,7 +170,7 @@ const TOKEN='figd_test_TOKEN_123';
  console.log('PASS 干净浏览器导入后图片都在、刷新还在；坏图片数据整份拒绝、不追加方案');
 
  // ---- 9 更多物件能选面：L 台 6 个立面（两个朝前的面分得开）、方吊楣 4 面、圆桌台面、电视 / 闺蜜机屏幕；人、电脑等没有。选中物件时左栏不显示「场地」 ----
- const cases={ldesk:['front','back','left','right','endA','endB'],fascia:['front','back','left','right'],table:['top'],tv:['screen'],display:['screen'],laptop:[],visitor:[]};
+ const cases={ldesk:['front','back','left','right','endA','endB'],fascia:['front','back','left','right'],table:['top'],tv:['screen'],display:['screen'],laptop:['screen'],visitor:[]};
  const aimAt=f=>page.evaluate(f=>{const o=editor.objects()[0],d=o.userData;let w,n;
   if(f){const sp=DecalModel.faceSpec(d.type,d.size,f,d);const q=new THREE.Object3D();q.position.set(...sp.pos);q.rotation.set(...sp.rot);o.add(q);o.updateMatrixWorld(true);w=q.getWorldPosition(new THREE.Vector3());n=new THREE.Vector3(0,0,1).transformDirection(q.matrixWorld);o.remove(q);}
   else{w=new THREE.Box3().setFromObject(o).getCenter(new THREE.Vector3());n=new THREE.Vector3(0,0,1);}
@@ -185,7 +185,7 @@ const TOKEN='figd_test_TOKEN_123';
   if(type==='fascia'){await page.evaluate(()=>{const o=editor.objects()[0];o.userData.shape='round';geometry(o);camera.position.set(0,1.7,4);orbit.target.set(0,1.3,0);orbit.update();});p=await point(0,1.3,1.5);await page.mouse.move(p.x,p.y);assert.equal((await dbg()).hover,null,'圆形吊楣：曲面不能贴');}
  }
  await page.evaluate(()=>{editor.decals.exit();select(null);});assert.equal(await page.locator('#roomPanel').isVisible(),true,'啥都没选：显示场地');
- console.log('PASS L 台 / 方吊楣 / 圆桌 / 电视 / 闺蜜机都能点出面（含转 45° 后）；圆形吊楣、电脑、游客没有；选中物件时左栏隐藏场地');
+ console.log('PASS L 台 / 方吊楣 / 圆桌 / 电视 / 闺蜜机都能点出面（含转 45° 后）；圆形吊楣、游客没有（笔记本屏幕可以）；选中物件时左栏隐藏场地');
 
  assert.deepEqual(errors,[]);
 }finally{await browser.close()}})().catch(e=>{console.error(e);process.exitCode=1});

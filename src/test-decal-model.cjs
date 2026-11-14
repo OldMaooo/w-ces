@@ -17,9 +17,9 @@ test('哪些物件能贴：前台 5 面、L 台 6 个立面、方吊楣 4 面、
  assert.deepEqual(M.facesFor('fascia',{shape:'square'}),['front','back','left','right']);
  assert.deepEqual(M.facesFor('fascia',{shape:'round'}),[]);
  assert.deepEqual(M.facesFor('table'),['top']);
- for(const t of ['tv','display'])assert.deepEqual(M.facesFor(t),['screen']);
+ for(const t of ['tv','display','laptop'])assert.deepEqual(M.facesFor(t),['screen']);
  for(const t of ['rollup','acrylic','acrylicA4','acrylicA5'])assert.deepEqual(M.facesFor(t),['front']);
- for(const t of ['laptop','webcam','chair','staff','visitor','robot'])assert.deepEqual(M.facesFor(t),[]);
+ for(const t of ['webcam','chair','staff','visitor','robot'])assert.deepEqual(M.facesFor(t),[]);
 });
 test('L 台：外侧背面=横边全长、左侧=纵边全长；内侧正面/右侧扣掉另一条边的宽；端头=边宽',()=>{
  const p={lengthA:2.2,widthA:.6,lengthB:1.6,widthB:.55},s=[2.2,1,1.6],f=k=>M.faceSpec('ldesk',s,k,p);

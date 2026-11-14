@@ -26,38 +26,38 @@ try{
  // 6 撤销 / 重做
  await p.evaluate(()=>{editor.checkpoint();const t=editor.tour();t.groups[0].name='改过的名字';editor.persist();});
  assert.equal(await p.evaluate(()=>editor.tour().groups[0].name),'改过的名字');
- await p.locator('#undo').click();assert.equal(await p.evaluate(()=>editor.tour().groups[0].name),'北过道·东→西');
- await p.locator('#redo').click();assert.equal(await p.evaluate(()=>editor.tour().groups[0].name),'改过的名字');
- await p.locator('#undo').click();console.log('PASS 撤销重做带 tour');
+ await p.evaluate(()=>editor.undo());assert.equal(await p.evaluate(()=>editor.tour().groups[0].name),'北过道·东→西');
+ await p.evaluate(()=>editor.redo());assert.equal(await p.evaluate(()=>editor.tour().groups[0].name),'改过的名字');
+ await p.evaluate(()=>editor.undo());console.log('PASS 撤销重做带 tour');
  // 7 删物料 → tour 原样（站变失效，不丢）→ 撤销恢复
  const del=await p.evaluate(()=>{const o=editor.objects().find(x=>x.userData.id===2);editor.checkpoint?.();return !!o;});
  assert.ok(del);
  await p.evaluate(()=>{window.__before=JSON.stringify(editor.tour());});
  await p.evaluate(()=>{const o=editor.objects().find(x=>x.userData.id===2);o&&editor.select(o);});await p.locator('#delete').click();
  assert.equal(await p.evaluate(()=>JSON.stringify(editor.tour())),await p.evaluate(()=>window.__before),'删物料不改 tour');
- await p.locator('#undo').click();assert.ok(await p.evaluate(()=>editor.objects().some(x=>x.userData.id===2)));assert.equal(await p.evaluate(()=>JSON.stringify(editor.tour())),await p.evaluate(()=>window.__before));console.log('PASS 删物料不丢 tour，撤销后物料回来');
+ await p.evaluate(()=>editor.undo());assert.ok(await p.evaluate(()=>editor.objects().some(x=>x.userData.id===2)));assert.equal(await p.evaluate(()=>JSON.stringify(editor.tour())),await p.evaluate(()=>window.__before));console.log('PASS 删物料不丢 tour，撤销后物料回来');
  // 8 复制物料不带兴趣点
  const pc=await p.evaluate(()=>{const o=editor.objects().find(x=>x.userData.id===1);editor.select(o);return editor.tour().pois.length;});
- await p.locator('#copy').click();assert.equal(await p.evaluate(()=>editor.tour().pois.length),pc);console.log('PASS 复制物料不复制兴趣点');await p.locator('#undo').click();
+ await p.locator('#copy').click();assert.equal(await p.evaluate(()=>editor.tour().pois.length),pc);console.log('PASS 复制物料不复制兴趣点');await p.evaluate(()=>editor.undo());
  // 9 导出 → 导入：tour 还在，且是独立副本
  const exp=await p.evaluate(()=>JSON.stringify(editor.exportData('current')));
  assert.ok(JSON.parse(exp).plans[0].layout.tour,'导出文件里要有 tour');
  await p.locator('#importFile').setInputFiles({name:'a.json',mimeType:'application/json',buffer:Buffer.from(exp)});
- await p.waitForFunction(()=>document.querySelectorAll('#tabs button').length===2);
+ await p.waitForFunction(()=>document.querySelectorAll('#tabs [role=tab]').length===2);
  assert.deepEqual(await p.evaluate(()=>editor.tour()),S);console.log('PASS 导出再导入 tour 还在');
  await p.evaluate(()=>{editor.checkpoint();editor.tour().groups[0].name='只改第二个方案';editor.persist();});
- await p.locator('#tabs button').first().click();assert.equal(await p.evaluate(()=>editor.tour().groups[0].name),'北过道·东→西');
- await p.locator('#tabs button').nth(1).click();assert.equal(await p.evaluate(()=>editor.tour().groups[0].name),'只改第二个方案');console.log('PASS 多方案切换，tour 互不串');
+ await p.locator('#tabs [role=tab]').first().click();assert.equal(await p.evaluate(()=>editor.tour().groups[0].name),'北过道·东→西');
+ await p.locator('#tabs [role=tab]').nth(1).click();assert.equal(await p.evaluate(()=>editor.tour().groups[0].name),'只改第二个方案');console.log('PASS 多方案切换，tour 互不串');
  // 10 另存方案：tour 深拷贝
- await p.locator('#newPlan').click();await p.waitForFunction(()=>document.querySelectorAll('#tabs button').length===3);
+ await p.locator('#newPlan').click();await p.waitForFunction(()=>document.querySelectorAll('#tabs [role=tab]').length===3);
  assert.equal(await p.evaluate(()=>editor.tour().groups[0].name),'只改第二个方案');
  await p.evaluate(()=>{editor.checkpoint();editor.tour().groups[0].name='第三个';editor.persist();});
- await p.locator('#tabs button').nth(1).click();assert.equal(await p.evaluate(()=>editor.tour().groups[0].name),'只改第二个方案');console.log('PASS 另存方案带 tour 且互不串');
+ await p.locator('#tabs [role=tab]').nth(1).click();assert.equal(await p.evaluate(()=>editor.tour().groups[0].name),'只改第二个方案');console.log('PASS 另存方案带 tour 且互不串');
  // 11 导入一个带坏 tour 的文件：物料导入成功，提示路线被忽略
  const badFile=JSON.parse(exp);badFile.plans[0].layout.tour.groups[0].approach='乱写';
  let dialogText='';p.removeAllListeners('dialog');p.on('dialog',d=>{dialogText=d.message();d.dismiss();});
  await p.locator('#importFile').setInputFiles({name:'b.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(badFile))});
- await p.waitForFunction(()=>document.querySelectorAll('#tabs button').length===4);
+ await p.waitForFunction(()=>document.querySelectorAll('#tabs [role=tab]').length===4);
  assert.ok(await p.evaluate(()=>editor.objects().length)>=3);assert.equal(await p.evaluate(()=>editor.tour().groups.length+editor.tour().pois.length),0);assert.ok(dialogText.includes('路线'),'导入时要提示路线被忽略：'+dialogText);console.log('PASS 导入坏 tour：物料照常进来，提示路线已忽略');
  assert.deepEqual(errors,[],'页面不应有报错：'+errors.join('\n'));console.log('PASS 全程无页面异常');
 }finally{await b.close()}})().catch(e=>{console.error(e);process.exitCode=1});

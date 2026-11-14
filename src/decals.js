@@ -1,4 +1,4 @@
-// Figma 贴图：贴图模式（含「管理贴面」）、右侧贴图面板、3D 贴图平面、本机图片仓库（IndexedDB）、Figma 取图。
+// Figma 贴图：物料模式（含「管理贴面」）、左栏贴面清单与贴图面板、3D 贴图平面、本机图片仓库（IndexedDB）、Figma 取图。
 // 与 app.js 打包在同一个 <script> 里：直接用 app.js 的全局（objects / room / roomGroup / selected / select / checkpoint / persist / geometry …）。
 // Decals.create() 由 app.js 在界面就绪后调用一次；数据规则在 decal-model.js。
 const Decals=(()=>{
@@ -41,7 +41,7 @@ const toBase64=blob=>new Promise((ok,bad)=>{const r=new FileReader();r.onload=()
 async function exportAssets(ids){const out={};for(const id of ids){const rec=await getAsset(id).catch(()=>null);if(rec)out[id]={mime:rec.mime,width:rec.width,height:rec.height,base64:await toBase64(rec.blob)};}return out;}
 async function importAssets(assets){for(const [id,a] of Object.entries(assets)){const bin=atob(a.base64),u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);await putAsset(id,{mime:a.mime,width:a.width,height:a.height,blob:new Blob([u],{type:a.mime})});}}
 
-function create(){
+function create(onMode){
  const M=DecalModel,NAMES=M.FACE_NAMES;
  const el=(tag,attrs={},...kids)=>{const e=document.createElement(tag);for(const [k,v] of Object.entries(attrs)){if(k==='class')e.className=v;else if(k.startsWith('on'))e[k]=v;else e.setAttribute(k,v);}e.append(...kids);return e;};
  const S={mode:false,manage:false,owner:null,face:null,error:'',busy:false,relink:false,needToken:false,pendingLink:''};
@@ -129,7 +129,7 @@ function create(){
 
  // ---------- 管理贴面：在贴图模式里点任意物体 / 墙的面，加上或去掉「可贴图的面」 ----------
  function toggleFace(f){const t=target(f.owner);if(!t)return;const on=facesOn(t).includes(f.face);
-  const go=()=>{checkpoint();setFaces(t,on?facesOn(t).filter(x=>x!==f.face):t.allowed.filter(x=>x===f.face||facesOn(t).includes(x)));drawTarget(t);persist();renderHint();};
+  const go=()=>{checkpoint();setFaces(t,on?facesOn(t).filter(x=>x!==f.face):t.allowed.filter(x=>x===f.face||facesOn(t).includes(x)));drawTarget(t);persist();renderPanel();};
   if(on&&decalOf(t,f.face))ask(t.name(f.face)+'「'+NAMES[f.face]+'」已经贴了图。去掉这个面会把图一起删掉（可以撤销）。','删除',go);else go();}
  function setManage(on){if(on===S.manage)return;S.manage=on;closeAsk();Object.assign(S,{owner:null,face:null,error:'',relink:false,needToken:false});hover=null;highlight(null);renderer.domElement.style.cursor='';renderPanel();}
  // 删除确认：带蒙层的小窗，必须选了才能继续
@@ -139,20 +139,14 @@ function create(){
   askBox=el('div',{class:'dk-modal',onclick:e=>{if(e.target===askBox)closeAsk();}},el('div',{class:'dk-dialog',role:'alertdialog','aria-modal':'true'},el('p',{},text),el('div',{class:'dk-actions'},no,yes)));document.body.append(askBox);yes.focus();}
 
  // ---------- 贴图模式 ----------
- const modeBtn=$('decalMode');modeBtn.onclick=()=>setMode(!S.mode);
- const panel=el('div',{class:'dk-panel',hidden:''}),hint=el('div',{class:'dk-hint',role:'status',hidden:''});view.append(panel,hint);
+  const side=el('div',{id:'decalSide',class:'dk-panel',hidden:''});document.querySelector('aside').append(side); // 物料模式下替换左栏
  function setMode(on){
   if(on===S.mode)return;
   if(on){cancelPlacement();setWalking(false);showLibrary(false);}
-  S.mode=on;S.manage=false;closeAsk();if(on)select(null);Object.assign(S,{owner:null,face:null,error:'',relink:false,needToken:false});modeBtn.classList.toggle('active',on);
+  S.mode=on;S.manage=false;closeAsk();if(on)select(null);Object.assign(S,{owner:null,face:null,error:'',relink:false,needToken:false});onMode?.();
   highlight(null);renderer.domElement.style.cursor='';drawAllTints();renderPanel();
  }
- const hintText=el('span'),manageBtn=el('button',{class:'dk-btn',onclick:()=>setManage(!S.manage)});hint.append(hintText,manageBtn);
- function renderHint(){
-  hint.hidden=!S.mode;if(hint.hidden)return;hint.classList.toggle('managing',S.manage);
-  manageBtn.textContent=S.manage?'完成':'管理贴面';manageBtn.classList.toggle('primary',S.manage);manageBtn.title=S.manage?'回到贴图（Esc）':'点物体的面，加上或去掉可贴图的面';
-  hintText.textContent=S.manage?'管理贴面 · 点物体或墙的面：加上 / 去掉 · Esc 完成':allTargets().some(t=>facesOn(t).length)?'贴图模式 · 点亮着的面添加设计图 · Esc 退出':'还没有可贴图的面：点右边「管理贴面」，在物体上点出要贴图的面';
- }
+ const manageBtn=el('button',{class:'dk-btn',onclick:()=>setManage(!S.manage)});
 
  // ---------- 贴上 / 改 / 删 ----------
  function apply(owner,face,assetId,source,keep){
@@ -208,15 +202,16 @@ function create(){
  function renderPanel(){
   const t=S.owner&&target(S.owner);
   if(S.owner&&(!t||!facesOn(t).includes(S.face)))Object.assign(S,{owner:null,face:null,error:''});
-  if(current?.userData.key!==(S.owner?key(S.owner,S.face):undefined)||(current&&!current.parent))markCurrent();renderHint();
-  panel.hidden=!S.mode||!S.owner;if(panel.hidden){panel.replaceChildren();return;}
-  const {owner,face}=S,faces=panelFaces(t,face),d=decalOf(t,face);panel.replaceChildren();
-  panel.append(el('div',{class:'dk-head'},el('strong',{},t.name(face)),el('small',{},M.sizeText(t.spec(face).size)),iconBtn('x','关闭（Esc）',close,'dk-x')));
+  if(current?.userData.key!==(S.owner?key(S.owner,S.face):undefined)||(current&&!current.parent))markCurrent();
+  document.body.classList.toggle('decaling',S.mode);side.hidden=!S.mode;side.replaceChildren();if(!S.mode)return;
+  if(!S.owner){renderList();return;}
+  const panel=side,{owner,face}=S,faces=panelFaces(t,face),d=decalOf(t,face);
+  panel.append(el('div',{class:'dk-head'},el('strong',{},t.name(face)),el('small',{},M.sizeText(t.spec(face).size)),iconBtn('x','返回贴面列表（Esc）',close,'dk-x')));
   if(faces.length>1)panel.append(el('div',{class:'dk-faces'},...faces.map(f=>el('button',{class:'dk-face'+(f===face?' on':''),onclick:()=>open(owner,f)},...(decalOf(t,f)?[el('i')]:[]),NAMES[f]))));
   if(S.error)panel.append(el('div',{class:'dk-note err',role:'alert'},S.error));
   if(!d||S.relink||S.needToken){emptyState(t,face,d);return;}
   const [fw,fh]=t.spec(face).size,img=el('img',{alt:''});
-  const thumb=el('div',{class:'dk-thumb',style:`height:${Math.round(Math.max(48,Math.min(150,276*fh/fw)))}px`},img);
+  const thumb=el('div',{class:'dk-thumb',style:`height:${Math.round(Math.max(48,Math.min(150,216*fh/fw)))}px`},img);
   if(d.source.kind==='file'){thumb.title='拖新图片到这里替换';dropTarget(thumb,owner,face);}
   imageOf(d.assetId).then(p=>{img.src=p.img.src;}).catch(()=>{thumb.replaceWith(el('div',{class:'dk-note err'},'这张图在本机找不到了（可能换了浏览器）：请换图，或重新导入带图片的方案文件。'));});
   panel.append(thumb);
@@ -236,8 +231,19 @@ function create(){
    panel.append(el('div',{class:'dk-row'},el('label',{},'原稿'),latest,btn('换链接',()=>{S.relink=true;S.error='';renderPanel();}),del));
   }else panel.append(el('div',{class:'dk-row'},el('label',{},'图片'),btn('换图',()=>choose(owner,face)),del));
  }
+ // 没选中面：「管理贴面」按钮 + 说明 + 已标出的可贴面清单（点一行打开这一面的编辑）
+ function renderList(){
+  manageBtn.textContent=S.manage?'保存并退出管理模式':'管理贴面';manageBtn.classList.toggle('primary',S.manage);manageBtn.title=S.manage?'回到贴图（Esc）':'';
+  side.append(el('div',{class:'dk-top'},manageBtn,el('p',{class:'dk-explain'},'先选面，再贴图。点「管理贴面」，再点场景里物体或墙的面，选出哪些面要贴图；选完点「保存并退出管理模式」，再在下面选一个面放设计图。')));
+  const rows=[];for(const t of [...objects.map(objTarget),roomTarget()])for(const f of facesOn(t))rows.push([t,f]);
+  side.append(el('h2',{style:'margin-top:16px'},'可贴图的面'));
+  if(!rows.length){side.append(el('p',{class:'dk-explain'},'还没有。点「管理贴面」添加。'));return;}
+  side.append(el('div',{class:'dk-list'},...rows.map(([t,f])=>{
+   const b=el('button',{class:'dk-item',onclick:()=>{if(S.manage)setManage(false);highlight(null);open(t.owner,f);}},el('span',{class:'dk-iname'},t.name(f)),el('small',{},t.owner==='room'?'内侧':NAMES[f]),...(decalOf(t,f)?[el('i',{title:'已贴图'})]:[]));
+   b.onmouseenter=()=>highlight({owner:t.owner,face:f});b.onmouseleave=()=>highlight(null);return b;})));
+ }
  function emptyState(t,face,d){
-  const {owner}=t;
+  const {owner}=t,panel=side;
   if(S.needToken){
    const inp=el('input',{type:'password',placeholder:'figd_…','aria-label':'Figma 个人令牌',autocomplete:'off'}),go=el('button',{class:'dk-btn primary'},'连接');
    go.onclick=()=>{const v=inp.value.trim();if(!v)return;localStorage.setItem(TOKEN_KEY,v);S.needToken=false;applyLink(owner,face,S.pendingLink,S.pendingKeep);};inp.onkeydown=e=>{if(e.key==='Enter')go.click();};
@@ -281,7 +287,7 @@ function create(){
  return {
   drawObject:o=>drawTarget(objTarget(o)),drawRoom:()=>drawTarget(roomTarget()),
   blocksSelect:()=>S.mode,onCanvasClick,
-  exit(){setMode(false);},
+  exit(){setMode(false);},enter(){setMode(true);},isOn:()=>S.mode,
   refresh(){renderPanel();},
   exportAssets,importAssets,
   debug(){const meshes={},tints=[];for(const t of allTargets())for(const p of t.parents)for(const c of p.children){const k=key(c.userData.dk?.owner,c.userData.dk?.face);if(c.userData.decal)meshes[k]={image:!!c.material.map,canvasW:c.userData.size?.[0],canvasH:c.userData.size?.[1]};if(c.userData.tint)tints.push(k);}

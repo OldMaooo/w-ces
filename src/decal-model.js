@@ -13,7 +13,7 @@ const DecalModel=(()=>{
   if(type==='ldesk')return [...SIDES,'endA','endB'];
   if(type==='fascia')return p.shape==='round'?[]:SIDES; // 圆形吊楣是曲面，不做
   if(type==='table')return ['top'];
-  if(type==='tv'||type==='display')return ['screen'];
+  if(type==='tv'||type==='display'||type==='laptop')return ['screen'];
   if(type==='rollup'||type==='acrylic'||type==='acrylicA4'||type==='acrylicA5')return ['front'];
   return [];
  }
@@ -29,6 +29,7 @@ const DecalModel=(()=>{
    endA:flat([wa,h],[a/2+GAP,y,-b/2+wa/2],[0,H,0]),endB:flat([wb,h],[-a/2+wb/2,y,b/2+GAP],[0,0,0])}[face];}
   if(type==='fascia'){const r=w/2+GAP,y=h/2;return {front:flat([w,h],[0,y,r],[0,0,0]),back:flat([w,h],[0,y,-r],[0,Math.PI,0]),left:flat([w,h],[-r,y,0],[0,-H,0]),right:flat([w,h],[r,y,0],[0,H,0])}[face];}
   if(type==='table')return {size:[w,d],pos:[0,1+e(h),0],rot:[-H,0,0],scale:[1,1],round:true};
+  if(type==='laptop')return {size:[.91*w,.82*h],pos:[0,.53,-.447+e(d)],rot:[0,0,0],scale:[.91,.82]};
   if(type==='tv')return flat([w-.036,h-.036],[0,h/2,d/2+.005+GAP],[0,0,0]);
   if(type==='display'){const s=screenSize(p.inches||27,!!p.portrait);return flat(s,[0,1.22,.03+GAP],[0,0,0]);}
   if(type==='desk')return {scale:[1,1],...{

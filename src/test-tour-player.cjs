@@ -171,7 +171,7 @@ try{
  console.log('PASS 设置里「跳过停留」：总时长、刻度跟着变，记在本机，刷新还在，不进方案');
 
  // 15 退出路线：3D 里直接点退出，相机、FOV、选中都恢复
- await cam('fp').click();await p.locator('#routeBtn').click();
+ await cam('fp').click();await p.locator('#modeBooth').click();
  const after=await p.evaluate(()=>({pos:editor.camera.position.toArray(),fov:editor.camera.fov,sel:editor.selected()?.userData.id,touring:document.body.classList.contains('touring'),plan:editor.tourPlan.isOpen(),aside:!document.querySelector('aside').hidden&&getComputedStyle(document.querySelector('aside')).display!=='none',open:editor.tourPlayer.isOpen(),home:document.querySelector('#view').parentNode===document.querySelector('main')}));
  assert.equal(after.touring,false);assert.equal(after.plan,false);assert.equal(after.aside,true);assert.equal(after.open,false);assert.equal(after.home,true);
  assert.ok(after.pos.every((v,i)=>near(v,bf.pos[i])),'相机位置恢复');assert.equal(after.fov,bf.fov);assert.equal(after.sel,bf.sel,'选中物料恢复');
@@ -192,7 +192,7 @@ try{
  console.log('PASS 切方案先回到平面');
 
  // 18 悬停：播放条所有按钮、刻度、设置按钮、开关都有变化
- await p.evaluate(()=>document.querySelector('#tabs button').click());await p.waitForFunction(()=>document.querySelector('#rtLeft .rt-row.r'));await routeRow('两站').click();
+ await p.evaluate(()=>document.querySelector('#tabs [role=tab]').click());await p.waitForFunction(()=>document.querySelector('#rtLeft .rt-row.r'));await routeRow('两站').click();
  // 8 预览里每站停留最多 3 秒（真实停留几十秒，预览太长）；「下一站」按钮；拖进度不改变播放/暂停状态；平面小人是顶视人形
  await routeRow('两站').click();
  {

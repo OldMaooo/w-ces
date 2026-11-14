@@ -4,7 +4,7 @@
 用于对比展台物料排布的桌面 3D 草图。保留空间关系，不追求施工精度，不做碰撞检测。以现有单页离线编辑器持续修改，不引入账号或云同步。
 
 ## 当前交付
-- 本地应用 v0.1.17；公开入口仍为 v0.1.13：https://mao-ces-booth-editor.oldmao.chatgpt.site/ 。部署已成功；本机保存、JSON 导出／导入，无云同步。
+- 本地应用 v0.1.18（Figma 贴图）；公开入口仍为 v0.1.13：https://mao-ces-booth-editor.oldmao.chatgpt.site/ 。部署已成功；本机保存、JSON 导出／导入，无云同步。
 - 悬浮物料栏、听讲椅、单模型两种角色、人物动画及图层调整均已实现；详细操作与验证见 [使用说明](使用说明.md)。
 - 新物料／人物及表面放置定向检查通过；原全量回归仍有墙长互换旋转断言失败。待用户验收拖入手感、人物大小和动画观感。
 
@@ -41,10 +41,9 @@
 
 ## 实现入口
 
-待开发：Figma 表面贴图、同面多个设计、方向调整与按倍率复制 Figma 尺寸模板；用户确认先走本机连接服务。当前仅单面 MVP 获认可，交互/数据细则见 [规划草案](plans/2026-11-13-Figma贴图交互-计划.md)，未进入正式实现。
-
 - `src/editor.html`：编辑器界面。
 - `src/app.js`：物料、场地、步行、方案状态及导入导出。
+- `src/decal-model.js`、`src/decals.js`：Figma 贴图（见文末一节）。
 - `src/people.js`：单一 GLB 加载、人物独立骨架／材质／动画与释放。
 - `src/icons.js`：Lucide 图标统一入口；`src/assets/README.md` 记录人物来源和许可。
 - `src/build.py`：将源码、Three.js 0.128.0、人物GLB和图标打包为根目录 `index.html`。
@@ -85,3 +84,16 @@
 - 模块：`src/tour-model.js`（数据）、`tour-path.js`（寻路）、`tour-timeline.js`（时间轴）、`tour-plan.js`（图纸界面）、`tour-player.js`（3D 播放）；入口接在 `src/app.js`。
 - 作废：手画路线、外部 Agent 文件往返。界面对照样品 doc/mock/route-demo/；技术计划见[计划](plans/2026-11-13-游客路线模拟-计划.md)，派工见[派工 prompt](plans/2026-11-13-游客路线模拟-派工prompt.md)。
 - 未做：路线与物料联动移动、多游客同场、真 Safari 与鼠标锁定手感的真人验收。
+
+## Figma 贴图（2026-11-14，v0.1.18，已实现，分支 claude/figma-decal-ad84dd）
+- 需求以 [确认版](plans/2026-11-14-Figma贴图-确认版.md) 为准，界面照可点样品 doc/mock/figma-decal/，但左栏按确认版改成「选面 → 在物体上点面 → 保存 / 取消」。操作见 [使用说明](使用说明.md)。
+- **数据**：物体 `userData.decalFaces`、`userData.decals[face]={source,assetId,fit,scale,ox,oy,rot}`；墙在 `room.decalFaces / room.decals`，键 `A` / `B`。没有可贴面时不写这两个字段。随方案快照，所以撤销、重做、自动保存、复制、导入导出都自动带上；`validateLayout` 用 `DecalModel.cleanDecals` 只保留该物件允许的面，坏的单张贴图丢弃。不升存储版本号。
+- **图片**：IndexedDB 库 `ces-decal-assets`，键是存进去那份图片字节的 SHA-256；长边超过 2048 像素先缩小，SVG / WebP 转 PNG。先存图成功再写引用。导出 JSON 顶层加 `assets:{id:{mime,width,height,base64}}`，只含导出范围用到的；导入时先 `validateAssets` 校验、再写仓库、最后才追加方案。导入文件上限从 12MB 放到 150MB（图片会让文件变大）。
+- **Figma**：浏览器直连 `GET api.figma.com/v1/images/:fileKey?ids=:nodeId&format=png`（请求头 `X-Figma-Token`），再下载返回的图片地址进仓库。令牌存 localStorage `ces-figma-token`，不进方案、导出、日志和下载的编辑器。**用真令牌取图未验证**（测试里用假接口）：若图片地址不允许网页读取，面板会报「跨域限制，这个做法走不通」，届时再定方案，不加本机中转。
+- **渲染**：每张贴图是挂在物体组（墙则挂在墙体上）下的一块平面，`geometry()`、`buildRoom()` 重建时从数据重画；按面的实际尺寸画一张画布纹理（摆法、大小、偏移、旋转都在画布里算，不拉伸），sRGB、不受色调映射。面的位置尺寸在 `DecalModel.faceSpec / wallSpec`，离面 3 毫米。
+- **接入 app.js 的点**：`geometry()` 末尾、`buildRoom()` 末尾画贴图；`restore()` 后刷新面板；`select()` 在贴图模式下不选中、选别的物体时结束选面；画布单击先交给 `decalUI.onCanvasClick`；步行、路线、放置会退出贴图模式；导出 / 导入带图片。
+- **可贴范围（2026-11-14 用户追加，盖过确认版「不做圆桌 / L 型台 / 电视屏」）**：`DecalModel.facesFor(type, 物体数据)` 定义——前台 5 面；L 型台 6 个立面（`front/back/left/right/endA/endB`，台面是 L 形不做）；方形吊楣外侧 4 面（圆形是曲面，不做）；小圆桌 `top`（圆形平面，`faceSpec` 返回 `round:true`，用 CircleGeometry，纹理还是方画布）；电视、闺蜜机 `screen`；易拉宝、立牌 `front`。人、电脑、摄像头、椅子、机器人没有。点中哪个面不再靠法线猜，而是看点中的位置落在哪个面的范围里（L 台有两个面朝同一边）。
+- **左栏「场地」区**（id `roomPanel`）只在什么都没选中时显示；选中物件或 Creator Space 时收起。
+- **选面改到贴图模式里（2026-11-14 用户改，盖过确认版第 1 条「常规模式左栏选面 + 保存」）**：左栏不再有「可贴图的面 / 可贴图的墙面」。贴图模式提示条上「管理贴面」开关：开着时悬停任意物体 / 墙的可贴面高亮，单击立即加上或去掉（每次一步撤销）；去掉已贴图的面先弹带蒙层的确认窗（`.dk-modal`）。面板打开的那一面一直描蓝框（`markCurrent`，图不被盖住；没图时加浅蓝底），不再闪一下就消失。版本 v0.1.19。
+- **验证**：`src/test-decal-model.cjs` 14 项、`src/test-decals-ui.cjs` 9 组全绿；原有定向测试（物料、放置、自动保存、指南针、默认方案、交付回归、路线各项）不退步。`test-venue` 的 `getMatrixAt` 报错、`test.cjs` 的墙长互换旋转断言，改动前的版本上同样失败。截图 tmp/decals/shots/。
+- **未验**：真令牌取 Figma 图；真鼠标拖文件进画布的手感（测试里拖文件用合成事件）；Safari。

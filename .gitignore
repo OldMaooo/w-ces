@@ -1,3 +1,4 @@
 tmp/
 .playwright-mcp/
 .DS_Store
+doc/mock/figma-decal/index.html

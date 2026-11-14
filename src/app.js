@@ -32,13 +32,13 @@ function buildRoom(){
  dimensionLabel(w.toFixed(1)+' m',0,d/2+.37);dimensionLabel(d.toFixed(1)+' m',w/2+.5,0);
  $('roomSize').textContent=w.toFixed(1)+' × '+d.toFixed(1)+' 米 / '+(w*d).toFixed(2)+' m²';$('badgeSize').textContent=w.toFixed(1)+' × '+d.toFixed(1)+' m';
  $('wallA').checked=room.wallA;$('wallB').checked=room.wallB;$('wallAText').textContent='A 左墙 '+d.toFixed(1)+'m';$('wallBText').textContent='B 后墙 '+w.toFixed(1)+'m';
- buildVenue();
+ buildVenue();decalUI?.drawRoom();
 }
 const definitions={tv:{name:'电视',size:[1.218,.685,.09]},desk:{name:'前台',size:[1.6,1,.65]},robot:{name:'机器人',size:[.65,1.5,.5]},display:{name:'闺蜜机',size:[.6,1.5,.45]},table:{name:'小圆桌',size:[.65,.75,.65]},ldesk:{name:'L 型台',size:[2.2,1,1.6]},fascia:{name:'悬空吊楣',size:[3,.6,3]},laptop:{name:'笔记本电脑',size:[.34,.24,.25]},webcam:{name:'电脑摄像头',size:[.10,.08,.06]},acrylic:{name:'桌面亚克力牌',size:[.21,.15,.07]},acrylicA4:{name:'A4 竖版亚克力牌',size:[.21,.297,.07]},acrylicA5:{name:'A5 竖版亚克力牌',size:[.1485,.21,.07]},rollup:{name:'易拉宝',size:[.84,2.08,.35]},chair:{name:'听讲椅',size:[.46,.82,.50]},staff:{name:'工作人员',size:[.55,1.75,.35]},visitor:{name:'游客',size:[.55,1.75,.35]}};
 const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
 const clone=v=>JSON.parse(JSON.stringify(v));
 const uid=()=>typeof crypto.randomUUID==='function'?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2);
-let objects=[],selected=null,nextId=1,history=[],plans=[],activeId='',workspaceId='default',saveBlocked=false,walking=false,tour=TourModel.emptyTour(),tourNotice='',tourPlan=null,tourPlayer=null;
+let objects=[],selected=null,nextId=1,history=[],plans=[],activeId='',workspaceId='default',saveBlocked=false,walking=false,tour=TourModel.emptyTour(),tourNotice='',tourPlan=null,tourPlayer=null,decalUI=null;
 const histories=new Map(),redos=new Map();let redoHistory=[];
 function cylinder(g,r,h,x,y,z,color,metal=false){const m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,40),new THREE.MeshStandardMaterial({color,metalness:metal?.75:0,roughness:metal?.28:.6}));m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;g.add(m);return m;}
 function screenSize(inches,portrait=false){const w=inches*.0254*16/Math.sqrt(337),h=w*9/16;return portrait?[h,w]:[w,h];}
@@ -127,6 +127,7 @@ function geometry(g){
   const material=new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c),side:THREE.FrontSide});const face=new THREE.Mesh(new THREE.PlaneGeometry(...dims),material);face.position.set(0,type==='tv'?p.size[1]/2:1.22,type==='tv'?p.size[2]/2+.005:.03);face.name='screen-purpose';g.add(face);
  }
  if(type==='fascia')g.traverse(child=>{if(child.isMesh)child.castShadow=false;});
+ decalUI?.drawObject(g);
  g.updateMatrixWorld(true);
 }
 function make(type,id,extra={}){const g=new THREE.Group(),def=definitions[type];g.userData={type,id:id||nextId++,size:[...def.size],wallSnap:false,...(people.types.has(type)?{personScale:1,animation:'Idle',clothesColor:type==='staff'?'#165DFF':'#f3f3ef'}:{}),...(type==='fascia'?{shape:'square'}:{}),...(type==='tv'?{inches:55}:{}),...(type==='display'?{inches:27,portrait:false}:{}),...(type==='ldesk'?{lengthA:2.2,widthA:.6,lengthB:1.6,widthB:.55}:{}),...clone(extra)};geometry(g);g.visible=g.userData.visible!==false;scene.add(g);objects.push(g);return g;}
@@ -134,7 +135,7 @@ function snapshot(){return objects.map(o=>({...clone(o.userData),position:o.posi
 function layout(){return {room:clone(room),objects:snapshot(),...(tour.pois.length||tour.groups.length?{tour:TourModel.cloneTour(tour)}:{})};}
 function checkpoint(){redoHistory=[];$('redo').disabled=true;history.push(layout());if(history.length>40)history.shift();$('undo').disabled=false;}
 function dispose(o){people.dispose(o);release(o);scene.remove(o);}
-function restore(data){select(null);objects.forEach(dispose);objects=[];room={...roomDefault(),...data.room};buildRoom();for(const r of data.objects){const o=make(r.type,r.id,r);o.position.fromArray(r.position);o.rotation.y=r.rotation;}nextId=Math.max(0,...objects.map(o=>o.userData.id))+1;tour=data.tour?TourModel.cloneTour(data.tour):TourModel.emptyTour();renderList();tourPlan?.refresh();}
+function restore(data){select(null);objects.forEach(dispose);objects=[];room={...roomDefault(),...data.room};buildRoom();for(const r of data.objects){const o=make(r.type,r.id,r);o.position.fromArray(r.position);o.rotation.y=r.rotation;}nextId=Math.max(0,...objects.map(o=>o.userData.id))+1;tour=data.tour?TourModel.cloneTour(data.tour):TourModel.emptyTour();renderList();tourPlan?.refresh();decalUI?.refresh();}
 function nearestWall(o){return Math.abs(o.position.x+room.width/2)<Math.abs(o.position.z+room.depth/2)?'A':'B';}
 function attachWall(o,wall=o.userData.wall||nearestWall(o)){
  o.userData.wall=wall;o.rotation.y=wall==='A'?Math.PI/2:0;o.updateMatrixWorld(true);
@@ -160,7 +161,7 @@ function sync(){if(!selected)return;$('place').disabled=!selected.visible;const 
  document.querySelectorAll('[data-inches]').forEach(b=>b.classList.toggle('active',Number(b.dataset.inches)===d.inches));
  selected.updateMatrixWorld(true);const b=new THREE.Box3().setFromObject(selected);$('status').textContent=b.min.x< -room.width/2-.001||b.max.x>room.width/2+.001||b.min.z< -room.depth/2-.001||b.max.z>room.depth/2+.001?'物料超出地面边界':'';
 }
-function select(o){setCreatorSelected(false);cancelPlacement();if(selected!==o&&document.activeElement===$('purpose'))$('purpose').blur();selected=o;if(o)$('purpose').value=o.userData.purpose||'';transform.detach();$('inspector').hidden=!o;$('empty').hidden=!!o;if(o){if(!walking&&o.visible)transform.attach(o);$('title').textContent=definitions[o.userData.type].name+' '+o.userData.id;sync();}renderList();}
+function select(o){if(o&&decalUI?.blocksSelect())o=null;setCreatorSelected(false);cancelPlacement();if(selected!==o&&document.activeElement===$('purpose'))$('purpose').blur();selected=o;if(o)$('purpose').value=o.userData.purpose||'';transform.detach();$('inspector').hidden=!o;$('empty').hidden=!!o;if(o){if(!walking&&o.visible)transform.attach(o);$('title').textContent=definitions[o.userData.type].name+' '+o.userData.id;sync();}renderList();decalUI?.afterSelect(o);}
 function commit(){if(selected?.userData.wallSnap)attachWall(selected);sync();renderList();persist();}
 function storageKey(){return 'ces-workspace-v2:'+workspaceId;}
 function collect(){const p=plans.find(p=>p.id===activeId);if(p)p.layout=layout();return {version:2,workspaceId,activeId,plans:clone(plans),panelWidth:document.querySelector('aside').offsetWidth,layerHeight:$('objects').offsetHeight};}
@@ -199,7 +200,7 @@ function cancelPlacement(){
  if(selected?.visible&&!walking)transform.attach(selected);
 }
 $('place').onclick=()=>{
- if(placing){cancelPlacement();return;}if(!selected?.visible)return;
+ if(placing){cancelPlacement();return;}if(!selected?.visible)return;decalUI.exit();
  setWalking(false);placing=true;transform.detach();transform.enabled=false;down=null;
  $('place').classList.add('active');$('place').textContent='取消';$('placementHint').hidden=false;
  $('placementHint').textContent='点击桌面或台面放置 · Esc 取消';renderer.domElement.style.cursor='crosshair';
@@ -223,6 +224,7 @@ renderer.domElement.addEventListener('click',()=>{if(walking&&!document.pointerL
 function lockMouse(){try{const result=renderer.domElement.requestPointerLock();if(result?.catch)result.catch(()=>{});}catch(e){/* Mouse movement still works over the canvas. */}}
 renderer.domElement.addEventListener('pointerup',e=>{
  lookDrag=null;const start=down;down=null;if(e.button!==0||walking||tourPlayer?.isOpen()||!start||start.axis||transform.dragging||Math.hypot(e.clientX-start.x,e.clientY-start.y)>4)return;
+ if(decalUI.onCanvasClick(e))return;
  if(placing){const hit=placementHit(e);if(!hit){$('placementHint').textContent='请选择朝上的桌面、台面或地面 · Esc 取消';return;}
   checkpoint();selected.updateMatrixWorld(true);const bounds=new THREE.Box3().setFromObject(selected),bottomOffset=bounds.min.y-selected.position.y;
   selected.position.set(hit.point.x,hit.point.y-bottomOffset,hit.point.z);selected.userData.wallSnap=false;delete selected.userData.wall;
@@ -309,7 +311,7 @@ $('swapWalls').onclick=()=>{
 };
 let yaw=0,pitch=0,editView=null;const keys=new Set();
 function look(){camera.rotation.set(pitch,yaw,0,'YXZ');}
-function setWalking(value){cancelPlacement();if(value===walking)return;walking=value;keys.clear();lookDrag=null;down=null;
+function setWalking(value){cancelPlacement();if(value===walking)return;if(value)decalUI?.exit();walking=value;keys.clear();lookDrag=null;down=null;
  if(value){lockMouse();editView={position:camera.position.clone(),target:orbit.target.clone(),quaternion:camera.quaternion.clone(),fov:camera.fov};const direction=new THREE.Vector3();camera.getWorldDirection(direction);yaw=Math.atan2(-direction.x,-direction.z);pitch=0;camera.position.set(clamp(camera.position.x,-room.width/2+.35,room.width/2-.35),1.75,clamp(camera.position.z,-room.depth/2+.35,room.depth/2-.35));camera.fov=65;camera.updateProjectionMatrix();look();orbit.enabled=false;transform.detach();transform.enabled=false;}
  else{if(document.pointerLockElement===renderer.domElement)document.exitPointerLock();camera.position.copy(editView.position);camera.quaternion.copy(editView.quaternion);camera.fov=editView.fov;camera.updateProjectionMatrix();orbit.target.copy(editView.target);orbit.enabled=true;orbit.update();transform.enabled=true;if(selected?.visible)transform.attach(selected);}
  $('walk').classList.toggle('active',value);$('walk').textContent=value?'退出浏览':'步行浏览';$('helpText').textContent=value?'人眼高度 1.75 米 · WASD 行走 · 移动鼠标看方向 · 空格 / Esc 退出':'拖空白转视角 · 滚轮缩放 · WASD 行走 · 空格切换浏览';
@@ -323,14 +325,20 @@ for(const b of document.querySelectorAll('[data-view]'))b.onclick=()=>{setWalkin
 function exportData(scope='current'){collect();return {format:'ces-booth-plans',version:2,activeId,plans:clone(scope==='all'?plans:plans.filter(p=>p.id===activeId))};}
 function editorHTML(){return '<!doctype html>\n'+editorTemplate.outerHTML;}
 function downloadFile(content,type,name){const url=URL.createObjectURL(new Blob([content],{type})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),10000);}
-$('save').onclick=()=>{const scope=$('exportScope').value,p=plans.find(p=>p.id===activeId),name=scope==='all'?'全部方案':p.name;downloadFile(JSON.stringify(exportData(scope),null,2),'application/json;charset=utf-8','CES-'+name.replace(/[\\/:*?"<>|]/g,'-')+'.json');};
+$('save').onclick=async()=>{const scope=$('exportScope').value,p=plans.find(p=>p.id===activeId),name=scope==='all'?'全部方案':p.name,data=exportData(scope);
+ // 贴图图片只带导出范围内用到的；令牌是本机设置，不在方案里
+ const assets=await decalUI.exportAssets(DecalModel.usedAssetIds(data.plans));if(Object.keys(assets).length)data.assets=assets;
+ downloadFile(JSON.stringify(data,null,2),'application/json;charset=utf-8','CES-'+name.replace(/[\\/:*?"<>|]/g,'-')+'.json');};
 $('saveEditor').onclick=()=>downloadFile(editorHTML(),'text/html;charset=utf-8','CES-3D编辑器.html');
 // Treat imported HTML strictly as data; never execute its scripts.
 function readTour(raw){if(raw===undefined)return {};const v=TourModel.validateTour(raw);if(!v.ok){tourNotice='路线数据无效，已忽略（物料不受影响）';return {};}return v.tour.pois.length||v.tour.groups.length?{tour:v.tour}:{};}
-function validateLayout(raw){const data=Array.isArray(raw)?{room:roomDefault(),objects:raw}:raw;if(!data||!Array.isArray(data.objects)||data.objects.length>500)throw Error('方案物料数据无效');const r={...roomDefault(),...data.room};if(![r.width,r.depth].every(n=>Number.isFinite(n)&&n>=1&&n<=30))throw Error('场地尺寸无效');const ids=new Set(),tr=readTour(data.tour);return {room:{width:r.width,depth:r.depth,wallA:r.wallA!==false,wallB:r.wallB!==false},...tr,objects:data.objects.map(o=>{if(!o||!Object.hasOwn(definitions,o.type)||!Number.isInteger(o.id)||o.id<1||ids.has(o.id)||!Array.isArray(o.size)||o.size.length!==3||!o.size.every(n=>Number.isFinite(n)&&n>=.01&&n<=10)||!Array.isArray(o.position)||o.position.length!==3||!o.position.every(n=>Number.isFinite(n)&&Math.abs(n)<=100)||!Number.isFinite(o.rotation))throw Error('物料尺寸或位置无效');ids.add(o.id);const p={type:o.type,id:o.id,size:[...o.size],position:[...o.position],rotation:o.rotation,visible:o.visible!==false,wallSnap:!!o.wallSnap};if(p.wallSnap)p.wall=o.wall==='A'?'A':'B';if(o.type==='tv'||o.type==='display'){p.inches=clamp(Number.isFinite(o.inches)?o.inches:o.type==='display'?27:Math.hypot(o.size[0],o.size[1])/.0254,10,120);p.portrait=!!o.portrait;p.purpose=typeof o.purpose==='string'?o.purpose.slice(0,40):'';}if(people.types.has(o.type)){p.personScale=clamp(Number.isFinite(o.personScale)?o.personScale:1,.25,3);p.animation=people.animations.includes(o.animation)?o.animation:'Idle';p.clothesColor=typeof o.clothesColor==='string'&&/^#[0-9a-f]{6}$/i.test(o.clothesColor)?o.clothesColor:o.type==='staff'?'#165DFF':'#f3f3ef';}if(o.type==='fascia')p.shape=o.shape==='round'?'round':'square';if(o.type==='ldesk'){for(const [k,v] of Object.entries({lengthA:2.2,widthA:.6,lengthB:1.6,widthB:.55}))p[k]=clamp(Number.isFinite(o[k])?o[k]:v,k.startsWith('length')?.2:.1,10);p.widthA=Math.min(p.widthA,p.lengthB-.05);p.widthB=Math.min(p.widthB,p.lengthA-.05);}return p;})};}
+function validateLayout(raw){const data=Array.isArray(raw)?{room:roomDefault(),objects:raw}:raw;if(!data||!Array.isArray(data.objects)||data.objects.length>500)throw Error('方案物料数据无效');const r={...roomDefault(),...data.room};if(![r.width,r.depth].every(n=>Number.isFinite(n)&&n>=1&&n<=30))throw Error('场地尺寸无效');const ids=new Set(),tr=readTour(data.tour);return {room:{width:r.width,depth:r.depth,wallA:r.wallA!==false,wallB:r.wallB!==false,...DecalModel.cleanDecals(data.room,['A','B'])},...tr,objects:data.objects.map(o=>{if(!o||!Object.hasOwn(definitions,o.type)||!Number.isInteger(o.id)||o.id<1||ids.has(o.id)||!Array.isArray(o.size)||o.size.length!==3||!o.size.every(n=>Number.isFinite(n)&&n>=.01&&n<=10)||!Array.isArray(o.position)||o.position.length!==3||!o.position.every(n=>Number.isFinite(n)&&Math.abs(n)<=100)||!Number.isFinite(o.rotation))throw Error('物料尺寸或位置无效');ids.add(o.id);const p={type:o.type,id:o.id,size:[...o.size],position:[...o.position],rotation:o.rotation,visible:o.visible!==false,wallSnap:!!o.wallSnap};if(p.wallSnap)p.wall=o.wall==='A'?'A':'B';if(o.type==='tv'||o.type==='display'){p.inches=clamp(Number.isFinite(o.inches)?o.inches:o.type==='display'?27:Math.hypot(o.size[0],o.size[1])/.0254,10,120);p.portrait=!!o.portrait;p.purpose=typeof o.purpose==='string'?o.purpose.slice(0,40):'';}if(people.types.has(o.type)){p.personScale=clamp(Number.isFinite(o.personScale)?o.personScale:1,.25,3);p.animation=people.animations.includes(o.animation)?o.animation:'Idle';p.clothesColor=typeof o.clothesColor==='string'&&/^#[0-9a-f]{6}$/i.test(o.clothesColor)?o.clothesColor:o.type==='staff'?'#165DFF':'#f3f3ef';}if(o.type==='fascia')p.shape=o.shape==='round'?'round':'square';if(o.type==='ldesk'){for(const [k,v] of Object.entries({lengthA:2.2,widthA:.6,lengthB:1.6,widthB:.55}))p[k]=clamp(Number.isFinite(o[k])?o[k]:v,k.startsWith('length')?.2:.1,10);p.widthA=Math.min(p.widthA,p.lengthB-.05);p.widthB=Math.min(p.widthB,p.lengthA-.05);}Object.assign(p,DecalModel.cleanDecals(o,DecalModel.facesFor(o.type)));return p;})};}
 function parseWorkspace(data){if(Array.isArray(data))return {version:2,workspaceId:uid(),activeId:'legacy',plans:[{id:'legacy',name:'导入方案',layout:validateLayout(data)}]};if(!data||data.version!==2||!Array.isArray(data.plans)||!data.plans.length||data.plans.length>100)throw Error('不是有效的展台方案');const ids=new Set();const list=data.plans.map(p=>{if(!p||typeof p.id!=='string'||ids.has(p.id))throw Error('方案编号无效');ids.add(p.id);return {id:p.id,name:String(p.name||'方案').slice(0,40),layout:validateLayout(p.layout)};});return {version:2,workspaceId:typeof data.workspaceId==='string'?data.workspaceId:uid(),activeId:list.some(p=>p.id===data.activeId)?data.activeId:list[0].id,plans:list,panelWidth:clamp(Number(data.panelWidth)||264,238,600),layerHeight:clamp(Number(data.layerHeight)||180,80,560)};}
 $('import').onclick=()=>$('importFile').click();
-$('importFile').onchange=async()=>{const file=$('importFile').files[0];if(!file)return;try{if(file.size>12e6)throw Error('文件太大，请选择下载的展台方案');const text=await file.text();const raw=text.trim().startsWith('<')?new DOMParser().parseFromString(text,'text/html').querySelector('#seed')?.textContent:text;tourNotice='';const data=parseWorkspace(JSON.parse(raw));if(tourNotice)alert('已导入方案；'+tourNotice);collect();const incoming=data.plans.map(p=>({...p,id:uid()}));plans.push(...incoming);switchPlan(incoming[Math.max(0,data.plans.findIndex(p=>p.id===data.activeId))].id);}catch(e){alert('导入失败：'+e.message);}finally{$('importFile').value='';}};
+$('importFile').onchange=async()=>{const file=$('importFile').files[0];if(!file)return;try{if(file.size>150e6)throw Error('文件太大，请选择下载的展台方案');const text=await file.text();const raw=text.trim().startsWith('<')?new DOMParser().parseFromString(text,'text/html').querySelector('#seed')?.textContent:text;tourNotice='';const json=JSON.parse(raw),data=parseWorkspace(json),assets=DecalModel.validateAssets(json?.assets);
+ // 先校验、再存图，最后才追加方案：任何一步失败都不碰现有方案
+ try{await decalUI.importAssets(assets);}catch(e){throw Error('贴图图片存不进本机（浏览器存储不可用或满了）');}
+ if(tourNotice)alert('已导入方案；'+tourNotice);collect();const incoming=data.plans.map(p=>({...p,id:uid()}));plans.push(...incoming);switchPlan(incoming[Math.max(0,data.plans.findIndex(p=>p.id===data.activeId))].id);}catch(e){alert('导入失败：'+e.message);}finally{$('importFile').value='';}};
 let resizeStart=null;$('resize').onpointerdown=e=>{resizeStart={x:e.clientX,w:document.querySelector('aside').offsetWidth};$('resize').setPointerCapture(e.pointerId);document.body.style.userSelect='none';};$('resize').onpointermove=e=>{if(resizeStart)document.querySelector('aside').style.width=Math.max(238,Math.min(innerWidth*.55,resizeStart.w+e.clientX-resizeStart.x))+'px';};function endResize(){if(resizeStart){resizeStart=null;document.body.style.userSelect='';persist();}}$('resize').onpointerup=endResize;$('resize').onpointercancel=endResize;
 const routeBtn=$('routeBtn');routeBtn.append(icon('route'),document.createTextNode('路线'));
 tourPlan=TourPlan.create({root:$('routeEdit'),icon,
@@ -338,9 +346,10 @@ tourPlan=TourPlan.create({root:$('routeEdit'),icon,
  getRoom:()=>room,getVenue:()=>venueGroup.userData,getTour:()=>tour,checkpoint,persist,
  undo:()=>$('undo').click(),redo:()=>$('redo').click(),undoState:()=>({undo:!$('undo').disabled,redo:!$('redo').disabled}),
  view3d:{show:(m,el)=>tourPlayer.show(m,el),hide:()=>tourPlayer.hide(),load:d=>tourPlayer.load(d),setTime:t=>tourPlayer.setTime(t),recenter:()=>tourPlayer.recenter(),isOpen:()=>tourPlayer.isOpen()}});
-function setRouteMode(on,routeId){if(on===tourPlan.isOpen())return;if(on){cancelPlacement();setWalking(false);showLibrary(false);tourPlan.open(routeId);}else tourPlan.close();document.body.classList.toggle('routing',on);routeBtn.classList.toggle('active',on);routeBtn.lastChild.textContent=on?'退出路线':'路线';}
+function setRouteMode(on,routeId){if(on===tourPlan.isOpen())return;if(on){decalUI.exit();cancelPlacement();setWalking(false);showLibrary(false);tourPlan.open(routeId);}else tourPlan.close();document.body.classList.toggle('routing',on);routeBtn.classList.toggle('active',on);routeBtn.lastChild.textContent=on?'退出路线':'路线';}
 routeBtn.onclick=()=>setRouteMode(!tourPlan.isOpen());
 // Modes: editor / freeWalk / routeEdit — one at a time. Inside routeEdit the canvas shows 平面 (SVG) or 透视 / 第一人称 (3D); TourPlan decides which.
+decalUI=Decals.create();
 tourPlayer=TourPlayer.create({view,scene,camera,orbit,canvas:renderer.domElement,onOpen:()=>route3dOpen(),onClose:()=>route3dClose(),onPause:()=>tourPlan.pause()});
 let playSaved=null;
 // 路线里切到「透视 / 第一人称」时画面换成 3D：先记下编辑视角和选中物料，回到「平面」或退出路线时原样恢复。
@@ -364,8 +373,8 @@ if(initial){plans=initial.plans;activeId=initial.activeId;restore(plans.find(p=>
 if(!initial&&!new URLSearchParams(location.search).has('builtin')){try{const d=parseWorkspace(JSON.parse($('defaultPlans')?.textContent||'null'));plans=d.plans;activeId=d.activeId;restore(plans.find(p=>p.id===activeId).layout);initial=d;}catch(e){}}
 if(!initial){buildRoom();make('tv').position.set(.4,1.2,-2.61);make('desk').position.set(-.8,0,1.75);make('robot').position.set(1.4,0,.3);activeId=uid();plans=[{id:activeId,name:'方案 1',layout:layout()}];}
 select(objects[1]||objects[0]||null);renderTabs();$('walk').textContent='步行浏览';$('walk').classList.remove('active');$('helpText').textContent='拖空白转视角 · 滚轮缩放 · WASD 行走 · 空格切换浏览';persist();if(!startError&&tourNotice)startError=tourNotice;if(startError)$('saveStatus').textContent=startError;
-let lastTime=performance.now();function animate(now){requestAnimationFrame(animate);const dt=Math.min(.05,(now-lastTime)/1000);lastTime=now;people.update(dt);tourPlayer.update();if(walking&&keys.size){let forward=Number(keys.has('KeyW'))-Number(keys.has('KeyS')),right=Number(keys.has('KeyD'))-Number(keys.has('KeyA'));const length=Math.hypot(forward,right)||1;forward=forward/length*dt*1.6;right=right/length*dt*1.6;camera.position.x+=-Math.sin(yaw)*forward+Math.cos(yaw)*right;camera.position.z+=-Math.cos(yaw)*forward-Math.sin(yaw)*right;camera.position.y=1.75;const bounds=venueGroup.userData.bounds;camera.position.x=clamp(camera.position.x,bounds.minX-1,bounds.maxX+1);camera.position.z=clamp(camera.position.z,bounds.minZ-1,bounds.maxZ+1);}rotationOverlay.style.display=!selected||!selected.visible||walking||placing?'none':'';
-if(selected&&selected.visible&&!walking&&!placing){
+let lastTime=performance.now();function animate(now){requestAnimationFrame(animate);const dt=Math.min(.05,(now-lastTime)/1000);lastTime=now;people.update(dt);tourPlayer.update();if(walking&&keys.size){let forward=Number(keys.has('KeyW'))-Number(keys.has('KeyS')),right=Number(keys.has('KeyD'))-Number(keys.has('KeyA'));const length=Math.hypot(forward,right)||1;forward=forward/length*dt*1.6;right=right/length*dt*1.6;camera.position.x+=-Math.sin(yaw)*forward+Math.cos(yaw)*right;camera.position.z+=-Math.cos(yaw)*forward-Math.sin(yaw)*right;camera.position.y=1.75;const bounds=venueGroup.userData.bounds;camera.position.x=clamp(camera.position.x,bounds.minX-1,bounds.maxX+1);camera.position.z=clamp(camera.position.z,bounds.minZ-1,bounds.maxZ+1);}rotationOverlay.style.display=!selected||!selected.visible||walking||placing||decalUI.busy()?'none':'';
+if(selected&&selected.visible&&!walking&&!placing&&!decalUI.busy()){
  // Project with the same current camera matrix used by the 3D renderer.
  camera.updateMatrixWorld(true);
  const radius=Math.max(.45,Math.min(1.2,Math.max(selected.userData.size[0],selected.userData.size[2])*.65)),points=[];let inFront=true;
@@ -374,6 +383,6 @@ if(selected&&selected.visible&&!walking&&!placing){
 }
 compassEuler.setFromQuaternion(camera.quaternion,'YXZ');$('compassDial').style.transform=`rotate(${compassEuler.y}rad)`;for(const letter of compassLetters)letter.style.transform=`rotate(${-compassEuler.y}rad)`;
 renderer.render(scene,camera);}requestAnimationFrame(animate);
-window.editor={snapshot,layout,scene,objects:()=>objects,selected:()=>selected,select,camera,transform,walking:()=>walking,exportData,editorHTML,validateLayout,parseWorkspace,restore,persist,checkpoint,tour:()=>tour,setTour:t=>{tour=t;},tourNotice:()=>tourNotice,tourPlan,setRouteMode,tourPlayer,venue:()=>venueGroup.userData};
+window.editor={snapshot,layout,scene,objects:()=>objects,selected:()=>selected,select,camera,transform,walking:()=>walking,exportData,editorHTML,validateLayout,parseWorkspace,restore,persist,checkpoint,tour:()=>tour,setTour:t=>{tour=t;},tourNotice:()=>tourNotice,tourPlan,setRouteMode,tourPlayer,venue:()=>venueGroup.userData,decals:decalUI};
 
 people.load();

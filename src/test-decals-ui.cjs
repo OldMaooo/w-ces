@@ -1,7 +1,7 @@
-// Figma 贴图界面测试（浏览器）。先 python3 src/build.py，再 node src/test-decals-ui.cjs（需「验收-Figma贴图」8878 在跑）
+// Figma 贴图界面测试（浏览器）。先 python3 src/build.py，再 node src/test-decals-ui.cjs（需「验收-悬浮物料栏与人物」8876 在跑）
 const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'/opt/homebrew/lib/node_modules/@playwright/mcp/node_modules/playwright');
 const assert=require('node:assert/strict');const fs=require('fs'),path=require('path');
-const BASE=process.env.TEST_URL||'http://127.0.0.1:8878/?builtin';
+const BASE=process.env.TEST_URL||'http://127.0.0.1:8876/?builtin';
 const dir=path.join(__dirname,'../tmp/decals');fs.mkdirSync(dir,{recursive:true});
 const texts=loc=>loc.allTextContents().then(a=>a.map(x=>x.trim()));
 const near=(a,b,t=.01)=>assert.ok(Math.abs(a-b)<t,`${a} ≠ ${b}`);

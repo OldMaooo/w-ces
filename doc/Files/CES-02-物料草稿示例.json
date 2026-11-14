@@ -1,0 +1,7 @@
+{
+  "decals": [
+    {"object": 12, "face": "front", "image": "物料示例/前台正面.png"},
+    {"object": "平行宇宙", "face": "screen", "image": "物料示例/电视屏幕.jpg", "fit": "cover"},
+    {"wall": "A", "image": "物料示例/A墙.png"}
+  ]
+}

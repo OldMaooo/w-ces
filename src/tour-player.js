@@ -1,61 +1,32 @@
-// Visitor-route 3D playback: temporary visitor, ground path, playbar, overview / first-person camera, mouse look.
-// Owns no storage and no undo. app.js decides when it opens and closes (one mode at a time) and restores the editor view.
+// Visitor-route 3D view: temporary visitor, ground path, perspective / first-person camera, mouse look.
+// Owns no clock, no bar, no storage, no undo: TourPlan drives time (setTime) and decides when 3D is shown (show / hide).
 const TourPlayer=(()=>{
- const T=TourTimeline,ops=TourPlan.ops;
+ const T=TourTimeline;
  const LOOK_SPEED=.003,PITCH_OFF_MAX=1.2,PITCH_MAX=1.45,FP_FOV=65;
  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
- // Dwell ticks on the progress bar: start of each stand-still, so clicking one lands on "停留".
- const ticks=c=>c.items.filter(it=>it.type==='hold').map(it=>({t:it.t0,stopIndex:it.stopIndex}));
- function phaseText(c,s,t,live){
-  if(t>=c.total-.01)return '已走完';
-  if(s.phase==='hold'){const stop=c.stops.find(x=>x.index===s.stopIndex),name=live[s.stopIndex]?.name||'前方';return `第 ${s.stopIndex+1} 站 · 停留 · 看「${name}」· 还剩 ${Math.max(1,Math.ceil(stop.t1-t-1e-6))} 秒`;}
-  return s.phase==='turn'?'转身':'行走中';
- }
- const isTextField=e=>e.target.isContentEditable||e.target.tagName==='TEXTAREA'||e.target.tagName==='SELECT'||(e.target.tagName==='INPUT'&&!['range','checkbox','radio','button'].includes(e.target.type));
-
- const CAM_KEY='ces-tour-cam',RATES=[.5,1,2];
- const savedCam=()=>{try{return localStorage.getItem(CAM_KEY)==='fp'?'fp':'orbit';}catch(e){return 'orbit';}};
- const saveCam=v=>{try{localStorage.setItem(CAM_KEY,v);}catch(e){}};
- // host: {view, main, actions, scene, camera, orbit, canvas, icon(name), renderList(el,{readonly,selRoute,onPick}), routes() → [{group, route, analysis}], onBack(routeId), onExit(), onGone()}
+  // host: {view, scene, camera, orbit, canvas, onOpen(), onClose(), onPause()}
  function create(host){
-  const {scene,camera,orbit,canvas}=host;
-  let open=false,routeId=null,compiled=null,live=[],eye=1.75,t=0,playing=false,rate=1,cam='orbit',yawOff=0,pitchOff=0,locked=false,dragLook=null,overview=null,lastAnim=null,lastBar='';
+  const {view,scene,camera,orbit,canvas}=host;
+  let open=false,compiled=null,live=[],eye=1.75,t=0,cam='orbit',yawOff=0,pitchOff=0,locked=false,dragLook=null,overview=null,lastAnim=null,home=null;
   let visitor=null,path=null;
-  const h=(tag,props,...kids)=>{const e=document.createElement(tag);for(const [k,v] of Object.entries(props||{})){if(v==null||v===false)continue;if(k==='class')e.className=v;else if(k.startsWith('on'))e[k]=v;else e.setAttribute(k,v===true?'':v);}for(const c of kids.flat())if(c!=null)e.append(c);return e;};
-  const btn=(props,ic,text)=>h('button',props,ic?host.icon(ic):null,text||null);
+  const h=(tag,props,...kids)=>{const e=document.createElement(tag);for(const [k,v] of Object.entries(props||{})){if(v==null||v===false)continue;if(k==='class')e.className=v;else e.setAttribute(k,v===true?'':v);}for(const c of kids.flat())if(c!=null)e.append(c);return e;};
 
-  // ----- DOM -----
-  const back=btn({id:'tourBack',class:'tour-top',onclick:()=>host.onBack(routeId)},'map','回到路线图');
-  const exit=btn({id:'tourExit',class:'tour-top',onclick:()=>host.onExit()},'x','退出');
-  host.actions.prepend(back,exit);
-  const side=h('div',{class:'rt-side',id:'tpSide',hidden:true});
-  const seek=h('input',{type:'range',id:'tpSeek',min:'0',step:'0.01','aria-label':'进度'});
-  const tickBox=h('div',{class:'tp-ticks'});
-  const play=btn({id:'tpPlay',class:'primary',title:'播放 / 暂停（空格）'});
-  const time=h('span',{class:'tp-time',id:'tpTime'});
-  const rateBtn=btn({id:'tpRate',title:'切换播放速度','aria-label':'切换播放速度',onclick:()=>{rate=RATES[(RATES.indexOf(rate)+1)%RATES.length];syncButtons();}});
-  const cams=h('div',{class:'tp-seg'},btn({'data-cam':'orbit',onclick:()=>setCam('orbit')},'box','总览'),btn({'data-cam':'fp',onclick:()=>setCam('fp')},'eye','第一人称'));
-  const recenter=btn({id:'tpRecenter',class:'ghost',title:'视线归位','aria-label':'视线归位',onclick:()=>{yawOff=pitchOff=0;apply();}},'rotate-ccw');
-  const restart=btn({id:'tpRestart',class:'ghost',title:'从头','aria-label':'从头',onclick:()=>{t=0;yawOff=pitchOff=0;apply();}},'skip-back');
-  const phase=h('div',{class:'tp-phase',id:'tpPhase'}),hint=h('div',{class:'tp-hint',id:'tpHint'}),cross=h('div',{class:'tp-cross',id:'tpCross'});
-  const root=h('div',{id:'tourPlay',hidden:true},phase,hint,cross,h('div',{class:'tp-bar'},restart,play,h('div',{class:'tp-track'},seek,tickBox),time,rateBtn,cams,recenter));
-  host.view.append(root);
-  host.main.insertBefore(side,host.view);host.attachResize(side).hidden=true;const splitBar=side.nextSibling;
-  play.onclick=()=>toggle();
-  seek.onpointerdown=()=>{playing=false;syncButtons();};
-  seek.oninput=()=>{t=Number(seek.value);yawOff=pitchOff=0;apply();};
+  // ----- overlays on the 3D picture (phase text, mouse-look hint, crosshair) -----
+  const hint=h('div',{class:'tp-hint',id:'tpHint'}),cross=h('div',{class:'tp-cross',id:'tpCross'});
+  const root=h('div',{id:'tourPlay',hidden:true},hint,cross);
+  view.append(root);
 
   // ----- scene objects -----
   const mat=c=>new THREE.MeshBasicMaterial({color:c,transparent:true,opacity:.9,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2});
   function disc(r,c,x,z){const m=new THREE.Mesh(new THREE.CircleGeometry(r,28),mat(c));m.rotation.x=-Math.PI/2;m.position.set(x,.014,z);return m;}
-  function buildPath(a){
+  function buildPath(legs,comp){
    const g=new THREE.Group();g.name='tour-path';
-   for(const leg of a.legs)for(let i=1;i<leg.length;i++){
+   for(const leg of legs)for(let i=1;i<leg.length;i++){
     const [x0,z0]=leg[i-1],[x1,z1]=leg[i],len=Math.hypot(x1-x0,z1-z0);if(len<1e-6)continue;
     const m=new THREE.Mesh(new THREE.PlaneGeometry(.08,len),mat('#176b55'));m.rotation.order='YXZ';m.rotation.set(-Math.PI/2,Math.atan2(x1-x0,z1-z0),0);m.position.set((x0+x1)/2,.012,(z0+z1)/2);g.add(m);
    }
-   for(const s of a.compiled.stops)g.add(disc(.2,'#176b55',s.x,s.z));
-   g.add(disc(.16,'#16a34a',...a.compiled.start),disc(.16,'#dc2626',...a.compiled.end));
+   for(const s of comp.stops)g.add(disc(.2,'#176b55',s.x,s.z));
+   g.add(disc(.16,'#16a34a',...comp.start),disc(.16,'#dc2626',...comp.end));
    return g;
   }
   function placeholder(){
@@ -73,98 +44,77 @@ const TourPlayer=(()=>{
    if(visitor){people.dispose(visitor);scene.remove(visitor);release(visitor);visitor=null;}
   }
 
-  // ----- routes -----
-  function find(id){return host.routes().find(x=>x.route.id===id)||null;}
-  const renderSide=()=>host.renderList(side,{readonly:true,selRoute:routeId,onPick:id=>load(id,false)});
-  function load(id,keepTime){
-   const list=host.routes(),x=list.find(y=>y.route.id===id);if(!x||!x.analysis.ok)return false;
-   routeId=id;compiled=x.analysis.compiled;live=x.analysis.live;eye=x.route.eyeHeight;
-   if(keepTime)t=clamp(t,0,compiled.total);else{t=0;playing=false;yawOff=pitchOff=0;}
-   renderSide();
-   if(path){scene.remove(path);release(path);}path=buildPath(x.analysis);scene.add(path);
-   tickBox.replaceChildren(...ticks(compiled).map(k=>{const e=h('span',{class:'tp-tick',title:'第 '+(k.stopIndex+1)+' 站停留',style:`left:calc(7px + (100% - 14px) * ${compiled.total?k.t/compiled.total:0})`});e.onclick=()=>{playing=false;t=Math.min(k.t+.01,compiled.total);yawOff=pitchOff=0;apply();};return e;}));
-   seek.max=String(compiled.total);lastBar='';apply();return true;
-  }
-
   // ----- camera / pose -----
   function setCam(next){
-   if(next===cam){syncButtons();return;}
+   if(next===cam){syncHint();return;}
    if(next==='fp'){overview={position:camera.position.clone(),target:orbit.target.clone(),fov:camera.fov};orbit.enabled=false;camera.fov=FP_FOV;camera.updateProjectionMatrix();}
-   else{unlock();camera.position.copy(overview.position);orbit.target.copy(overview.target);camera.fov=overview.fov;camera.updateProjectionMatrix();orbit.enabled=true;orbit.update();}
-   cam=next;saveCam(next);dragLook=null;apply();
+   else{unlock();backToOverview();}
+   cam=next;dragLook=null;apply();
   }
+  function backToOverview(){camera.position.copy(overview.position);orbit.target.copy(overview.target);camera.fov=overview.fov;camera.updateProjectionMatrix();orbit.enabled=true;orbit.update();}
   function apply(){
-   if(!compiled)return;
+   if(!open||!compiled)return;
    if(visitor&&people.ready()&&visitor.getObjectByName('tour-placeholder')){const ph=visitor.getObjectByName('tour-placeholder');visitor.remove(ph);release(ph);people.build(visitor);}
    const s=T.sampleRoute(compiled,t,eye);
    visitor.position.set(s.x,0,s.z);visitor.rotation.y=s.bodyYaw;visitor.visible=cam!=='fp';
    lastAnim=people.pose(visitor,s.phase==='walk'?'Walk':'Idle',t);
    if(cam==='fp'){camera.position.set(s.x,eye,s.z);camera.rotation.set(clamp(s.lookPitch+pitchOff,-PITCH_MAX,PITCH_MAX),s.lookYaw+Math.PI+yawOff,0,'YXZ');camera.updateMatrixWorld();}
-   syncBar(s);
   }
-  function syncBar(s){
-   const total=compiled.total;seek.value=String(t);
-   const text=ops.fmtDuration(t)+' / '+ops.fmtDuration(total);if(time.textContent!==text)time.textContent=text;
-   const ph=phaseText(compiled,s,t,live);if(phase.textContent!==ph)phase.textContent=ph;
-   const sig=[playing,t>=total-.01&&total>0,cam,locked,rate].join();if(sig!==lastBar){lastBar=sig;syncButtons();}
+  function syncHint(){
+   const fp=cam==='fp';hint.hidden=cross.hidden=!fp;
+   hint.textContent=locked?'移动鼠标转头 · Esc 释放鼠标并暂停':'按住 Cmd 移动鼠标转头，松开恢复原视角（也可按住拖动）';
   }
-  function syncButtons(){
-   const done=compiled&&t>=compiled.total-.01&&compiled.total>0;
-   play.replaceChildren(host.icon(playing?'pause':'play'),playing?'暂停':done?'重播':'播放');
-   rateBtn.textContent=rate+'×';
-   root.querySelectorAll('[data-cam]').forEach(b=>b.classList.toggle('active',b.dataset.cam===cam));
-   const fp=cam==='fp';hint.hidden=cross.hidden=recenter.hidden=!fp;
-   hint.textContent=locked?'移动鼠标转头 · Esc 释放鼠标并暂停':'点画面锁定鼠标后转头（或按住拖动）';
-  }
-  function toggle(){if(!compiled)return;if(playing)playing=false;else{if(t>=compiled.total-.01)t=0;playing=true;}syncButtons();apply();}
-  function pause(){if(playing){playing=false;syncButtons();}}
 
-  // ----- input -----
+  // ----- mouse look -----
   function unlock(){if(document.pointerLockElement===canvas)document.exitPointerLock();locked=false;}
   canvas.addEventListener('pointerdown',e=>{
    if(!open||cam!=='fp'||e.button!==0)return;dragLook={x:e.clientX,y:e.clientY};
-   if(!locked){try{const r=canvas.requestPointerLock();if(r?.catch)r.catch(()=>{});}catch(_){/* drag still turns the head */}}
+   
   });
   window.addEventListener('pointerup',()=>{dragLook=null;});
   document.addEventListener('pointermove',e=>{
    if(!open||cam!=='fp')return;let mx=0,my=0;
-   if(locked){mx=e.movementX;my=e.movementY;}else if(dragLook&&e.buttons&1){mx=e.clientX-dragLook.x;my=e.clientY-dragLook.y;dragLook={x:e.clientX,y:e.clientY};}else return;
+   if(metaDown||locked){mx=e.movementX;my=e.movementY;}else if(dragLook&&e.buttons&1){mx=e.clientX-dragLook.x;my=e.clientY-dragLook.y;dragLook={x:e.clientX,y:e.clientY};}else return;
    yawOff-=mx*LOOK_SPEED;pitchOff=clamp(pitchOff-my*LOOK_SPEED,-PITCH_OFF_MAX,PITCH_OFF_MAX);apply();
   });
-  document.addEventListener('pointerlockchange',()=>{const was=locked;locked=open&&document.pointerLockElement===canvas;if(was&&!locked)pause();if(open)syncButtons();});
-  window.addEventListener('keydown',e=>{
-   if(!open||e.code!=='Space'||isTextField(e)||e.isComposing||e.metaKey||e.ctrlKey||e.altKey)return;
-   e.preventDefault();if(!e.repeat)toggle();
-  });
-  // A focused button would also "click" on Space keyup; the keydown above already toggled.
-  window.addEventListener('keyup',e=>{if(open&&e.code==='Space'&&e.target.tagName==='BUTTON')e.preventDefault();});
-  window.addEventListener('blur',pause);
-  document.addEventListener('visibilitychange',()=>{if(document.hidden)pause();});
+  // 按住 Cmd 随鼠标转头，松开回到路径设定的视角
+  let metaDown=false;
+  const metaSet=v=>{if(v===metaDown)return;metaDown=v;if(!v&&open&&cam==='fp'){yawOff=pitchOff=0;apply();}};
+  window.addEventListener('keydown',e=>{if(e.key==='Meta')metaSet(true);});
+  window.addEventListener('keyup',e=>{if(e.key==='Meta')metaSet(false);});
+  window.addEventListener('blur',()=>metaSet(false));
+  document.addEventListener('pointerlockchange',()=>{const was=locked;locked=open&&document.pointerLockElement===canvas;if(was&&!locked)host.onPause();if(open)syncHint();});
 
   return {
-   // Show route `id` (must be playable). The caller has already put the editor into a neutral state.
-   open(id){
-    if(open)this.close();
-    visitor=makeVisitor();scene.add(visitor);open=true;cam='orbit';rate=1;root.hidden=false;side.hidden=splitBar.hidden=false;
-    if(!load(id,false)){this.close();return false;}
-    if(savedCam()==='fp')setCam('fp');
-    playing=true;syncButtons();return true;
+   // Show the 3D picture in `mount` with camera 'orbit' (透视) or 'fp' (第一人称). Data arrives through load().
+   show(mode,mount){
+    if(!open){
+     home={parent:view.parentNode,next:view.nextSibling};mount.append(view);host.onOpen();
+     visitor=makeVisitor();scene.add(visitor);open=true;cam='orbit';root.hidden=false;yawOff=pitchOff=0;
+    }
+    setCam(mode);syncHint();
    },
-   close(){
-    if(!open&&!visitor)return;
-    unlock();playing=false;dragLook=null;
-    if(cam==='fp'&&overview){camera.position.copy(overview.position);orbit.target.copy(overview.target);camera.fov=overview.fov;camera.updateProjectionMatrix();}
-    cam='orbit';open=false;root.hidden=side.hidden=splitBar.hidden=true;clearScene();compiled=null;routeId=null;
+   // {compiled, legs, live, eye}: the route to show (a new object whenever the route or its timing changed).
+   load(d){
+    compiled=d.compiled;live=d.live;eye=d.eye;t=clamp(t,0,compiled.total);
+    if(path){scene.remove(path);release(path);}path=buildPath(d.legs,compiled);scene.add(path);apply();
+   },
+   setTime(v){t=v;apply();},
+   recenter(){yawOff=pitchOff=0;apply();},
+   hide(){
+    if(!open)return;
+    unlock();dragLook=null;if(cam==='fp'&&overview)backToOverview();
+    cam='orbit';open=false;root.hidden=true;clearScene();compiled=null;
+    home.parent.insertBefore(view,home.next);home=null;host.onClose();
    },
    isOpen:()=>open,
-   // Data changed (undo, restore…): follow the route, or report that it is gone / no longer playable.
-   refresh(){if(!open)return;const x=find(routeId);if(!x||!x.analysis.ok){host.onGone();return;}load(routeId,true);},
-   update(dt){if(!open||!compiled)return;if(playing){t=T.advance(t,dt,rate,compiled.total);if(t>=compiled.total)playing=false;}if(playing||(people.ready()&&visitor.getObjectByName('tour-placeholder')))apply();},
+   // Called every frame: swaps the placeholder body for the real model once it has loaded.
+   update(){if(open&&compiled&&visitor&&people.ready()&&visitor.getObjectByName('tour-placeholder'))apply();},
    debug(){
     const s=compiled?T.sampleRoute(compiled,t,eye):null;
-    return {routeId,t,total:compiled?.total??0,playing,rate,cam,yawOff,pitchOff,eyeHeight:eye,phase:s?.phase,visitor:visitor?{x:visitor.position.x,z:visitor.position.z,rotY:visitor.rotation.y,visible:visitor.visible}:null,anim:lastAnim?{...lastAnim}:{}};
+    return {t,total:compiled?.total??0,cam,yawOff,pitchOff,eyeHeight:eye,phase:s?.phase,visitor:visitor?{x:visitor.position.x,z:visitor.position.z,rotY:visitor.rotation.y,visible:visitor.visible}:null,anim:lastAnim?{...lastAnim}:{}};
    },
   };
  }
- return {ticks,phaseText,create};
+ return {create};
 })();

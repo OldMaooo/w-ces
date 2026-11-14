@@ -35,6 +35,7 @@ const TourModel=(()=>{
  }
  // null = fine; otherwise why the stop can't be used right now.
  function staleReason(tour,stop,objects){
+  if(stop.pos)return null;   // 路径点（不挂在兴趣点上）永远可用
   const poi=tour.pois.find(p=>p.id===stop.poiId);if(!poi)return 'poi-removed';
   const o=objects.find(x=>x.id===poi.objectId);if(!o)return 'object-missing';
   return o.hidden===true||o.visible===false?'object-hidden':null;
@@ -86,7 +87,7 @@ const TourModel=(()=>{
     if(r.stops.length>LIMITS.stops)fail('站太多（每条路线最多 '+LIMITS.stops+' 站）');
     const stops=r.stops.map(s=>{
      if(!isObj(s))fail('站格式不对');
-     const out={poiId:id(s.poiId,'站')};if(s.dwell!==undefined)out.dwell=num(s.dwell,'站停留时间',0,3600);return out;
+     const out=s.poiId===undefined?{pos:pair(s.pos,'路径点',1000)}:{poiId:id(s.poiId,'站')};if(s.dwell!==undefined)out.dwell=num(s.dwell,'站停留时间',0,3600);return out;
     });
     return {id:rid,name:str(r.name,'子方案名称',40),speed:r.speed===undefined?1:num(r.speed,'走速',1e-3,10),eyeHeight:r.eyeHeight===undefined?1.75:num(r.eyeHeight,'眼高',.5,3),stops};
    });

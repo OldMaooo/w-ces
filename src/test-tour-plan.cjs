@@ -78,12 +78,12 @@ test('站顺序：加站（同一兴趣点可多次）、删站、挪站、上�
  for(let i=r.stops.length;i<M.LIMITS.stops;i++)assert.ok(ops.addStop(r,'z'));assert.equal(ops.addStop(r,'z'),false);assert.equal(r.stops.length,M.LIMITS.stops);
  ops.moveStop(r,-1,0);ops.moveStop(r,0,999);assert.equal(r.stops.length,M.LIMITS.stops);
 });
-test('编号串：入口 → ③ → ① → 出口；失效的站显示「已失效」；没有站就是入口 → 出口',()=>{
+test('名称串：入口 → ③ → ① → 出口；失效的站显示「已失效」；没有站就是入口 → 出口',()=>{
  const tour=freshTour(),os=[obj('tv',0,-2),obj('robot',1,1),obj('table',-1,1)];
- const ps=os.map(o=>ops.addPoi(tour,o,{name:'x'}));const g=ops.newGroup(tour,'A','other',room,venue),r=ops.newRoute(g,'r');
+ const ps=os.map((o,i)=>ops.addPoi(tour,o,{name:'甲乙丙'[i]}));const g=ops.newGroup(tour,'A','other',room,venue),r=ops.newRoute(g,'r');
  assert.equal(ops.routeLabel(tour,r,os),'入口 → 出口');
- ops.addStop(r,ps[2].id);ops.addStop(r,ps[0].id);assert.equal(ops.routeLabel(tour,r,os),'入口 → ③ → ① → 出口');
- ops.removePoi(tour,ps[0].id);assert.equal(ops.routeLabel(tour,r,os),'入口 → ③ → 已失效 → 出口');
+ ops.addStop(r,ps[2].id);ops.addStop(r,ps[0].id);assert.equal(ops.routeLabel(tour,r,os),'入口 → 丙 → 甲 → 出口');
+ ops.removePoi(tour,ps[0].id);assert.equal(ops.routeLabel(tour,r,os),'入口 → 丙 → 已失效 → 出口');
  assert.equal(ops.numLabel(1),'①');assert.equal(ops.numLabel(20),'⑳');assert.equal(ops.numLabel(21),'21');
 });
 test('时长显示：mm:ss',()=>{assert.equal(ops.fmtDuration(65),'1:05');assert.equal(ops.fmtDuration(0),'0:00');assert.equal(ops.fmtDuration(59.6),'1:00');assert.equal(ops.fmtDuration(null),'—');});
@@ -125,7 +125,7 @@ test('分析：站位在障碍里 → 「② 的站位被挡住了，拖一下�
  const p1=ops.addPoi(tour,a,{name:'电视'}),p2=ops.addPoi(tour,b,{name:'电脑'});p2.stand=[0,0];
  const g=ops.newGroup(tour,'A','north-ew',room,venue),r=ops.newRoute(g,'r');ops.addStop(r,p1.id);ops.addStop(r,p2.id);
  const res=ops.analyzeRoute(ctxFor(tour,[a,d,b]),g,r);assert.equal(res.ok,false);
- assert.ok(res.issues.some(i=>i.text==='② 的站位被挡住了，拖一下站位点'),JSON.stringify(res.issues));
+ assert.ok(res.issues.some(i=>i.text==='电脑 的站位被挡住了，拖一下站位点'),JSON.stringify(res.issues));
  assert.equal(res.stops[1].standBlocked,true);assert.equal(res.stops[0].standBlocked,false);
 });
 test('分析：入口在走不了的地方 → 提示拖入口；出口同理',()=>{
@@ -140,7 +140,7 @@ test('分析：完全走不通 → 「① → ② 走不通，被『前台』挡
  const os=[a,b,...ring];const p1=ops.addPoi(tour,a,{name:'电视'}),p2=ops.addPoi(tour,b,{name:'电脑'});p2.stand=[0,0];
  const g=ops.newGroup(tour,'A','north-ew',room,venue),r=ops.newRoute(g,'r');ops.addStop(r,p1.id);ops.addStop(r,p2.id);
  const res=ops.analyzeRoute(ctxFor(tour,os),g,r);assert.equal(res.ok,false);assert.equal(res.total,null);
- assert.ok(res.issues.some(i=>i.text==='① → ② 走不通，被『前台』挡住'),JSON.stringify(res.issues));
+ assert.ok(res.issues.some(i=>i.text==='电视 → 电脑 走不通，被『前台』挡住'),JSON.stringify(res.issues));
  const bad=res.segments.filter(s=>!s.ok);assert.equal(bad.length>=1,true);assert.equal(bad[0].points.length,2);
 });
 test('分析不改入参（tour、objects 原样）',()=>{
@@ -150,6 +150,20 @@ test('分析不改入参（tour、objects 原样）',()=>{
 test('改后的 tour 仍能通过 validateTour（所有操作产出的数据合法）',()=>{
  const tour=freshTour(),a=obj('tv',0,-2),p=ops.addPoi(tour,a,{name:'电视'});const g=ops.newGroup(tour,'A','north-ew',room,venue),r=ops.newRoute(g,'r');ops.addStop(r,p.id);ops.addStop(r,p.id);
  ops.copyGroup(tour,g.id);ops.copyRoute(g,r.id);ops.moveStop(r,0,1);assert.deepEqual(M.validateTour(tour).ok,true,JSON.stringify(M.validateTour(tour)));
+});
+
+test('路径点：能插在指定位置，不挂兴趣点也算站，路线能走通并带进时间线，数据能通过校验',()=>{
+ const tour=freshTour(),a=obj('tv',0,-2),b=obj('robot',1,1);
+ const pa=ops.addPoi(tour,a,{name:'电视'}),pb=ops.addPoi(tour,b,{name:'机器人'});
+ const g=ops.newGroup(tour,'A','north-ew',room,venue),r=ops.newRoute(g,'r');
+ ops.addStop(r,pa.id);ops.addStop(r,pb.id);ops.addWaypoint(r,[0.5,0.5],1);
+ assert.deepEqual(r.stops.map(s=>s.pos?'wp':s.poiId),[pa.id,'wp',pb.id]);
+ assert.equal(ops.routeLabel(tour,r,[a,b]),'入口 → 电视 → 路径点 → 机器人 → 出口');
+ const res=ops.analyzeRoute(ctxFor(tour,[a,b]),g,r);
+ assert.equal(res.stops[1].waypoint,true);assert.equal(res.stops[1].name,'路径点 1');assert.deepEqual(res.stops[1].stand,[0.5,0.5]);assert.equal(res.stops[1].stale,null);
+ assert.equal(res.ok,true,JSON.stringify(res.issues));assert.equal(res.compiled.stops.length,3);
+ assert.equal(M.validateTour(JSON.parse(JSON.stringify(tour))).ok,true);
+ tour.groups[0].routes[0].stops[1].pos=[NaN,0];assert.equal(M.validateTour(JSON.parse(JSON.stringify(tour))).ok,false);
 });
 
 let failed=0;

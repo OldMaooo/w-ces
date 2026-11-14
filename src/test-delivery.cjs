@@ -23,9 +23,9 @@ try{
  await B.p.locator('#routeBtn').click();await B.p.waitForSelector('#rtPlan rect.rt-booth');
  const ui=await B.p.evaluate(()=>({badges:document.querySelectorAll('#rtPlan g.rt-badge').length,left:document.querySelector('#rtLeft').textContent}));
  assert.equal(ui.badges,2);assert.ok(ui.left.includes('看两块屏'),ui.left);
- await B.p.locator('#rtLeft .rt-row.r',{hasText:'看两块屏'}).click();await B.p.locator('#rtRight button:has-text("在 3D 中预览")').click();await B.p.waitForSelector('#tpPlay');assert.equal(await B.p.evaluate(()=>editor.tourPlayer.isOpen()),true);
+ await B.p.locator('#rtLeft .rt-row.r',{hasText:'看两块屏'}).click();await B.p.locator('#rtBar [data-cam="orbit"]').click();assert.equal(await B.p.evaluate(()=>editor.tourPlayer.isOpen()),true);await B.p.locator('#tpPlay').click();
  await B.p.waitForTimeout(600);assert.ok(await B.p.evaluate(()=>editor.tourPlayer.debug().t)>0,'播放应在走');
- console.log('PASS 断网 + file:// 打开下载的编辑器，导入后图纸上两个兴趣点、路线在，3D 预览能播');
+ console.log('PASS 断网 + file:// 打开下载的编辑器，导入后图纸上两个兴趣点、路线在，透视视角能播');
  await B.c.close();
  // 丙：另一个隔离浏览器配置（联网版）导入同一 JSON，界面看到同样的兴趣点和路线
  const C=await mk();await C.p.goto('http://127.0.0.1:8876/?builtin');await ready(C.p);

@@ -35,11 +35,11 @@ try{
  assert.equal(await p.locator('#routeEdit').isHidden(),true);assert.equal(await p.locator('aside').isHidden(),true);
  assert.equal(await p.locator('#tourBack').isVisible(),true);assert.equal(await p.locator('#tourExit').isVisible(),true);
  for(const id of ['#undo','#import','#save','#routeBtn','#viewbar','#libraryToggle'])assert.equal(await p.locator(id).isHidden(),true,id+' 播放时应收起');
- for(const id of ['#tpPick','#tpRestart','#tpPlay','#tpSeek','#tpTime','#tpRecenter'])assert.equal(await p.locator(id).count(),1,id);
- assert.equal(await p.locator('#tourPlay [data-rate]').count(),3);assert.equal(await p.locator('#tourPlay [data-cam]').count(),2);
- const opts=await p.locator('#tpPick option').evaluateAll(os=>os.map(o=>[o.value,o.disabled]));
- assert.deepEqual(opts,[['r1',false],['r2',false],['r3',false],['r4',true]]);assert.equal(await p.locator('#tpPick').inputValue(),'r3');
- assert.equal(await p.locator('#tpPick optgroup').getAttribute('label'),'北过道·东→西');
+ for(const id of ['#tpSide','#tpRate','#tpRestart','#tpPlay','#tpSeek','#tpTime','#tpRecenter'])assert.equal(await p.locator(id).count(),1,id);
+ assert.equal(await p.locator('#tourPlay [data-cam]').count(),2);assert.equal(await p.locator('#tpPick').count(),0,'不再用下拉');assert.equal(await p.locator('#tpRate').textContent(),'1×');
+ const rows=await p.locator('#tpSide .rt-row.r').evaluateAll(es=>es.map(e=>[e.querySelector('.rt-name').textContent,e.classList.contains('off'),e.classList.contains('sel')]));
+ assert.equal(rows.length,4);assert.deepEqual(rows.map(r=>r[1]),[false,false,false,true]);assert.deepEqual(rows.map(r=>r[2]),[false,false,true,false]);
+ assert.equal(await p.locator('#tpSide .rt-row.g').first().textContent().then(t=>t.includes('北过道·东→西')),true);assert.equal(await p.locator('#tpSide button').count(),0,'预览左栏只读，没有编辑按钮');
  assert.equal((await st()).playing,true,'进来就开始播');
  await p.waitForTimeout(500);const t1=(await st()).t;assert.ok(t1>.2,'时间在走：'+t1);
  console.log('PASS 进入 3D 预览：顶栏、播放条、路线下拉（走不通的灰掉），自动开播');
@@ -67,8 +67,9 @@ try{
  assert.equal(await p.evaluate(()=>editor.layout().objects.length),3,'游客不进方案数据');
  console.log('PASS 游客停留放 Idle、走路放 Walk，暂停不动；不写进方案');
  // 7 倍速
- await p.locator('#tourPlay [data-rate="2"]').click();assert.equal((await st()).rate,2);assert.ok(await p.locator('#tourPlay [data-rate="2"]').evaluate(e=>e.classList.contains('active')));
- console.log('PASS 倍速切换');
+ const seqR=[];for(let i=0;i<4;i++){await p.locator('#tpRate').click();seqR.push([(await st()).rate,await p.locator('#tpRate').textContent()]);}
+ assert.deepEqual(seqR,[[2,'2×'],[.5,'0.5×'],[1,'1×'],[2,'2×']]);await p.locator('#tpRate').click();await p.locator('#tpRate').click();
+ console.log('PASS 倍速是一个按钮，点一下依次 1×→2×→0.5×→1×');
  // 8 总览下点画面不会选中物料
  await p.mouse.click(720,400);assert.equal(await p.evaluate(()=>editor.selected()),null);
  // 9 第一人称：相机在眼高、隐藏游客、FOV 65；拖动转头；视线归位 / 拖进度清零
@@ -99,7 +100,7 @@ try{
  await p.locator('#tpPlay').click();assert.equal((await st()).playing,true);await p.evaluate(()=>window.dispatchEvent(new Event('blur')));assert.equal((await st()).playing,false);
  console.log('PASS 失焦暂停');
  // 12 切路线：从头、暂停、清转头
- await p.locator('#tpPick').selectOption('r2');d=await st();assert.equal(d.routeId,'r2');assert.equal(d.t,0);assert.equal(d.playing,false);assert.equal(d.yawOff,0);
+ await p.locator('#tpSide .rt-row.r',{hasText:'两站'}).click();d=await st();assert.equal(d.routeId,'r2');assert.equal(d.t,0);assert.equal(d.playing,false);assert.equal(d.yawOff,0);
  assert.equal(await p.locator('#tourPlay .tp-tick').count(),2);
  console.log('PASS 切路线后从头开始');
  // 13 回到路线图：选中刚才那条
@@ -127,11 +128,23 @@ try{
  console.log('PASS 切方案先退出播放');
  // 17 悬停：播放条按钮都有变化
  await p.locator('#routeBtn').click();await routeRow('两站').click();await preview().click();await p.locator('#tpPlay').click();
- for(const sel of ['#tpRestart','#tpPlay','#tourPlay [data-rate="1"]','#tourPlay [data-cam="fp"]','#tourBack','#tourExit','#tpPick']){
+ for(const sel of ['#tpRestart','#tpPlay','#tpRate','#tourPlay [data-cam="fp"]','#tourBack','#tourExit']){
   const loc=p.locator(sel).first();await p.mouse.move(5,890);const s0=await loc.evaluate(e=>{const c=getComputedStyle(e);return c.backgroundColor+c.borderColor;});
   await loc.hover();const s1=await loc.evaluate(e=>{const c=getComputedStyle(e);return c.backgroundColor+c.borderColor;});assert.notEqual(s1,s0,sel+' 悬停无变化');
  }
  await p.mouse.move(5,890);const tk=p.locator('#tourPlay .tp-tick').first();const k0=await tk.evaluate(e=>getComputedStyle(e).transform);await tk.hover();assert.notEqual(await tk.evaluate(e=>getComputedStyle(e).transform),k0,'刻度悬停');
  console.log('PASS 播放条所有按钮、刻度悬停有变化');
+
+ // 18 视角记忆：切到第一人称后，下次进入还是第一人称；刷新页面也记得；切回总览也记得
+ await p.evaluate(()=>localStorage.removeItem('ces-tour-cam'));
+ await p.locator('#tourExit').click();await p.locator('#routeBtn').click();await routeRow('两站').click();await preview().click();assert.equal((await st()).cam,'orbit','没设置过默认总览');
+ await p.locator('#tourPlay [data-cam="fp"]').click();await p.locator('#tourExit').click();
+ await p.locator('#routeBtn').click();await routeRow('两站').click();await preview().click();assert.equal((await st()).cam,'fp','再次进入按上次的第一人称');
+ assert.equal(await p.evaluate(()=>editor.camera.fov),65);
+ await p.locator('#tourBack').click();await routeRow('只路过').click();await preview().click();assert.equal((await st()).cam,'fp','换一条子方案也是第一人称');
+ await p.locator('#tourExit').click();await p.reload();await p.waitForFunction(()=>window.editor&&window.editor.tourPlayer);await p.locator('#routeBtn').click();await routeRow('两站').click();await preview().click();assert.equal((await st()).cam,'fp','刷新页面后也记得');
+ await p.locator('#tourPlay [data-cam="orbit"]').click();await p.locator('#tourExit').click();await p.locator('#routeBtn').click();await routeRow('两站').click();await preview().click();assert.equal((await st()).cam,'orbit','切回总览也记得');
+ assert.equal(await p.evaluate(()=>JSON.stringify(editor.layout()).includes('ces-tour-cam')),false);
+ console.log('PASS 总览 / 第一人称记住上次的选择（换方案、刷新都保留，不进方案数据）');
  assert.deepEqual(errors,[],'页面不应有报错：'+errors.join('\n'));console.log('PASS 全程无页面异常');
 }finally{await b.close()}})().catch(e=>{console.error(e);process.exitCode=1});

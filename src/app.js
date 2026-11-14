@@ -337,10 +337,10 @@ tourPlan=TourPlan.create({root:$('routeEdit'),icon,
  getObjects:()=>snapshot().map(o=>({...o,name:o.type==='acrylicA4'||o.type==='acrylicA5'?'亚克力立牌':definitions[o.type].name})),
  getRoom:()=>room,getVenue:()=>venueGroup.userData,getTour:()=>tour,checkpoint,persist,
  undo:()=>$('undo').click(),redo:()=>$('redo').click(),undoState:()=>({undo:!$('undo').disabled,redo:!$('redo').disabled}),onPreview:id=>enterPlay(id)});
-function setRouteMode(on,routeId){if(on===tourPlan.isOpen())return;if(on){exitPlay();cancelPlacement();setWalking(false);showLibrary(false);tourPlan.open(routeId);}else tourPlan.close();routeBtn.classList.toggle('active',on);routeBtn.lastChild.textContent=on?'退出路线':'路线';}
+function setRouteMode(on,routeId){if(on===tourPlan.isOpen())return;if(on){exitPlay();cancelPlacement();setWalking(false);showLibrary(false);tourPlan.open(routeId);}else tourPlan.close();document.body.classList.toggle('routing',on);routeBtn.classList.toggle('active',on);routeBtn.lastChild.textContent=on?'退出路线':'路线';}
 routeBtn.onclick=()=>setRouteMode(!tourPlan.isOpen());
 // Modes: editor / freeWalk / routeEdit / routePlay — one at a time. Playback is entered and left only through this pair.
-tourPlayer=TourPlayer.create({view,actions:document.querySelector('header .actions'),scene,camera,orbit,canvas:renderer.domElement,icon,
+tourPlayer=TourPlayer.create({view,main:document.querySelector('main'),attachResize:TourPlan.attachResize,renderList:(el,o)=>tourPlan.renderList(el,o),actions:document.querySelector('header .actions'),scene,camera,orbit,canvas:renderer.domElement,icon,
  routes:()=>tour.groups.flatMap(g=>g.routes.map(r=>({group:g,route:r,analysis:tourPlan.analysisOf(r.id)}))),
  onBack:id=>{exitPlay();setRouteMode(true,id);},onExit:()=>exitPlay(),onGone:()=>exitPlay()});
 let playSaved=null;

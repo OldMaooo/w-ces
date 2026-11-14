@@ -104,6 +104,17 @@ const TourPlan=(()=>{
   return e;
  }
 
+ // 面板宽度可左右拖（存本机，不进方案）；图纸左栏和 3D 预览左栏共用一个宽度
+ const PANEL_KEY='ces-route-panel-w';
+ function setPanelWidth(w){const max=Math.max(240,innerWidth*.7);document.documentElement.style.setProperty('--rt-left-w',Math.round(Math.max(240,Math.min(max,w)))+'px');}
+ try{const w=parseFloat(localStorage.getItem(PANEL_KEY));if(w>0)setPanelWidth(w);}catch(e){}
+ function attachResize(panel){
+  const bar=h('div',{class:'rt-split',role:'separator','aria-orientation':'vertical',title:'左右拖动调整宽度'});panel.after(bar);let st=null;
+  bar.onpointerdown=e=>{st={x:e.clientX,w:panel.offsetWidth};bar.setPointerCapture(e.pointerId);bar.classList.add('drag');document.body.style.userSelect='none';};
+  bar.onpointermove=e=>{if(st)setPanelWidth(st.w+e.clientX-st.x);};
+  const end=()=>{if(!st)return;st=null;bar.classList.remove('drag');document.body.style.userSelect='';try{localStorage.setItem(PANEL_KEY,String(panel.offsetWidth));}catch(e){}};
+  bar.onpointerup=end;bar.onpointercancel=end;return bar;
+ }
  // host: {root, icon(name), getObjects(), getRoom(), getVenue(), getTour(), checkpoint(), persist(), undo(), redo(), undoState()}
  function create(host){
   const root=host.root,q=s=>root.querySelector(s);
@@ -114,6 +125,7 @@ const TourPlan=(()=>{
   const toW=(sx,sy)=>[view.cx-(sx-W/2)/view.k,view.cz-(sy-H/2)/view.k];
 
   root.append(h('div',{class:'rt-side',id:'rtLeft'}),h('div',{id:'rtStage'},(()=>{const e=document.createElementNS('http://www.w3.org/2000/svg','svg');e.id='rtPlan';return e;})(),h('div',{class:'rt-toolbar',id:'rtTools'}),h('div',{class:'rt-hint',id:'rtHint',hidden:true})),h('div',{class:'rt-side right',id:'rtRight'}));
+  attachResize(q('#rtLeft'));
 
   // ----- context / analysis (nav rebuilt only when objects or room change) -----
   function ctx(){
@@ -148,28 +160,31 @@ const TourPlan=(()=>{
    el.append(btn('undo-2','撤销',()=>host.undo(),!u.undo),btn('redo-2','重做',()=>host.redo(),!u.redo),h('span',{class:'rt-sep'}),btn('maximize','适应画面',()=>{view=null;drawPlan();}),h('span',{class:'rt-zoom',id:'rtZoom'}));
   }
 
-  // ----- left: 大方案 / 子方案 -----
-  function renderLeft(c){
-   const el=q('#rtLeft'),{tour}=c;el.replaceChildren();
-   el.append(h('h2',null,'路线方案',h('button',{class:'ghost',title:'新建大方案','aria-label':'新建大方案',onclick:newGroup},host.icon('plus'))));
+  // ----- left: 大方案 / 子方案（图纸模式可编辑；3D 预览里 readonly，只能点选能走通的子方案）-----
+  function renderList(el,c,opts={}){
+   const {tour}=c,ro=!!opts.readonly,cur=ro?opts.selRoute:selRoute;el.replaceChildren();
+   el.append(h('h2',null,'路线方案',ro?null:h('button',{class:'ghost',title:'新建大方案','aria-label':'新建大方案',onclick:newGroup},host.icon('plus'))));
    if(!tour.groups.length)el.append(h('div',{class:'rt-empty'},'还没有路线方案'));
    for(const g of tour.groups){
-    const row=h('div',{class:'rt-row g'+(selGroup===g.id&&!selRoute?' sel':''),onclick:()=>{selGroup=g.id;selRoute=null;ordering=false;render();}},
-     h('span',{class:'rt-name'},g.name),h('span',{class:'rt-meta'},String(g.routes.length)),
-     h('span',{class:'rt-tools'},toolBtn('copy','复制',()=>{if(tour.groups.length>=M.LIMITS.groups){flash('大方案最多 20 个');return;}mutate(()=>{const n=ops.copyGroup(tour,g.id);selGroup=n.id;selRoute=null;});}),toolBtn('trash','删除',()=>mutate(()=>{ops.removeGroup(tour,g.id);}))));
+    const row=ro?h('div',{class:'rt-row g static'},h('span',{class:'rt-name'},g.name))
+     :h('div',{class:'rt-row g'+(selGroup===g.id&&!selRoute?' sel':''),onclick:()=>{selGroup=g.id;selRoute=null;ordering=false;render();}},
+      h('span',{class:'rt-name'},g.name),
+      h('span',{class:'rt-tools'},toolBtn('copy','复制',()=>{if(tour.groups.length>=M.LIMITS.groups){flash('大方案最多 20 个');return;}mutate(()=>{const n=ops.copyGroup(tour,g.id);selGroup=n.id;selRoute=null;});}),toolBtn('trash','删除',()=>mutate(()=>{ops.removeGroup(tour,g.id);}))),
+      toolBtn('plus','新建子方案',()=>newRoute(g),'rt-addroute'));
     const subs=h('div',{class:'rt-subs'});
     for(const r of g.routes){
-     const a=analysis(c,g,r);
-     subs.append(h('div',{class:'rt-row r'+(selRoute===r.id?' sel':''),onclick:()=>{selGroup=g.id;selRoute=r.id;ordering=false;render();}},
+     const a=analysis(c,g,r),off=ro&&!a.ok;
+     subs.append(h('div',{class:'rt-row r'+(cur===r.id?' sel':'')+(off?' off':''),title:off?'有走不通的地方，不能预览':null,onclick:ro?()=>{if(a.ok)opts.onPick(r.id);}:()=>{selGroup=g.id;selRoute=r.id;ordering=false;render();}},
       h('span',{class:'rt-main'},h('span',{class:'rt-name'},r.name),h('span',{class:'rt-seq',title:a.label},a.label)),
-      h('span',{class:'rt-meta'+(a.ok?'':' warn')},a.ok?fmtDuration(a.total):'走不通'),
-      h('span',{class:'rt-tools'},toolBtn('copy','复制',()=>{if(g.routes.length>=M.LIMITS.routes){flash('子方案最多 30 个');return;}mutate(()=>{const n=ops.copyRoute(g,r.id,tour);selGroup=g.id;selRoute=n.id;});}),toolBtn('trash','删除',()=>mutate(()=>{ops.removeRoute(g,r.id);})))));
+      a.ok?null:h('span',{class:'rt-flag',title:'走不通'},host.icon('triangle-alert')),
+      ro?null:h('span',{class:'rt-tools'},toolBtn('copy','复制',()=>{if(g.routes.length>=M.LIMITS.routes){flash('子方案最多 30 个');return;}mutate(()=>{const n=ops.copyRoute(g,r.id,tour);selGroup=g.id;selRoute=n.id;});}),toolBtn('trash','删除',()=>mutate(()=>{ops.removeRoute(g,r.id);})))));
     }
     if(!g.routes.length)subs.append(h('div',{class:'rt-empty'},'还没有子方案'));
-    el.append(h('div',{class:'rt-group'},row,h('div',{class:'rt-approach'},M.APPROACH_NAMES[g.approach]),subs,h('button',{class:'rt-add',onclick:()=>newRoute(g)},host.icon('plus'),'新子方案')));
+    el.append(h('div',{class:'rt-group'},row,h('div',{class:'rt-approach'},M.APPROACH_NAMES[g.approach]),subs));
    }
   }
-  function toolBtn(ic,title,on){return h('button',{class:'ghost',title,'aria-label':title,onclick:e=>{e.stopPropagation();on();}},host.icon(ic));}
+  const renderLeft=c=>renderList(q('#rtLeft'),c);
+  function toolBtn(ic,title,on,cls=''){return h('button',{class:'ghost '+cls,title,'aria-label':title,onclick:e=>{e.stopPropagation();on();}},host.icon(ic));}
   function newGroup(){
    const c=ctx();
    if(c.tour.groups.length>=M.LIMITS.groups){flash('大方案最多 20 个');return;}
@@ -191,20 +206,23 @@ const TourPlan=(()=>{
    i.onchange=()=>{const v=i.value.trim();if(v&&v!==value)on(v);else i.value=value;};return i;
   };
   function renderRight(c){
-   const el=q('#rtRight');el.replaceChildren();
-   const g=curGroup(c),r=curRoute(g),o=selObj!=null?c.objects.find(x=>x.id===selObj):null;
-   if(o)el.append(objectSection(c,o));
-   if(g&&r)el.append(routeSection(c,g,r));else if(g)el.append(groupSection(c,g));
-   if(!el.children.length)el.append(h('div',{class:'rt-empty'},'点图上的物料，设为兴趣点'));
+   const el=q('#rtRight'),body=h('div',{class:'rt-scroll'}),foot=h('div',{class:'rt-foot'});el.replaceChildren(body,foot);
+   const g=curGroup(c),r=curRoute(g),o=selObj!=null?c.objects.find(x=>x.id===selObj):null,acts=[];
+   if(o)body.append(objectSection(c,o,acts));
+   if(g&&r)body.append(routeSection(c,g,r,acts));else if(g)body.append(groupSection(c,g));
+   if(!body.children.length)body.append(h('div',{class:'rt-empty'},'点图上的物料，设为兴趣点'));
+   // 最主要的按钮固定在右下角，最右边的那个是主按钮
+   const main=acts.find(x=>x.key==='finish')||acts.find(x=>x.key==='preview')||acts.find(x=>x.key==='poi');
+   for(const x of acts)foot.append(h('button',{class:x===main?'primary':'',disabled:x.disabled,title:x.title,onclick:x.on},host.icon(x.icon),x.text));
   }
-  function objectSection(c,o){
+  function objectSection(c,o,acts){
    const {tour}=c,poi=tour.pois.find(p=>p.objectId===o.id),sec=h('section',null);
    sec.append(h('h2',null,poi?'兴趣点 '+numLabel(poi.num)+' · '+objLabel(c,o):objLabel(c,o)));
    if(!poi){
-    sec.append(h('button',{class:'primary rt-wide',onclick:()=>{
+    acts.push({key:'poi',icon:'map-pin',text:'设为兴趣点',on:()=>{
      if(tour.pois.length>=M.LIMITS.pois){flash('兴趣点最多 100 个');return;}
      mutate(()=>{ops.addPoi(tour,o,{name:objLabel(c,o),isWalkable:(x,z)=>c.nav.isWalkable(x,z)});});
-    }},host.icon('map-pin'),'设为兴趣点'));
+    }});
     return sec;
    }
    sec.append(field('名称',textInput(poi.name,v=>mutate(()=>{poi.name=v;}))),field('默认停留',numberInput(poi.dwell,0,3600,1,v=>mutate(()=>{poi.dwell=v;})),'秒'));
@@ -223,13 +241,14 @@ const TourPlan=(()=>{
    sec.append(field('来向',sel),h('div',{class:'rt-btnrow'},h('button',{title:'入口和出口点放回默认位置',onclick:()=>mutate(()=>{ops.setApproach(g,g.approach,c.room,c.venue);})},'还原入口出口')));
    return sec;
   }
-  function routeSection(c,g,r){
+  function routeSection(c,g,r,acts){
    const a=analysis(c,g,r),sec=h('section',null);
-   sec.append(h('h2',null,'子方案'),h('button',{class:'rt-wide'+(ordering?' primary':''),onclick:()=>{ordering=!ordering;render();}},host.icon(ordering?'check':'list-ordered'),ordering?'完成':'排顺序'));
+   sec.append(h('h2',null,'子方案'));
+   acts.push({key:ordering?'finish':'order',icon:ordering?'check':'list-ordered',text:ordering?'完成':'排顺序',on:()=>{ordering=!ordering;render();}});
    sec.append(field('名称',textInput(r.name,v=>mutate(()=>{r.name=v.slice(0,40);}))),
     field('走速',numberInput(r.speed,.1,5,.1,v=>mutate(()=>{r.speed=v;})),'倍'),field('眼高',numberInput(r.eyeHeight,1,2.2,.05,v=>mutate(()=>{r.eyeHeight=v;})),'米'));
    sec.append(h('div',{class:'rt-stat'},h('div',null,h('small',null,'时长'),a.ok?fmtDuration(a.total):'—'),h('div',null,h('small',null,'站点'),String(r.stops.length))));
-   if(host.onPreview)sec.append(h('button',{class:'primary rt-wide rt-preview',disabled:!a.ok,title:a.ok?'回到 3D 看游客走一遍':'有走不通的地方，先修好再预览',onclick:()=>{ordering=false;host.onPreview(r.id);}},host.icon('play'),'在 3D 中预览'));
+   if(host.onPreview&&!ordering)acts.push({key:'preview',icon:'play',text:'在 3D 中预览',disabled:!a.ok,title:a.ok?'回到 3D 看游客走一遍':'有走不通的地方，先修好再预览',on:()=>{ordering=false;host.onPreview(r.id);}});
    const list=h('div',{class:'rt-stops'});
    list.append(h('div',{class:'rt-stop fixed'},h('span',{class:'rt-end start'},'入'),h('span',{class:'rt-sname'},'入口')));
    a.stops.forEach((s,i)=>list.append(stopRow(c,r,s,i)));
@@ -297,7 +316,6 @@ const TourPlan=(()=>{
    for(const o of vis)if(!solid.has(o.id)&&o.type!=='fascia')s+=soft(o);
    for(const o of vis){if(!solid.has(o.id)&&o.type!=='fascia'&&!poiOf.has(o.id)&&selObj!==o.id)continue;const [a,bb]=toS(o.position[0],o.position[2]);s+=`<text class="rt-olabel" x="${f(a)}" y="${f(bb+(poiOf.has(o.id)?24:0))}">${esc(objLabel(c,o))}</text>`;}
    if(g){
-    for(const rr of g.routes){if(rr===r)continue;const a=analysis(c,g,rr);if(a.legs.length)s+=`<polyline class="rt-seg dim" points="${poly(a.legs.flat())}"/>`;}
     if(r){
      const a=analysis(c,g,r);
      a.segments.forEach(seg=>{
@@ -406,10 +424,12 @@ const TourPlan=(()=>{
    close(){open=false;root.hidden=true;ordering=false;drag=null;pan=null;},
    isOpen:()=>open,
    refresh:render,
+   // 3D 预览左栏复用同一套方案列表（只读）
+   renderList:(el,opts)=>renderList(el,ctx(),opts),
    state:()=>({selGroup,selRoute,selObj,ordering}),
    analysisOf(id){const c=ctx();for(const g of c.tour.groups){const r=g.routes.find(x=>x.id===id);if(r)return analysis(c,g,r);}return null;},
   };
  }
- return {ops,create,numLabel,fmtDuration};
+ return {ops,create,numLabel,fmtDuration,attachResize};
 })();
 if(typeof module!=='undefined'&&module.exports)module.exports=TourPlan;

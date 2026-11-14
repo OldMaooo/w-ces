@@ -13,7 +13,10 @@ const TourPlayer=(()=>{
  }
  const isTextField=e=>e.target.isContentEditable||e.target.tagName==='TEXTAREA'||e.target.tagName==='SELECT'||(e.target.tagName==='INPUT'&&!['range','checkbox','radio','button'].includes(e.target.type));
 
- // host: {view, actions, scene, camera, orbit, canvas, icon(name), routes() → [{group, route, analysis}], onBack(routeId), onExit(), onGone()}
+ const CAM_KEY='ces-tour-cam',RATES=[.5,1,2];
+ const savedCam=()=>{try{return localStorage.getItem(CAM_KEY)==='fp'?'fp':'orbit';}catch(e){return 'orbit';}};
+ const saveCam=v=>{try{localStorage.setItem(CAM_KEY,v);}catch(e){}};
+ // host: {view, main, actions, scene, camera, orbit, canvas, icon(name), renderList(el,{readonly,selRoute,onPick}), routes() → [{group, route, analysis}], onBack(routeId), onExit(), onGone()}
  function create(host){
   const {scene,camera,orbit,canvas}=host;
   let open=false,routeId=null,compiled=null,live=[],eye=1.75,t=0,playing=false,rate=1,cam='orbit',yawOff=0,pitchOff=0,locked=false,dragLook=null,overview=null,lastAnim=null,lastBar='';
@@ -25,20 +28,20 @@ const TourPlayer=(()=>{
   const back=btn({id:'tourBack',class:'tour-top',onclick:()=>host.onBack(routeId)},'map','回到路线图');
   const exit=btn({id:'tourExit',class:'tour-top',onclick:()=>host.onExit()},'x','退出');
   host.actions.prepend(back,exit);
-  const pick=h('select',{id:'tpPick','aria-label':'选择子方案'});
+  const side=h('div',{class:'rt-side',id:'tpSide',hidden:true});
   const seek=h('input',{type:'range',id:'tpSeek',min:'0',step:'0.01','aria-label':'进度'});
   const tickBox=h('div',{class:'tp-ticks'});
   const play=btn({id:'tpPlay',class:'primary',title:'播放 / 暂停（空格）'});
   const time=h('span',{class:'tp-time',id:'tpTime'});
-  const rates=h('div',{class:'tp-seg'},...[.5,1,2].map(v=>btn({'data-rate':String(v),onclick:()=>{rate=v;syncButtons();}},null,v+'×')));
+  const rateBtn=btn({id:'tpRate',title:'切换播放速度','aria-label':'切换播放速度',onclick:()=>{rate=RATES[(RATES.indexOf(rate)+1)%RATES.length];syncButtons();}});
   const cams=h('div',{class:'tp-seg'},btn({'data-cam':'orbit',onclick:()=>setCam('orbit')},'box','总览'),btn({'data-cam':'fp',onclick:()=>setCam('fp')},'eye','第一人称'));
   const recenter=btn({id:'tpRecenter',class:'ghost',title:'视线归位','aria-label':'视线归位',onclick:()=>{yawOff=pitchOff=0;apply();}},'rotate-ccw');
   const restart=btn({id:'tpRestart',class:'ghost',title:'从头','aria-label':'从头',onclick:()=>{t=0;yawOff=pitchOff=0;apply();}},'skip-back');
   const phase=h('div',{class:'tp-phase',id:'tpPhase'}),hint=h('div',{class:'tp-hint',id:'tpHint'}),cross=h('div',{class:'tp-cross',id:'tpCross'});
-  const root=h('div',{id:'tourPlay',hidden:true},phase,hint,cross,h('div',{class:'tp-bar'},pick,restart,play,h('div',{class:'tp-track'},seek,tickBox),time,rates,cams,recenter));
+  const root=h('div',{id:'tourPlay',hidden:true},phase,hint,cross,h('div',{class:'tp-bar'},restart,play,h('div',{class:'tp-track'},seek,tickBox),time,rateBtn,cams,recenter));
   host.view.append(root);
+  host.main.insertBefore(side,host.view);host.attachResize(side).hidden=true;const splitBar=side.nextSibling;
   play.onclick=()=>toggle();
-  pick.onchange=()=>load(pick.value,false);
   seek.onpointerdown=()=>{playing=false;syncButtons();};
   seek.oninput=()=>{t=Number(seek.value);yawOff=pitchOff=0;apply();};
 
@@ -72,16 +75,12 @@ const TourPlayer=(()=>{
 
   // ----- routes -----
   function find(id){return host.routes().find(x=>x.route.id===id)||null;}
-  function fillPick(list){
-   pick.replaceChildren();const groups=new Map();
-   for(const x of list){if(!groups.has(x.group.id))groups.set(x.group.id,h('optgroup',{label:x.group.name}));groups.get(x.group.id).append(h('option',{value:x.route.id,disabled:!x.analysis.ok},x.route.name));}
-   pick.append(...groups.values());pick.value=routeId;
-  }
+  const renderSide=()=>host.renderList(side,{readonly:true,selRoute:routeId,onPick:id=>load(id,false)});
   function load(id,keepTime){
    const list=host.routes(),x=list.find(y=>y.route.id===id);if(!x||!x.analysis.ok)return false;
    routeId=id;compiled=x.analysis.compiled;live=x.analysis.live;eye=x.route.eyeHeight;
    if(keepTime)t=clamp(t,0,compiled.total);else{t=0;playing=false;yawOff=pitchOff=0;}
-   fillPick(list);
+   renderSide();
    if(path){scene.remove(path);release(path);}path=buildPath(x.analysis);scene.add(path);
    tickBox.replaceChildren(...ticks(compiled).map(k=>{const e=h('span',{class:'tp-tick',title:'第 '+(k.stopIndex+1)+' 站停留',style:`left:calc(7px + (100% - 14px) * ${compiled.total?k.t/compiled.total:0})`});e.onclick=()=>{playing=false;t=Math.min(k.t+.01,compiled.total);yawOff=pitchOff=0;apply();};return e;}));
    seek.max=String(compiled.total);lastBar='';apply();return true;
@@ -92,7 +91,7 @@ const TourPlayer=(()=>{
    if(next===cam){syncButtons();return;}
    if(next==='fp'){overview={position:camera.position.clone(),target:orbit.target.clone(),fov:camera.fov};orbit.enabled=false;camera.fov=FP_FOV;camera.updateProjectionMatrix();}
    else{unlock();camera.position.copy(overview.position);orbit.target.copy(overview.target);camera.fov=overview.fov;camera.updateProjectionMatrix();orbit.enabled=true;orbit.update();}
-   cam=next;dragLook=null;apply();
+   cam=next;saveCam(next);dragLook=null;apply();
   }
   function apply(){
    if(!compiled)return;
@@ -112,7 +111,7 @@ const TourPlayer=(()=>{
   function syncButtons(){
    const done=compiled&&t>=compiled.total-.01&&compiled.total>0;
    play.replaceChildren(host.icon(playing?'pause':'play'),playing?'暂停':done?'重播':'播放');
-   root.querySelectorAll('[data-rate]').forEach(b=>b.classList.toggle('active',Number(b.dataset.rate)===rate));
+   rateBtn.textContent=rate+'×';
    root.querySelectorAll('[data-cam]').forEach(b=>b.classList.toggle('active',b.dataset.cam===cam));
    const fp=cam==='fp';hint.hidden=cross.hidden=recenter.hidden=!fp;
    hint.textContent=locked?'移动鼠标转头 · Esc 释放鼠标并暂停':'点画面锁定鼠标后转头（或按住拖动）';
@@ -146,15 +145,16 @@ const TourPlayer=(()=>{
    // Show route `id` (must be playable). The caller has already put the editor into a neutral state.
    open(id){
     if(open)this.close();
-    visitor=makeVisitor();scene.add(visitor);open=true;cam='orbit';rate=1;root.hidden=false;
+    visitor=makeVisitor();scene.add(visitor);open=true;cam='orbit';rate=1;root.hidden=false;side.hidden=splitBar.hidden=false;
     if(!load(id,false)){this.close();return false;}
+    if(savedCam()==='fp')setCam('fp');
     playing=true;syncButtons();return true;
    },
    close(){
     if(!open&&!visitor)return;
     unlock();playing=false;dragLook=null;
     if(cam==='fp'&&overview){camera.position.copy(overview.position);orbit.target.copy(overview.target);camera.fov=overview.fov;camera.updateProjectionMatrix();}
-    cam='orbit';open=false;root.hidden=true;clearScene();compiled=null;routeId=null;
+    cam='orbit';open=false;root.hidden=side.hidden=splitBar.hidden=true;clearScene();compiled=null;routeId=null;
    },
    isOpen:()=>open,
    // Data changed (undo, restore…): follow the route, or report that it is gone / no longer playable.

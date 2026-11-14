@@ -26,33 +26,33 @@ body.touring header .actions>*:not(.tour-top),body.touring aside,body.touring #r
 #tourPlay .tp-phase{position:absolute;top:14px;right:14px;z-index:6;background:#fff;border:1px solid #dce2de;border-radius:7px;padding:6px 10px;font-size:12px;pointer-events:none}
 #tourPlay .tp-hint{position:absolute;top:14px;left:50%;transform:translateX(-50%);z-index:6;background:#ffffffe6;border:1px solid #dce2de;border-radius:7px;padding:6px 12px;font-size:12px;color:#547064;pointer-events:none}
 #tourPlay .tp-cross{position:absolute;left:50%;top:calc(50% - 24px);width:6px;height:6px;margin:-3px;border-radius:50%;background:#fff;box-shadow:0 0 0 1px #0006;pointer-events:none;z-index:6}
-#routeEdit .rt-side{width:272px;flex-shrink:0;background:#fafbf9;overflow:auto;padding:12px;border-right:1px solid #dce2de}#routeEdit .rt-side.right{border-right:0;border-left:1px solid #dce2de}
-#routeEdit h2{display:flex;align-items:center;justify-content:space-between}#routeEdit section+section{border-top:1px solid #e0e5e1;margin-top:12px;padding-top:12px}
-#routeEdit button svg,#routeEdit .rt-warn svg{width:15px;height:15px;flex-shrink:0}#routeEdit button{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
-#routeEdit button.ghost{border-color:transparent;background:transparent;padding:4px}#routeEdit button.ghost:hover{background:#e5efeb;border-color:transparent}
-#routeEdit .rt-empty{color:#7e9085;font-size:12px;padding:6px 8px}#routeEdit .rt-note{color:#7e9085;font-size:12px;padding:6px 4px}
-#routeEdit .rt-group{margin-bottom:12px}#routeEdit .rt-subs{padding-left:14px}#routeEdit .rt-approach{font-size:11px;color:#708478;padding:0 6px 4px}
-#routeEdit .rt-row{display:flex;align-items:center;gap:6px;padding:5px 6px;border-radius:5px;cursor:pointer;min-height:30px}#routeEdit .rt-row:hover{background:#e5efeb}
-#routeEdit .rt-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#routeEdit .rt-main{flex:1;min-width:0;display:flex;flex-direction:column}
-#routeEdit .rt-seq{font-size:11px;color:#708478;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#routeEdit .rt-meta{color:#708478;font-size:11px;flex-shrink:0}#routeEdit .rt-meta.warn{color:#c2410c}
-#routeEdit .rt-tools{display:none;gap:2px}#routeEdit .rt-row:hover .rt-tools{display:flex}#routeEdit .rt-row:hover .rt-meta{display:none}
-#routeEdit .rt-row.sel{background:#176b55;color:#fff}#routeEdit .rt-row.sel .rt-seq,#routeEdit .rt-row.sel .rt-meta{color:#d3eee4}#routeEdit .rt-row.sel button.ghost{color:#fff}#routeEdit .rt-row.sel button.ghost:hover{background:#23846a}#routeEdit .rt-row.sel:hover{background:#23846a}
-#routeEdit .rt-add{margin:2px 0 0 14px;padding:4px 8px;font-size:12px;color:#708478;border:1px dashed #cdd7d2;background:transparent}#routeEdit .rt-add:hover{color:#176b55;border-color:#8bab9e}
-#routeEdit #rtStage{position:relative;flex:1;min-width:0;overflow:hidden;background:#d7dbd8}#rtPlan{display:block;width:100%;height:100%;user-select:none}#rtPlan.picking{cursor:cell}#rtPlan.panning{cursor:grabbing}
-#routeEdit .rt-toolbar{position:absolute;top:12px;left:12px;display:flex;gap:4px;background:#fff;border:1px solid #dce2de;border-radius:7px;padding:3px}#routeEdit .rt-tool{border-color:transparent;padding:5px 7px}#routeEdit .rt-sep{width:1px;background:#dce2de;margin:3px 2px}#routeEdit .rt-zoom{color:#708478;font-size:12px;align-self:center;padding:0 6px;min-width:42px;text-align:center}
-#routeEdit .rt-hint{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);background:#fff;border:1px solid #dce2de;border-radius:7px;padding:6px 12px;color:#547064;font-size:12px;pointer-events:none}
-#routeEdit .rt-field{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:7px 0}#routeEdit .rt-field label{color:#708478;font-size:12px}#routeEdit .rt-field>span{display:flex;align-items:center;gap:4px;flex:1;justify-content:flex-end;min-width:0}
-#routeEdit .rt-field input[type=text],#routeEdit .rt-field select{flex:1;min-width:0;width:100%}#routeEdit .rt-field input[type=number]{width:72px;text-align:right}
-#routeEdit input,#routeEdit select{border:1px solid #d7dfdc;border-radius:5px;padding:5px 6px;background:#fff;font:inherit;color:inherit}#routeEdit input:hover,#routeEdit select:hover{border-color:#8bab9e}
-#routeEdit .rt-wide{width:100%;justify-content:center;margin-bottom:4px}#routeEdit .rt-btnrow{display:flex;gap:6px;margin-top:8px}#routeEdit .rt-btnrow button{flex:1;justify-content:center}
-#routeEdit .rt-stat{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}#routeEdit .rt-stat div{background:#fff;border:1px solid #dce2de;border-radius:5px;padding:6px 8px}#routeEdit .rt-stat small{display:block;color:#708478;font-size:11px}
-#routeEdit .rt-stops{margin-top:10px}#routeEdit .rt-stop{display:flex;align-items:center;gap:6px;padding:3px 4px;border-radius:5px;min-height:30px}#routeEdit .rt-stop:not(.fixed):hover{background:#e5efeb}#routeEdit .rt-stop.fixed{color:#708478}
-#routeEdit .rt-end{width:18px;height:18px;border-radius:50%;background:#dc2626;color:#fff;font-size:10px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}#routeEdit .rt-end.start{background:#16a34a}
-#routeEdit .rt-grip{display:inline-flex;opacity:.3;cursor:grab}#routeEdit .rt-stop:hover .rt-grip{opacity:1}#routeEdit .rt-order{color:#708478;font-size:11px;min-width:12px;text-align:center}
-#routeEdit .rt-sname{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#routeEdit .rt-sname.warn{color:#c2410c}
-#routeEdit .rt-dwell-wrap{display:inline-flex;align-items:center;gap:3px;color:#708478;font-size:11px}#routeEdit .rt-dwell{width:46px;padding:3px 4px;text-align:right}
-#routeEdit .rt-del{opacity:0}#routeEdit .rt-stop:hover .rt-del,#routeEdit .rt-del:focus-visible{opacity:1}#routeEdit .rt-stop.dragging{opacity:.5}#routeEdit .rt-stop.over{outline:2px dashed #176b55}
-#routeEdit .rt-warn{display:flex;gap:6px;align-items:flex-start;color:#c2410c;background:#fff4ec;border:1px solid #f3c6a8;border-radius:5px;padding:6px 8px;margin-top:6px;font-size:12px;text-align:left;width:100%}#routeEdit .rt-warn.click{cursor:pointer}#routeEdit .rt-warn.click:hover{border-color:#c2410c;background:#fff4ec}
+:is(#routeEdit,#tpSide) .rt-side{width:272px;flex-shrink:0;background:#fafbf9;overflow:auto;padding:12px;border-right:1px solid #dce2de}:is(#routeEdit,#tpSide) .rt-side.right{border-right:0;border-left:1px solid #dce2de}
+:is(#routeEdit,#tpSide) h2{display:flex;align-items:center;justify-content:space-between}:is(#routeEdit,#tpSide) section+section{border-top:1px solid #e0e5e1;margin-top:12px;padding-top:12px}
+:is(#routeEdit,#tpSide) button svg,:is(#routeEdit,#tpSide) .rt-warn svg{width:15px;height:15px;flex-shrink:0}:is(#routeEdit,#tpSide) button{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+:is(#routeEdit,#tpSide) button.ghost{border-color:transparent;background:transparent;padding:4px}:is(#routeEdit,#tpSide) button.ghost:hover{background:#e5efeb;border-color:transparent}
+:is(#routeEdit,#tpSide) .rt-empty{color:#7e9085;font-size:12px;padding:6px 8px}:is(#routeEdit,#tpSide) .rt-note{color:#7e9085;font-size:12px;padding:6px 4px}
+:is(#routeEdit,#tpSide) .rt-group{margin-bottom:12px}:is(#routeEdit,#tpSide) .rt-subs{padding-left:14px}:is(#routeEdit,#tpSide) .rt-approach{font-size:11px;color:#708478;padding:0 6px 4px}
+:is(#routeEdit,#tpSide) .rt-row{display:flex;align-items:center;gap:6px;padding:5px 6px;border-radius:5px;cursor:pointer;min-height:30px}:is(#routeEdit,#tpSide) .rt-row:hover{background:#e5efeb}
+:is(#routeEdit,#tpSide) .rt-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}:is(#routeEdit,#tpSide) .rt-main{flex:1;min-width:0;display:flex;flex-direction:column}
+:is(#routeEdit,#tpSide) .rt-seq{font-size:11px;color:#708478;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}:is(#routeEdit,#tpSide) .rt-meta{color:#708478;font-size:11px;flex-shrink:0}:is(#routeEdit,#tpSide) .rt-meta.warn{color:#c2410c}
+:is(#routeEdit,#tpSide) .rt-tools{display:none;gap:2px}:is(#routeEdit,#tpSide) .rt-row:hover .rt-tools{display:flex}:is(#routeEdit,#tpSide) .rt-row:hover .rt-meta{display:none}
+:is(#routeEdit,#tpSide) .rt-row.sel{background:#dfece6}:is(#routeEdit,#tpSide) .rt-row.sel:hover{background:#d3e5dd}:is(#routeEdit,#tpSide) .rt-row.static,:is(#routeEdit,#tpSide) .rt-row.off{cursor:default}:is(#routeEdit,#tpSide) .rt-row.static:hover,:is(#routeEdit,#tpSide) .rt-row.off:hover{background:transparent}:is(#routeEdit,#tpSide) .rt-row.off{opacity:.55;cursor:not-allowed}:is(#routeEdit,#tpSide) .rt-flag{display:inline-flex;color:#c2410c;flex-shrink:0}
+:is(#routeEdit,#tpSide) .rt-add{margin:2px 0 0 14px;padding:4px 8px;font-size:12px;color:#708478;border:1px dashed #cdd7d2;background:transparent}:is(#routeEdit,#tpSide) .rt-add:hover{color:#176b55;border-color:#8bab9e}
+:is(#routeEdit,#tpSide) #rtStage{position:relative;flex:1;min-width:0;overflow:hidden;background:#d7dbd8}#rtPlan{display:block;width:100%;height:100%;user-select:none}#rtPlan.picking{cursor:cell}#rtPlan.panning{cursor:grabbing}
+:is(#routeEdit,#tpSide) .rt-toolbar{position:absolute;top:12px;left:12px;display:flex;gap:4px;background:#fff;border:1px solid #dce2de;border-radius:7px;padding:3px}:is(#routeEdit,#tpSide) .rt-tool{border-color:transparent;padding:5px 7px}:is(#routeEdit,#tpSide) .rt-sep{width:1px;background:#dce2de;margin:3px 2px}:is(#routeEdit,#tpSide) .rt-zoom{color:#708478;font-size:12px;align-self:center;padding:0 6px;min-width:42px;text-align:center}
+:is(#routeEdit,#tpSide) .rt-hint{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);background:#fff;border:1px solid #dce2de;border-radius:7px;padding:6px 12px;color:#547064;font-size:12px;pointer-events:none}
+:is(#routeEdit,#tpSide) .rt-field{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:7px 0}:is(#routeEdit,#tpSide) .rt-field label{color:#708478;font-size:12px}:is(#routeEdit,#tpSide) .rt-field>span{display:flex;align-items:center;gap:4px;flex:1;justify-content:flex-end;min-width:0}
+:is(#routeEdit,#tpSide) .rt-field input[type=text],:is(#routeEdit,#tpSide) .rt-field select{flex:1;min-width:0;width:100%}:is(#routeEdit,#tpSide) .rt-field input[type=number]{width:72px;text-align:right}
+:is(#routeEdit,#tpSide) input,:is(#routeEdit,#tpSide) select{border:1px solid #d7dfdc;border-radius:5px;padding:5px 6px;background:#fff;font:inherit;color:inherit}:is(#routeEdit,#tpSide) input:hover,:is(#routeEdit,#tpSide) select:hover{border-color:#8bab9e}
+:is(#routeEdit,#tpSide) .rt-wide{width:100%;justify-content:center;margin-bottom:4px}:is(#routeEdit,#tpSide) .rt-btnrow{display:flex;gap:6px;margin-top:8px}:is(#routeEdit,#tpSide) .rt-btnrow button{flex:1;justify-content:center}
+:is(#routeEdit,#tpSide) .rt-stat{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}:is(#routeEdit,#tpSide) .rt-stat div{background:#fff;border:1px solid #dce2de;border-radius:5px;padding:6px 8px}:is(#routeEdit,#tpSide) .rt-stat small{display:block;color:#708478;font-size:11px}
+:is(#routeEdit,#tpSide) .rt-stops{margin-top:10px}:is(#routeEdit,#tpSide) .rt-stop{display:flex;align-items:center;gap:6px;padding:3px 4px;border-radius:5px;min-height:30px}:is(#routeEdit,#tpSide) .rt-stop:not(.fixed):hover{background:#e5efeb}:is(#routeEdit,#tpSide) .rt-stop.fixed{color:#708478}
+:is(#routeEdit,#tpSide) .rt-end{width:18px;height:18px;border-radius:50%;background:#dc2626;color:#fff;font-size:10px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}:is(#routeEdit,#tpSide) .rt-end.start{background:#16a34a}
+:is(#routeEdit,#tpSide) .rt-grip{display:inline-flex;opacity:.3;cursor:grab}:is(#routeEdit,#tpSide) .rt-stop:hover .rt-grip{opacity:1}:is(#routeEdit,#tpSide) .rt-order{color:#708478;font-size:11px;min-width:12px;text-align:center}
+:is(#routeEdit,#tpSide) .rt-sname{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}:is(#routeEdit,#tpSide) .rt-sname.warn{color:#c2410c}
+:is(#routeEdit,#tpSide) .rt-dwell-wrap{display:inline-flex;align-items:center;gap:3px;color:#708478;font-size:11px}:is(#routeEdit,#tpSide) .rt-dwell{width:46px;padding:3px 4px;text-align:right}
+:is(#routeEdit,#tpSide) .rt-del{opacity:0}:is(#routeEdit,#tpSide) .rt-stop:hover .rt-del,:is(#routeEdit,#tpSide) .rt-del:focus-visible{opacity:1}:is(#routeEdit,#tpSide) .rt-stop.dragging{opacity:.5}:is(#routeEdit,#tpSide) .rt-stop.over{outline:2px dashed #176b55}
+:is(#routeEdit,#tpSide) .rt-warn{display:flex;gap:6px;align-items:flex-start;color:#c2410c;background:#fff4ec;border:1px solid #f3c6a8;border-radius:5px;padding:6px 8px;margin-top:6px;font-size:12px;text-align:left;width:100%}:is(#routeEdit,#tpSide) .rt-warn.click{cursor:pointer}:is(#routeEdit,#tpSide) .rt-warn.click:hover{border-color:#c2410c;background:#fff4ec}
 .rt-block{fill:#d7dbd8}.rt-aisle{fill:#f2f4f3}.rt-booth{fill:#fff;stroke:#b9c4be;stroke-width:1}.rt-grid{stroke:#e3e8e5;stroke-width:1}.rt-wall{fill:#7b8a83}.rt-vlabel{fill:#9aa79f;font-size:12px;text-anchor:middle;dominant-baseline:central;pointer-events:none}
 .rt-obj{fill:#e9eeeb;stroke:#8fa197;stroke-width:1.2;cursor:pointer}.rt-obj:hover{fill:#d9efe6;stroke:#176b55}.rt-obj.sel{fill:#cfeadf;stroke:#176b55;stroke-width:2}.rt-obj.soft{fill:#f4f6f5;stroke-dasharray:3 2}.rt-obj.soft.big{fill:none;stroke:#b9c4be;pointer-events:stroke}
 .rt-olabel{fill:#4d625a;font-size:11px;text-anchor:middle;dominant-baseline:central;pointer-events:none}
@@ -62,6 +62,11 @@ body.touring header .actions>*:not(.tour-top),body.touring aside,body.touring #r
 .rt-tag rect{fill:#263b39}.rt-tag text{fill:#fff;font-size:10px;text-anchor:middle;dominant-baseline:central;pointer-events:none}
 .rt-ep circle{stroke:#fff;stroke-width:2;cursor:grab}.rt-ep.entry circle{fill:#16a34a}.rt-ep.exit circle{fill:#dc2626}.rt-ep:hover circle{stroke:#0f172a}.rt-ep.bad circle{stroke:#c2410c;stroke-width:3}.rt-ep text{fill:#fff;font-size:11px;text-anchor:middle;dominant-baseline:central;pointer-events:none}
 .rt-compass circle{fill:#fff;stroke:#cfd8d3}.rt-compass text{font-size:11px;fill:#5d7268;text-anchor:middle;dominant-baseline:central}.rt-scale line{stroke:#5d7268;stroke-width:2}.rt-scale text{font-size:11px;fill:#5d7268;text-anchor:middle}
+#rtLeft.rt-side,#tpSide{width:var(--rt-left-w,272px)}#tpSide{flex-shrink:0;background:#fafbf9;overflow:auto;padding:12px;border-right:1px solid #dce2de}
+.rt-split{width:6px;margin:0 -3px;flex-shrink:0;cursor:ew-resize;position:relative;z-index:3}.rt-split:hover,.rt-split.drag{background:#176b5566}
+#rtRight.rt-side{display:flex;flex-direction:column;padding:0;overflow:hidden}#rtRight .rt-scroll{flex:1;min-height:0;overflow:auto;padding:12px}#rtRight .rt-foot{flex-shrink:0;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px;padding:10px 12px;border-top:1px solid #dce2de;background:#fafbf9}#rtRight .rt-foot:empty{display:none}
+#tourPlay #tpRate{min-width:48px;justify-content:center}
+body.routing header .actions>*:not(#routeBtn),body.routing #planbar,body.routing aside,body.routing #resize{display:none!important}body.routing main{height:calc(100dvh - 48px)}
 </style></head><body><header><strong>CES / 展台草图</strong><small>v0.1.16 · 米</small><div class="actions"><button id="undo" title="⌘/Ctrl Z">撤销</button><button id="redo" title="⌘/Ctrl Shift Z 或 Ctrl Y">重做</button><button id="routeBtn" title="游客路线：在平面图纸上标兴趣点、排参观顺序"></button><button id="import">导入方案</button><select id="exportScope" aria-label="导出范围"><option value="current">当前方案</option><option value="all">全部方案</option></select><button class="primary" id="save" title="修改会自动保存到本机；导出用于备份或换设备">导出 JSON</button><button id="saveEditor">下载编辑器</button><input id="importFile" type="file" accept=".html,.json" hidden></div></header><div id="planbar"><div id="tabs" role="tablist" aria-label="方案"></div><button id="newPlan">另存方案 +</button><button id="rename">改名</button><span id="saveStatus" role="status"></span></div><main><aside><section id="layers"><h2>图层管理</h2><div class="objects" id="objects"></div><div id="layerResize" role="separator" aria-label="调整图层栏高度" aria-orientation="horizontal" tabindex="0" title="上下拖动调整高度"></div></section><div id="inspectorScroll"><section><h2>选中物料</h2><div id="empty">点击场景或上方列表选择物料</div><div id="creatorPanel" hidden><div id="creatorTitle" style="font-size:14px;font-weight:500;margin-bottom:8px">Creator Space</div><div class="line"><button id="flipCreator" title="讲台、演讲台与座椅整体前后掉头">前后翻转</button></div></div><div id="inspector" hidden><div id="title"></div><div class="fields"><label>左右 X<input id="x" type="number" step="0.1"></label><label>离地高度<input id="y" type="number" min="0" step="0.1"></label><label>前后 Z<input id="z" type="number" step="0.1"></label></div><div id="screenFields" hidden><div class="fields" style="grid-template-columns:1fr"><label>屏幕用途名称<input id="purpose" type="text" maxlength="40" placeholder="例如：产品演示"></label></div><div class="sub">屏幕尺寸（英寸 · 16:9）</div><div class="presets"><button data-inches="48">48 寸</button><button data-inches="55">55 寸</button><button data-inches="65">65 寸</button></div><div class="fields two"><label>自定义英寸<input id="inches" type="number" min="10" max="120" step="1"></label><label id="orientationLabel">屏幕方向<select id="orientation"><option value="landscape">横屏</option><option value="portrait">竖屏</option></select></label></div></div><div id="fasciaFields" hidden><div class="fields two"><label>吊楣形状<select id="fasciaShape"><option value="square">方形</option><option value="round">圆形</option></select></label><label id="fasciaSpanLabel">边长（米）<input id="fasciaSpan" type="number" min="0.15" max="10" step="0.1"></label></div><p class="note">离地高度控制底边悬空高度；整体尺寸的「高」控制吊楣自身高度。</p></div><div id="standFields" hidden><div class="fields" style="grid-template-columns:1fr"><label>纸张尺寸<select id="paper"><option value="A4">A4 · 210 × 297 毫米</option><option value="A5">A5 · 148.5 × 210 毫米</option></select></label></div></div><div id="lFields" hidden><div class="sub">L 台两条边（米）</div><div class="fields two"><label>横边长度<input id="lengthA" type="number" min="0.2" max="10" step="0.1"></label><label>横边宽度<input id="widthA" type="number" min="0.1" max="5" step="0.1"></label><label>纵边长度<input id="lengthB" type="number" min="0.2" max="10" step="0.1"></label><label>纵边宽度<input id="widthB" type="number" min="0.1" max="5" step="0.1"></label></div></div><div id="personFields" hidden><div class="fields two"><label>等比缩放<input id="personScale" type="number" min="0.25" max="3" step="0.05"></label><label>马甲颜色<input id="clothesColor" type="color" value="#165DFF"></label></div><div class="fields" style="grid-template-columns:1fr"><label>动画<select id="personAnimation"></select></label></div></div><div class="sub">整体尺寸（米）</div><div class="fields"><label>宽<input id="w" type="number" min="0.1" max="10" step="0.1"></label><label>高<input id="h" type="number" min="0.1" max="10" step="0.1"></label><label>深<input id="d" type="number" min="0.1" max="10" step="0.1"></label></div><div class="sub">朝向 · 每次 45°</div><div class="fields"><button id="rotateLeft">−45°</button><label><input id="rotation" aria-label="朝向" type="number" step="45"></label><button id="rotate">+45°</button></div><label class="check"><input id="wallSnap" type="checkbox">靠墙吸附</label><p class="note" id="snapNote" hidden>已贴墙；旋转会解除吸附。</p><details><summary>微移 · 每次 0.1 米</summary><div class="nudges"><button data-axis="x" data-delta="-0.1">左 −X</button><button data-axis="y" data-delta="0.1">上 +Y</button><button data-axis="z" data-delta="-0.1">后 −Z</button><button data-axis="x" data-delta="0.1">右 +X</button><button data-axis="y" data-delta="-0.1">下 −Y</button><button data-axis="z" data-delta="0.1">前 +Z</button></div></details><div class="line"><button id="place" title="选中物品后，点击另一物品的水平表面放置">放置</button><button id="ground">落地</button><button id="copy">复制</button><button id="delete" title="Delete / Backspace">删除</button></div><div id="status"></div></div></section><section><h2>场地</h2><div id="roomSize"></div><div class="line"><button id="swapWalls">A / B 墙长互换</button></div><div class="line"><label class="check"><input id="wallA" type="checkbox" checked><span id="wallAText"></span></label><label class="check"><input id="wallB" type="checkbox" checked><span id="wallBText"></span></label></div><label class="check"><input id="snap" type="checkbox" checked>移动按 0.1 米对齐</label><p class="note">换墙时地面物料转 90°，间距自动适配。<br>方案自动存本机，导出 JSON 可带走。</p></section></div></aside><div id="resize"></div><div id="view"><div id="viewbar"><button data-view="venue" title="北向上 · 未标注展区按图估算">会场全景</button><button data-view="perspective" class="active">透视</button><button data-view="top">俯视</button><button data-view="front">正视</button><button id="walk">步行浏览</button></div><button id="libraryToggle" aria-expanded="false" aria-controls="library"><span id="libraryIcon"></span>物料</button><section id="library" aria-label="物料库" hidden><div class="library-head"><strong>物料库</strong><button id="libraryClose" class="icon-button" aria-label="关闭物料库" title="关闭物料库"></button></div><p class="library-help">拖入画布添加 · 也可点击添加</p><div class="add"><button data-add="tv">电视 +</button><button data-add="desk">前台 +</button><button data-add="robot">机器人 +</button><button data-add="display">闺蜜机 +</button><button data-add="table">小圆桌 +</button><button data-add="ldesk">L 型台 +</button><button data-add="fascia">悬空吊楣 +</button><button data-add="laptop" title="笔记本电脑">笔记本 +</button><button data-add="webcam" title="电脑摄像头（输入设备）">摄像头 +</button><button data-add="acrylicA4" title="亚克力立牌 · 选中后在左侧切换 A4 / A5">亚克力立牌 +</button><button data-add="rollup" title="80 × 200 厘米画面，含底座总高 2.08 米">易拉宝 +</button><button data-add="chair" title="简易听讲椅 · 46 × 82 × 50 厘米">听讲椅 +</button><button data-add="staff" disabled>工作人员 +</button><button data-add="visitor" disabled>游客 +</button></div><div id="peopleStatus" role="status"></div></section><div id="placementHint" role="status" hidden style="position:absolute;top:54px;left:14px;z-index:3;background:#fffef3;border:1px solid #b8cabb;border-radius:5px;padding:8px 12px;pointer-events:none"></div><div class="badge"><b id="badgeSize"></b><small>周边按图估算 · 非施工图</small></div><div class="help"><span id="helpText">拖空白转视角 · 滚轮缩放 · WASD 行走 · 空格切换浏览</span></div></div><div id="routeEdit" hidden></div></main><script id="seed" type="application/json">null</script>
 <!-- Third-party licenses
 The MIT License
@@ -7369,6 +7374,17 @@ const TourPlan=(()=>{
   return e;
  }
 
+ // 面板宽度可左右拖（存本机，不进方案）；图纸左栏和 3D 预览左栏共用一个宽度
+ const PANEL_KEY='ces-route-panel-w';
+ function setPanelWidth(w){const max=Math.max(240,innerWidth*.7);document.documentElement.style.setProperty('--rt-left-w',Math.round(Math.max(240,Math.min(max,w)))+'px');}
+ try{const w=parseFloat(localStorage.getItem(PANEL_KEY));if(w>0)setPanelWidth(w);}catch(e){}
+ function attachResize(panel){
+  const bar=h('div',{class:'rt-split',role:'separator','aria-orientation':'vertical',title:'左右拖动调整宽度'});panel.after(bar);let st=null;
+  bar.onpointerdown=e=>{st={x:e.clientX,w:panel.offsetWidth};bar.setPointerCapture(e.pointerId);bar.classList.add('drag');document.body.style.userSelect='none';};
+  bar.onpointermove=e=>{if(st)setPanelWidth(st.w+e.clientX-st.x);};
+  const end=()=>{if(!st)return;st=null;bar.classList.remove('drag');document.body.style.userSelect='';try{localStorage.setItem(PANEL_KEY,String(panel.offsetWidth));}catch(e){}};
+  bar.onpointerup=end;bar.onpointercancel=end;return bar;
+ }
  // host: {root, icon(name), getObjects(), getRoom(), getVenue(), getTour(), checkpoint(), persist(), undo(), redo(), undoState()}
  function create(host){
   const root=host.root,q=s=>root.querySelector(s);
@@ -7379,6 +7395,7 @@ const TourPlan=(()=>{
   const toW=(sx,sy)=>[view.cx-(sx-W/2)/view.k,view.cz-(sy-H/2)/view.k];
 
   root.append(h('div',{class:'rt-side',id:'rtLeft'}),h('div',{id:'rtStage'},(()=>{const e=document.createElementNS('http://www.w3.org/2000/svg','svg');e.id='rtPlan';return e;})(),h('div',{class:'rt-toolbar',id:'rtTools'}),h('div',{class:'rt-hint',id:'rtHint',hidden:true})),h('div',{class:'rt-side right',id:'rtRight'}));
+  attachResize(q('#rtLeft'));
 
   // ----- context / analysis (nav rebuilt only when objects or room change) -----
   function ctx(){
@@ -7413,28 +7430,31 @@ const TourPlan=(()=>{
    el.append(btn('undo-2','撤销',()=>host.undo(),!u.undo),btn('redo-2','重做',()=>host.redo(),!u.redo),h('span',{class:'rt-sep'}),btn('maximize','适应画面',()=>{view=null;drawPlan();}),h('span',{class:'rt-zoom',id:'rtZoom'}));
   }
 
-  // ----- left: 大方案 / 子方案 -----
-  function renderLeft(c){
-   const el=q('#rtLeft'),{tour}=c;el.replaceChildren();
-   el.append(h('h2',null,'路线方案',h('button',{class:'ghost',title:'新建大方案','aria-label':'新建大方案',onclick:newGroup},host.icon('plus'))));
+  // ----- left: 大方案 / 子方案（图纸模式可编辑；3D 预览里 readonly，只能点选能走通的子方案）-----
+  function renderList(el,c,opts={}){
+   const {tour}=c,ro=!!opts.readonly,cur=ro?opts.selRoute:selRoute;el.replaceChildren();
+   el.append(h('h2',null,'路线方案',ro?null:h('button',{class:'ghost',title:'新建大方案','aria-label':'新建大方案',onclick:newGroup},host.icon('plus'))));
    if(!tour.groups.length)el.append(h('div',{class:'rt-empty'},'还没有路线方案'));
    for(const g of tour.groups){
-    const row=h('div',{class:'rt-row g'+(selGroup===g.id&&!selRoute?' sel':''),onclick:()=>{selGroup=g.id;selRoute=null;ordering=false;render();}},
-     h('span',{class:'rt-name'},g.name),h('span',{class:'rt-meta'},String(g.routes.length)),
-     h('span',{class:'rt-tools'},toolBtn('copy','复制',()=>{if(tour.groups.length>=M.LIMITS.groups){flash('大方案最多 20 个');return;}mutate(()=>{const n=ops.copyGroup(tour,g.id);selGroup=n.id;selRoute=null;});}),toolBtn('trash','删除',()=>mutate(()=>{ops.removeGroup(tour,g.id);}))));
+    const row=ro?h('div',{class:'rt-row g static'},h('span',{class:'rt-name'},g.name))
+     :h('div',{class:'rt-row g'+(selGroup===g.id&&!selRoute?' sel':''),onclick:()=>{selGroup=g.id;selRoute=null;ordering=false;render();}},
+      h('span',{class:'rt-name'},g.name),
+      h('span',{class:'rt-tools'},toolBtn('copy','复制',()=>{if(tour.groups.length>=M.LIMITS.groups){flash('大方案最多 20 个');return;}mutate(()=>{const n=ops.copyGroup(tour,g.id);selGroup=n.id;selRoute=null;});}),toolBtn('trash','删除',()=>mutate(()=>{ops.removeGroup(tour,g.id);}))),
+      toolBtn('plus','新建子方案',()=>newRoute(g),'rt-addroute'));
     const subs=h('div',{class:'rt-subs'});
     for(const r of g.routes){
-     const a=analysis(c,g,r);
-     subs.append(h('div',{class:'rt-row r'+(selRoute===r.id?' sel':''),onclick:()=>{selGroup=g.id;selRoute=r.id;ordering=false;render();}},
+     const a=analysis(c,g,r),off=ro&&!a.ok;
+     subs.append(h('div',{class:'rt-row r'+(cur===r.id?' sel':'')+(off?' off':''),title:off?'有走不通的地方，不能预览':null,onclick:ro?()=>{if(a.ok)opts.onPick(r.id);}:()=>{selGroup=g.id;selRoute=r.id;ordering=false;render();}},
       h('span',{class:'rt-main'},h('span',{class:'rt-name'},r.name),h('span',{class:'rt-seq',title:a.label},a.label)),
-      h('span',{class:'rt-meta'+(a.ok?'':' warn')},a.ok?fmtDuration(a.total):'走不通'),
-      h('span',{class:'rt-tools'},toolBtn('copy','复制',()=>{if(g.routes.length>=M.LIMITS.routes){flash('子方案最多 30 个');return;}mutate(()=>{const n=ops.copyRoute(g,r.id,tour);selGroup=g.id;selRoute=n.id;});}),toolBtn('trash','删除',()=>mutate(()=>{ops.removeRoute(g,r.id);})))));
+      a.ok?null:h('span',{class:'rt-flag',title:'走不通'},host.icon('triangle-alert')),
+      ro?null:h('span',{class:'rt-tools'},toolBtn('copy','复制',()=>{if(g.routes.length>=M.LIMITS.routes){flash('子方案最多 30 个');return;}mutate(()=>{const n=ops.copyRoute(g,r.id,tour);selGroup=g.id;selRoute=n.id;});}),toolBtn('trash','删除',()=>mutate(()=>{ops.removeRoute(g,r.id);})))));
     }
     if(!g.routes.length)subs.append(h('div',{class:'rt-empty'},'还没有子方案'));
-    el.append(h('div',{class:'rt-group'},row,h('div',{class:'rt-approach'},M.APPROACH_NAMES[g.approach]),subs,h('button',{class:'rt-add',onclick:()=>newRoute(g)},host.icon('plus'),'新子方案')));
+    el.append(h('div',{class:'rt-group'},row,h('div',{class:'rt-approach'},M.APPROACH_NAMES[g.approach]),subs));
    }
   }
-  function toolBtn(ic,title,on){return h('button',{class:'ghost',title,'aria-label':title,onclick:e=>{e.stopPropagation();on();}},host.icon(ic));}
+  const renderLeft=c=>renderList(q('#rtLeft'),c);
+  function toolBtn(ic,title,on,cls=''){return h('button',{class:'ghost '+cls,title,'aria-label':title,onclick:e=>{e.stopPropagation();on();}},host.icon(ic));}
   function newGroup(){
    const c=ctx();
    if(c.tour.groups.length>=M.LIMITS.groups){flash('大方案最多 20 个');return;}
@@ -7456,20 +7476,23 @@ const TourPlan=(()=>{
    i.onchange=()=>{const v=i.value.trim();if(v&&v!==value)on(v);else i.value=value;};return i;
   };
   function renderRight(c){
-   const el=q('#rtRight');el.replaceChildren();
-   const g=curGroup(c),r=curRoute(g),o=selObj!=null?c.objects.find(x=>x.id===selObj):null;
-   if(o)el.append(objectSection(c,o));
-   if(g&&r)el.append(routeSection(c,g,r));else if(g)el.append(groupSection(c,g));
-   if(!el.children.length)el.append(h('div',{class:'rt-empty'},'点图上的物料，设为兴趣点'));
+   const el=q('#rtRight'),body=h('div',{class:'rt-scroll'}),foot=h('div',{class:'rt-foot'});el.replaceChildren(body,foot);
+   const g=curGroup(c),r=curRoute(g),o=selObj!=null?c.objects.find(x=>x.id===selObj):null,acts=[];
+   if(o)body.append(objectSection(c,o,acts));
+   if(g&&r)body.append(routeSection(c,g,r,acts));else if(g)body.append(groupSection(c,g));
+   if(!body.children.length)body.append(h('div',{class:'rt-empty'},'点图上的物料，设为兴趣点'));
+   // 最主要的按钮固定在右下角，最右边的那个是主按钮
+   const main=acts.find(x=>x.key==='finish')||acts.find(x=>x.key==='preview')||acts.find(x=>x.key==='poi');
+   for(const x of acts)foot.append(h('button',{class:x===main?'primary':'',disabled:x.disabled,title:x.title,onclick:x.on},host.icon(x.icon),x.text));
   }
-  function objectSection(c,o){
+  function objectSection(c,o,acts){
    const {tour}=c,poi=tour.pois.find(p=>p.objectId===o.id),sec=h('section',null);
    sec.append(h('h2',null,poi?'兴趣点 '+numLabel(poi.num)+' · '+objLabel(c,o):objLabel(c,o)));
    if(!poi){
-    sec.append(h('button',{class:'primary rt-wide',onclick:()=>{
+    acts.push({key:'poi',icon:'map-pin',text:'设为兴趣点',on:()=>{
      if(tour.pois.length>=M.LIMITS.pois){flash('兴趣点最多 100 个');return;}
      mutate(()=>{ops.addPoi(tour,o,{name:objLabel(c,o),isWalkable:(x,z)=>c.nav.isWalkable(x,z)});});
-    }},host.icon('map-pin'),'设为兴趣点'));
+    }});
     return sec;
    }
    sec.append(field('名称',textInput(poi.name,v=>mutate(()=>{poi.name=v;}))),field('默认停留',numberInput(poi.dwell,0,3600,1,v=>mutate(()=>{poi.dwell=v;})),'秒'));
@@ -7488,13 +7511,14 @@ const TourPlan=(()=>{
    sec.append(field('来向',sel),h('div',{class:'rt-btnrow'},h('button',{title:'入口和出口点放回默认位置',onclick:()=>mutate(()=>{ops.setApproach(g,g.approach,c.room,c.venue);})},'还原入口出口')));
    return sec;
   }
-  function routeSection(c,g,r){
+  function routeSection(c,g,r,acts){
    const a=analysis(c,g,r),sec=h('section',null);
-   sec.append(h('h2',null,'子方案'),h('button',{class:'rt-wide'+(ordering?' primary':''),onclick:()=>{ordering=!ordering;render();}},host.icon(ordering?'check':'list-ordered'),ordering?'完成':'排顺序'));
+   sec.append(h('h2',null,'子方案'));
+   acts.push({key:ordering?'finish':'order',icon:ordering?'check':'list-ordered',text:ordering?'完成':'排顺序',on:()=>{ordering=!ordering;render();}});
    sec.append(field('名称',textInput(r.name,v=>mutate(()=>{r.name=v.slice(0,40);}))),
     field('走速',numberInput(r.speed,.1,5,.1,v=>mutate(()=>{r.speed=v;})),'倍'),field('眼高',numberInput(r.eyeHeight,1,2.2,.05,v=>mutate(()=>{r.eyeHeight=v;})),'米'));
    sec.append(h('div',{class:'rt-stat'},h('div',null,h('small',null,'时长'),a.ok?fmtDuration(a.total):'—'),h('div',null,h('small',null,'站点'),String(r.stops.length))));
-   if(host.onPreview)sec.append(h('button',{class:'primary rt-wide rt-preview',disabled:!a.ok,title:a.ok?'回到 3D 看游客走一遍':'有走不通的地方，先修好再预览',onclick:()=>{ordering=false;host.onPreview(r.id);}},host.icon('play'),'在 3D 中预览'));
+   if(host.onPreview&&!ordering)acts.push({key:'preview',icon:'play',text:'在 3D 中预览',disabled:!a.ok,title:a.ok?'回到 3D 看游客走一遍':'有走不通的地方，先修好再预览',on:()=>{ordering=false;host.onPreview(r.id);}});
    const list=h('div',{class:'rt-stops'});
    list.append(h('div',{class:'rt-stop fixed'},h('span',{class:'rt-end start'},'入'),h('span',{class:'rt-sname'},'入口')));
    a.stops.forEach((s,i)=>list.append(stopRow(c,r,s,i)));
@@ -7562,7 +7586,6 @@ const TourPlan=(()=>{
    for(const o of vis)if(!solid.has(o.id)&&o.type!=='fascia')s+=soft(o);
    for(const o of vis){if(!solid.has(o.id)&&o.type!=='fascia'&&!poiOf.has(o.id)&&selObj!==o.id)continue;const [a,bb]=toS(o.position[0],o.position[2]);s+=`<text class="rt-olabel" x="${f(a)}" y="${f(bb+(poiOf.has(o.id)?24:0))}">${esc(objLabel(c,o))}</text>`;}
    if(g){
-    for(const rr of g.routes){if(rr===r)continue;const a=analysis(c,g,rr);if(a.legs.length)s+=`<polyline class="rt-seg dim" points="${poly(a.legs.flat())}"/>`;}
     if(r){
      const a=analysis(c,g,r);
      a.segments.forEach(seg=>{
@@ -7671,11 +7694,13 @@ const TourPlan=(()=>{
    close(){open=false;root.hidden=true;ordering=false;drag=null;pan=null;},
    isOpen:()=>open,
    refresh:render,
+   // 3D 预览左栏复用同一套方案列表（只读）
+   renderList:(el,opts)=>renderList(el,ctx(),opts),
    state:()=>({selGroup,selRoute,selObj,ordering}),
    analysisOf(id){const c=ctx();for(const g of c.tour.groups){const r=g.routes.find(x=>x.id===id);if(r)return analysis(c,g,r);}return null;},
   };
  }
- return {ops,create,numLabel,fmtDuration};
+ return {ops,create,numLabel,fmtDuration,attachResize};
 })();
 if(typeof module!=='undefined'&&module.exports)module.exports=TourPlan;
 
@@ -7694,7 +7719,10 @@ const TourPlayer=(()=>{
  }
  const isTextField=e=>e.target.isContentEditable||e.target.tagName==='TEXTAREA'||e.target.tagName==='SELECT'||(e.target.tagName==='INPUT'&&!['range','checkbox','radio','button'].includes(e.target.type));
 
- // host: {view, actions, scene, camera, orbit, canvas, icon(name), routes() → [{group, route, analysis}], onBack(routeId), onExit(), onGone()}
+ const CAM_KEY='ces-tour-cam',RATES=[.5,1,2];
+ const savedCam=()=>{try{return localStorage.getItem(CAM_KEY)==='fp'?'fp':'orbit';}catch(e){return 'orbit';}};
+ const saveCam=v=>{try{localStorage.setItem(CAM_KEY,v);}catch(e){}};
+ // host: {view, main, actions, scene, camera, orbit, canvas, icon(name), renderList(el,{readonly,selRoute,onPick}), routes() → [{group, route, analysis}], onBack(routeId), onExit(), onGone()}
  function create(host){
   const {scene,camera,orbit,canvas}=host;
   let open=false,routeId=null,compiled=null,live=[],eye=1.75,t=0,playing=false,rate=1,cam='orbit',yawOff=0,pitchOff=0,locked=false,dragLook=null,overview=null,lastAnim=null,lastBar='';
@@ -7706,20 +7734,20 @@ const TourPlayer=(()=>{
   const back=btn({id:'tourBack',class:'tour-top',onclick:()=>host.onBack(routeId)},'map','回到路线图');
   const exit=btn({id:'tourExit',class:'tour-top',onclick:()=>host.onExit()},'x','退出');
   host.actions.prepend(back,exit);
-  const pick=h('select',{id:'tpPick','aria-label':'选择子方案'});
+  const side=h('div',{class:'rt-side',id:'tpSide',hidden:true});
   const seek=h('input',{type:'range',id:'tpSeek',min:'0',step:'0.01','aria-label':'进度'});
   const tickBox=h('div',{class:'tp-ticks'});
   const play=btn({id:'tpPlay',class:'primary',title:'播放 / 暂停（空格）'});
   const time=h('span',{class:'tp-time',id:'tpTime'});
-  const rates=h('div',{class:'tp-seg'},...[.5,1,2].map(v=>btn({'data-rate':String(v),onclick:()=>{rate=v;syncButtons();}},null,v+'×')));
+  const rateBtn=btn({id:'tpRate',title:'切换播放速度','aria-label':'切换播放速度',onclick:()=>{rate=RATES[(RATES.indexOf(rate)+1)%RATES.length];syncButtons();}});
   const cams=h('div',{class:'tp-seg'},btn({'data-cam':'orbit',onclick:()=>setCam('orbit')},'box','总览'),btn({'data-cam':'fp',onclick:()=>setCam('fp')},'eye','第一人称'));
   const recenter=btn({id:'tpRecenter',class:'ghost',title:'视线归位','aria-label':'视线归位',onclick:()=>{yawOff=pitchOff=0;apply();}},'rotate-ccw');
   const restart=btn({id:'tpRestart',class:'ghost',title:'从头','aria-label':'从头',onclick:()=>{t=0;yawOff=pitchOff=0;apply();}},'skip-back');
   const phase=h('div',{class:'tp-phase',id:'tpPhase'}),hint=h('div',{class:'tp-hint',id:'tpHint'}),cross=h('div',{class:'tp-cross',id:'tpCross'});
-  const root=h('div',{id:'tourPlay',hidden:true},phase,hint,cross,h('div',{class:'tp-bar'},pick,restart,play,h('div',{class:'tp-track'},seek,tickBox),time,rates,cams,recenter));
+  const root=h('div',{id:'tourPlay',hidden:true},phase,hint,cross,h('div',{class:'tp-bar'},restart,play,h('div',{class:'tp-track'},seek,tickBox),time,rateBtn,cams,recenter));
   host.view.append(root);
+  host.main.insertBefore(side,host.view);host.attachResize(side).hidden=true;const splitBar=side.nextSibling;
   play.onclick=()=>toggle();
-  pick.onchange=()=>load(pick.value,false);
   seek.onpointerdown=()=>{playing=false;syncButtons();};
   seek.oninput=()=>{t=Number(seek.value);yawOff=pitchOff=0;apply();};
 
@@ -7753,16 +7781,12 @@ const TourPlayer=(()=>{
 
   // ----- routes -----
   function find(id){return host.routes().find(x=>x.route.id===id)||null;}
-  function fillPick(list){
-   pick.replaceChildren();const groups=new Map();
-   for(const x of list){if(!groups.has(x.group.id))groups.set(x.group.id,h('optgroup',{label:x.group.name}));groups.get(x.group.id).append(h('option',{value:x.route.id,disabled:!x.analysis.ok},x.route.name));}
-   pick.append(...groups.values());pick.value=routeId;
-  }
+  const renderSide=()=>host.renderList(side,{readonly:true,selRoute:routeId,onPick:id=>load(id,false)});
   function load(id,keepTime){
    const list=host.routes(),x=list.find(y=>y.route.id===id);if(!x||!x.analysis.ok)return false;
    routeId=id;compiled=x.analysis.compiled;live=x.analysis.live;eye=x.route.eyeHeight;
    if(keepTime)t=clamp(t,0,compiled.total);else{t=0;playing=false;yawOff=pitchOff=0;}
-   fillPick(list);
+   renderSide();
    if(path){scene.remove(path);release(path);}path=buildPath(x.analysis);scene.add(path);
    tickBox.replaceChildren(...ticks(compiled).map(k=>{const e=h('span',{class:'tp-tick',title:'第 '+(k.stopIndex+1)+' 站停留',style:`left:calc(7px + (100% - 14px) * ${compiled.total?k.t/compiled.total:0})`});e.onclick=()=>{playing=false;t=Math.min(k.t+.01,compiled.total);yawOff=pitchOff=0;apply();};return e;}));
    seek.max=String(compiled.total);lastBar='';apply();return true;
@@ -7773,7 +7797,7 @@ const TourPlayer=(()=>{
    if(next===cam){syncButtons();return;}
    if(next==='fp'){overview={position:camera.position.clone(),target:orbit.target.clone(),fov:camera.fov};orbit.enabled=false;camera.fov=FP_FOV;camera.updateProjectionMatrix();}
    else{unlock();camera.position.copy(overview.position);orbit.target.copy(overview.target);camera.fov=overview.fov;camera.updateProjectionMatrix();orbit.enabled=true;orbit.update();}
-   cam=next;dragLook=null;apply();
+   cam=next;saveCam(next);dragLook=null;apply();
   }
   function apply(){
    if(!compiled)return;
@@ -7793,7 +7817,7 @@ const TourPlayer=(()=>{
   function syncButtons(){
    const done=compiled&&t>=compiled.total-.01&&compiled.total>0;
    play.replaceChildren(host.icon(playing?'pause':'play'),playing?'暂停':done?'重播':'播放');
-   root.querySelectorAll('[data-rate]').forEach(b=>b.classList.toggle('active',Number(b.dataset.rate)===rate));
+   rateBtn.textContent=rate+'×';
    root.querySelectorAll('[data-cam]').forEach(b=>b.classList.toggle('active',b.dataset.cam===cam));
    const fp=cam==='fp';hint.hidden=cross.hidden=recenter.hidden=!fp;
    hint.textContent=locked?'移动鼠标转头 · Esc 释放鼠标并暂停':'点画面锁定鼠标后转头（或按住拖动）';
@@ -7827,15 +7851,16 @@ const TourPlayer=(()=>{
    // Show route `id` (must be playable). The caller has already put the editor into a neutral state.
    open(id){
     if(open)this.close();
-    visitor=makeVisitor();scene.add(visitor);open=true;cam='orbit';rate=1;root.hidden=false;
+    visitor=makeVisitor();scene.add(visitor);open=true;cam='orbit';rate=1;root.hidden=false;side.hidden=splitBar.hidden=false;
     if(!load(id,false)){this.close();return false;}
+    if(savedCam()==='fp')setCam('fp');
     playing=true;syncButtons();return true;
    },
    close(){
     if(!open&&!visitor)return;
     unlock();playing=false;dragLook=null;
     if(cam==='fp'&&overview){camera.position.copy(overview.position);orbit.target.copy(overview.target);camera.fov=overview.fov;camera.updateProjectionMatrix();}
-    cam='orbit';open=false;root.hidden=true;clearScene();compiled=null;routeId=null;
+    cam='orbit';open=false;root.hidden=side.hidden=splitBar.hidden=true;clearScene();compiled=null;routeId=null;
    },
    isOpen:()=>open,
    // Data changed (undo, restore…): follow the route, or report that it is gone / no longer playable.
@@ -8189,10 +8214,10 @@ tourPlan=TourPlan.create({root:$('routeEdit'),icon,
  getObjects:()=>snapshot().map(o=>({...o,name:o.type==='acrylicA4'||o.type==='acrylicA5'?'亚克力立牌':definitions[o.type].name})),
  getRoom:()=>room,getVenue:()=>venueGroup.userData,getTour:()=>tour,checkpoint,persist,
  undo:()=>$('undo').click(),redo:()=>$('redo').click(),undoState:()=>({undo:!$('undo').disabled,redo:!$('redo').disabled}),onPreview:id=>enterPlay(id)});
-function setRouteMode(on,routeId){if(on===tourPlan.isOpen())return;if(on){exitPlay();cancelPlacement();setWalking(false);showLibrary(false);tourPlan.open(routeId);}else tourPlan.close();routeBtn.classList.toggle('active',on);routeBtn.lastChild.textContent=on?'退出路线':'路线';}
+function setRouteMode(on,routeId){if(on===tourPlan.isOpen())return;if(on){exitPlay();cancelPlacement();setWalking(false);showLibrary(false);tourPlan.open(routeId);}else tourPlan.close();document.body.classList.toggle('routing',on);routeBtn.classList.toggle('active',on);routeBtn.lastChild.textContent=on?'退出路线':'路线';}
 routeBtn.onclick=()=>setRouteMode(!tourPlan.isOpen());
 // Modes: editor / freeWalk / routeEdit / routePlay — one at a time. Playback is entered and left only through this pair.
-tourPlayer=TourPlayer.create({view,actions:document.querySelector('header .actions'),scene,camera,orbit,canvas:renderer.domElement,icon,
+tourPlayer=TourPlayer.create({view,main:document.querySelector('main'),attachResize:TourPlan.attachResize,renderList:(el,o)=>tourPlan.renderList(el,o),actions:document.querySelector('header .actions'),scene,camera,orbit,canvas:renderer.domElement,icon,
  routes:()=>tour.groups.flatMap(g=>g.routes.map(r=>({group:g,route:r,analysis:tourPlan.analysisOf(r.id)}))),
  onBack:id=>{exitPlay();setRouteMode(true,id);},onExit:()=>exitPlay(),onGone:()=>exitPlay()});
 let playSaved=null;

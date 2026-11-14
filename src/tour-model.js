@@ -31,7 +31,7 @@ const TourModel=(()=>{
  function makePoi(tour,o,opts={}){
   const {stand}=defaultStand(o,opts.isWalkable);
   const taken=new Set(tour.pois.map(p=>p.id));
-  return {id:newId('p',taken),objectId:o.id,num:nextNum(tour),name:typeof opts.name==='string'&&opts.name?opts.name:'物料 '+o.id,dwell:fin(opts.dwell)&&opts.dwell>=0?opts.dwell:DEFAULT_DWELL,stand};
+  return {id:newId('p',taken),objectId:o.id,num:nextNum(tour),name:typeof opts.name==='string'&&opts.name?opts.name:'物品 '+o.id,dwell:fin(opts.dwell)&&opts.dwell>=0?opts.dwell:DEFAULT_DWELL,stand};
  }
  // null = fine; otherwise why the stop can't be used right now.
  function staleReason(tour,stop,objects){
@@ -72,7 +72,7 @@ const TourModel=(()=>{
   const pois=raw.pois.map(p=>{
    if(!isObj(p))fail('兴趣点格式不对');
    const pid=id(p.id,'兴趣点');if(poiIds.has(pid))fail('兴趣点编号重复');poiIds.add(pid);
-   if(!Number.isInteger(p.objectId)||p.objectId<1)fail('兴趣点对应的物料编号无效');
+   if(!Number.isInteger(p.objectId)||p.objectId<1)fail('兴趣点对应的物品编号无效');
    if(!Number.isInteger(p.num)||p.num<1)fail('兴趣点序号无效');if(nums.has(p.num))fail('兴趣点序号重复');nums.add(p.num);
    return {id:pid,objectId:p.objectId,num:p.num,name:str(p.name,'兴趣点名称',40),dwell:p.dwell===undefined?DEFAULT_DWELL:num(p.dwell,'停留时间',0,3600),stand:pair(p.stand,'站位',100)};
   });

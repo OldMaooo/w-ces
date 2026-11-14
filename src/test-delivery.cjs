@@ -39,7 +39,7 @@ try{
  const N=await mk();await N.p.goto('http://127.0.0.1:8876/?builtin');await ready(N.p);const before=await N.p.locator('#tabs [role=tab]').count();
  await N.p.locator('#importFile').setInputFiles(oldJson);await N.p.waitForFunction(n=>document.querySelectorAll('#tabs [role=tab]').length>n,before);
  assert.equal(await N.p.evaluate(()=>editor.tour().pois.length),0);assert.ok(await N.p.evaluate(()=>editor.layout().objects.length)>=3);
- await N.p.locator('#routeBtn').click();await N.p.waitForSelector('#rtPlan rect.rt-booth');console.log('PASS 旧版导出的文件导入新版：物料在、没有路线、路线图纸能打开、无报错');
+ await N.p.locator('#routeBtn').click();await N.p.waitForSelector('#rtPlan rect.rt-booth');console.log('PASS 旧版导出的文件导入新版：物品在、没有路线、路线图纸能打开、无报错');
  await N.c.close();
  await O.p.locator('#importFile').setInputFiles(newJson);await O.p.waitForFunction(()=>document.querySelectorAll('#tabs [role=tab]').length>=2);
  const lost=await O.p.evaluate(()=>({tour:editor.layout().tour,n:editor.layout().objects.length,exp:JSON.stringify(editor.exportData('all'))}));

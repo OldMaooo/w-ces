@@ -95,6 +95,13 @@ test('导入图片数据：格式对才收；任何一项坏了整体拒绝；�
  assert.deepEqual(M.validateAssets(ok),{[ID]:{mime:'image/png',width:2,height:3,base64:'iVBORw0KGgo='}});
  for(const bad of [[],{x:ok[ID]},{[ID]:{...ok[ID],mime:'text/html'}},{[ID]:{...ok[ID],width:0}},{[ID]:{...ok[ID],base64:'<script>'}}])assert.throws(()=>M.validateAssets(bad),/贴图图片数据无效/);
 });
+test('复制为 Figma 画框：1 米 = 1000 像素的 SVG，带面名；名字里的特殊字符转义',()=>{
+ const s=M.frameSvg('前台 12 正面',[2.7,1]);
+ assert.match(s,/^<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg" width="2700" height="1000" viewBox="0 0 2700 1000"/);
+ assert.match(s,/<title>前台 12 正面<\/title>/);
+ assert.match(M.frameSvg('立牌',[.1806,.2552]),/width="181" height="255"/);
+ const bad=M.frameSvg('a&b<"c">',[1,1]);assert.ok(!/<"c">/.test(bad));assert.match(bad,/a&amp;b&lt;&quot;c&quot;&gt;/);
+});
 
 let failed=0;for(const [name,fn] of tests){try{fn();console.log('PASS',name);}catch(e){failed++;console.log('FAIL',name,'\n ',e.message);}}
 console.log(`${tests.length-failed}/${tests.length} passed`);if(failed)process.exitCode=1;

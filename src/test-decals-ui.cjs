@@ -8,7 +8,7 @@ const near=(a,b,t=.01)=>assert.ok(Math.abs(a-b)<t,`${a} ≠ ${b}`);
 const TOKEN='figd_test_TOKEN_123';
 (async()=>{const browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_PATH||'/Users/mao/Library/Caches/ms-playwright/chromium-1234/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing'});try{
  const errors=[],alerts=[];
- const ctx=await browser.newContext({viewport:{width:1440,height:960},acceptDownloads:true});const page=await ctx.newPage();
+ const ctx=await browser.newContext({viewport:{width:1440,height:960},acceptDownloads:true,permissions:['clipboard-read','clipboard-write']});const page=await ctx.newPage();
  page.on('pageerror',e=>errors.push(e.message));page.on('dialog',d=>{alerts.push(d.message());d.dismiss();});
  await page.goto(BASE);await page.waitForFunction(()=>window.editor&&editor.decals);
  // 测试图：红 / 蓝两张 PNG
@@ -56,7 +56,11 @@ const TOKEN='figd_test_TOKEN_123';
  await drag(FRONT,png[0]);await settle();
  let d=await desk();assert.match(d.decals.front.assetId,/^[0-9a-f]{64}$/);assert.deepEqual(d.decals.front.source,{kind:'file'});
  const redId=d.decals.front.assetId;
- assert.equal(await page.locator('.dk-head strong').textContent(),'前台 1');assert.equal(await page.locator('.dk-head small').textContent(),'1.6 × 1 米');
+ assert.equal(await page.locator('.dk-head strong').textContent(),'前台 1');assert.equal(await page.locator('.dk-size span').textContent(),'尺寸 1.6 × 1 米');
+ const copyBtn=page.locator('.dk-size button');assert.equal(await copyBtn.getAttribute('title'),'复制为 Figma 画框（1600 × 1000 像素），到 Figma 里 ⌘V');assert.equal((await copyBtn.textContent()).trim(),'复制到 Figma');await copyBtn.click();
+ const clip=await page.evaluate(()=>navigator.clipboard.readText());assert.match(clip,/^<svg [^>]*width="1600" height="1000"/);assert.match(clip,/<title>前台 1 正面<\/title>/);
+ assert.equal((await copyBtn.textContent()).trim(),'已复制，去 Figma ⌘V');
+ console.log('PASS 面板复制为 Figma 画框：剪贴板里是 1600×1000 的 SVG、带面名、按钮显示已复制');
  let m=(await dbg()).meshes['obj:1|front'];assert.ok(m&&m.image,'3D 里有贴图');near(m.canvasW/m.canvasH,1.6);
  assert.equal((await dbg()).current,'obj:1|front','选中的面亮着');await page.waitForTimeout(1000);assert.equal((await dbg()).current,'obj:1|front','过一秒还亮着');
  assert.deepEqual(await texts(page.locator('.dk-face')),['正面','台面']);assert.equal(await page.locator('.dk-face i').count(),1,'有图的面带小圆点');
@@ -96,7 +100,7 @@ const TOKEN='figd_test_TOKEN_123';
  assert.equal((await dbg()).tints.length,3);
  p=await point(...WALLB);await page.mouse.move(p.x,p.y);
  await page.evaluate(b64=>{const bin=atob(b64),u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);const dt=new DataTransfer();dt.items.add(new File([u],'x.png',{type:'image/png'}));document.dispatchEvent(new ClipboardEvent('paste',{clipboardData:dt,bubbles:true,cancelable:true}));},png[1]);await settle();
- assert.equal(await page.evaluate(()=>editor.layout().room.decals.B.assetId),blueId);assert.equal(await page.locator('.dk-head strong').textContent(),'B 后墙');assert.equal(await page.locator('.dk-head small').textContent(),'6.1 × 2.8 米');
+ assert.equal(await page.evaluate(()=>editor.layout().room.decals.B.assetId),blueId);assert.equal(await page.locator('.dk-head strong').textContent(),'B 后墙');assert.equal(await page.locator('.dk-size span').textContent(),'尺寸 6.1 × 2.8 米');
  // 墙长互换后贴图跟着重画
  await page.keyboard.press('Escape');await page.keyboard.press('Escape');await page.locator('#swapWalls').click();await settle();m=(await dbg()).meshes['room|B'];near(m.canvasW/m.canvasH,5.5/2.8);
  await page.evaluate(()=>editor.undo());await settle();

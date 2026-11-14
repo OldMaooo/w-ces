@@ -14,16 +14,16 @@ try{
  // 1 进入 / 退出：图纸盖住 3D，退出后恢复
  await open();assert.equal(await p.locator('#routeBtn').getAttribute('aria-selected'),'true');
  assert.ok(await p.locator('#rtPlan text.rt-vlabel').count()>=2);assert.ok(await p.locator('#rtPlan g.rt-compass').count()===1);assert.ok(await p.locator('#rtPlan g.rt-scale').count()===1);
- assert.equal(await p.locator('#rtPlan [data-o]').count()>=3,true,'图上应有物料轮廓');
+ assert.equal(await p.locator('#rtPlan [data-o]').count()>=3,true,'图上应有物品轮廓');
  await p.locator('#modeBooth').click();assert.equal(await p.locator('#routeEdit').isHidden(),true);assert.equal(await p.locator('#modeBooth').getAttribute('aria-selected'),'true');
- console.log('PASS 路线按钮进入 / 退出，图纸有过道、物料轮廓、指南针、比例尺');
+ console.log('PASS 路线按钮进入 / 退出，图纸有过道、物品轮廓、指南针、比例尺');
  // 2 标兴趣点：电视(1)、前台(2)、机器人(3)
  await open();
  await clickObj(1);assert.ok(await p.locator('#rtRight button:has-text("设为兴趣点")').isVisible());
  for(const id of [1,3,2]){await clickObj(id);await p.locator('#rtRight button:has-text("设为兴趣点")').click();}
  const nums=await p.evaluate(()=>editor.tour().pois.map(x=>[x.objectId,x.num]));assert.deepEqual(nums,[[1,1],[3,2],[2,3]]);
  assert.equal(await p.locator('#rtPlan g.rt-badge').count(),3);assert.equal(await p.locator('#rtPlan circle.rt-stand').count(),3);assert.equal(await p.locator('#rtPlan line.rt-link').count(),3);
- console.log('PASS 点物料 → 设为兴趣点：编号圆标 + 站位点 + 虚线');
+ console.log('PASS 点物品 → 设为兴趣点：编号圆标 + 站位点 + 虚线');
  // 3 改名 / 默认停留
  await clickObj(2);await p.locator('#rtRight input[type=text]').fill('前台洽谈');await p.locator('#rtRight input[type=text]').press('Enter');
  assert.equal(await p.evaluate(()=>editor.tour().pois.find(x=>x.objectId===2).name),'前台洽谈');
@@ -46,7 +46,7 @@ try{
   const dist=(o,px,pz)=>{if(['fascia','laptop','webcam','acrylicA4','acrylicA5'].includes(o.type))return Infinity;const c=Math.cos(o.rotation),s=Math.sin(o.rotation),dx=px-o.position[0],dz=pz-o.position[2],lx=dx*c-dz*s,lz=dx*s+dz*c;return Math.hypot(Math.max(Math.abs(lx)-o.size[0]/2,0),Math.max(Math.abs(lz)-o.size[2]/2,0));};
   for(const r of r0){const a=editor.tourPlan.analysisOf(r.id);if(!a.ok)bad++;for(const leg of a.legs)for(let i=1;i<leg.length;i++){const [x0,z0]=leg[i-1],[x1,z1]=leg[i],n=Math.max(1,Math.ceil(Math.hypot(x1-x0,z1-z0)/.05));for(let k=0;k<=n;k++){const px=x0+(x1-x0)*k/n,pz=z0+(z1-z0)*k/n;for(const o of objs)worst=Math.min(worst,dist(o,px,pz));}}}
   return {worst,bad};});
- assert.equal(clearance.bad,0);assert.ok(clearance.worst>=.29,'路线离物料最近 '+clearance.worst);console.log('PASS 3 条路线都通，离任何物料最近 '+clearance.worst.toFixed(2)+' 米（≥0.3 米人体半径）');
+ assert.equal(clearance.bad,0);assert.ok(clearance.worst>=.29,'路线离物品最近 '+clearance.worst);console.log('PASS 3 条路线都通，离任何物品最近 '+clearance.worst.toFixed(2)+' 米（≥0.3 米人体半径）');
  // 6 站位点拖动：一次撤销就回去
  const standBefore=await p.evaluate(()=>JSON.stringify(editor.tour().pois[0].stand));
  const box=await p.locator('#rtPlan circle.rt-stand').first().boundingBox();
@@ -79,7 +79,7 @@ try{
  assert.equal(await p.locator('#rtLeft .rt-row.r').nth(1).locator('.rt-flag').count(),1);
  console.log('PASS 走不通：红色虚线 + 右栏「'+warns[0].trim()+'」+ 左栏标「走不通」');
  await p.locator('#rtTools button[title="撤销"]').click();assert.equal(await p.locator('#rtPlan .rt-seg.bad').count(),0);assert.equal(await p.evaluate(()=>editor.objects().length),3);
- // 9 站位被挡：把兴趣点的站位拖进物料里 → 站位标红 + 提示
+ // 9 站位被挡：把兴趣点的站位拖进物品里 → 站位标红 + 提示
  await p.evaluate(()=>{editor.checkpoint();editor.tour().pois[1].stand=[0,0];editor.persist();editor.tourPlan.refresh();});
  assert.ok(await p.locator('#rtPlan circle.rt-stand.bad').count()>=1);
  const w2=await p.locator('#rtRight .rt-warn').allTextContents();assert.ok(w2.some(t=>t.includes('的站位被挡住了')),'站位被挡要提示：'+w2.join('|'));
@@ -91,8 +91,8 @@ try{
  assert.ok((await p.locator('#rtRight .rt-stop.stale').count())>=1);assert.ok((await p.locator('#rtRight .rt-stop.stale').first().textContent()).includes('已失效'));
  assert.equal(await p.locator('#rtLeft .rt-row.r').nth(1).locator('.rt-flag').count(),0,'失效的站跳过，路线照算');
  await p.locator('#modeBooth').click();await p.evaluate(()=>editor.undo());await open();await p.locator('#rtLeft .rt-row.r').nth(1).click();
- assert.equal(await p.locator('#rtRight .rt-stop.stale').count(),0);console.log('PASS 物料被删 → 站「已失效」路线照算，撤销恢复');
- // 11 键盘：路线模式里空格 / WASD 不触发自由步行，Delete 不删物料
+ assert.equal(await p.locator('#rtRight .rt-stop.stale').count(),0);console.log('PASS 物品被删 → 站「已失效」路线照算，撤销恢复');
+ // 11 键盘：路线模式里空格 / WASD 不触发自由步行，Delete 不删物品
  await p.keyboard.press('Space');await p.keyboard.press('KeyW');await p.keyboard.press('Delete');
  assert.equal(await p.evaluate(()=>editor.walking()),false);assert.equal(await p.evaluate(()=>editor.objects().length),3);console.log('PASS 路线模式下空格 / W / Delete 不影响 3D 编辑');
  // 12 刷新后都在
@@ -124,7 +124,7 @@ try{
  await probe('#rtTools button[title="适应画面"]',['backgroundColor']);await probe('#rtLeft .rt-row.g',['backgroundColor']);await probe('#rtLeft .rt-addroute',['backgroundColor']);
  await probe('#rtPlan .rt-obj[data-o="2"]',['fill'],{x:4,y:4});await probe('#rtPlan g.rt-badge text',['fill']);await probe('#rtPlan circle.rt-stand:not(.sel)',['strokeWidth']);await probe('#rtPlan g.rt-ep circle',['stroke']);
  await probe('#rtRight .rt-stop:not(.fixed)',['backgroundColor']);await probe('#rtRight .rt-field input',['borderColor']);await probe('#rtBar #tpPlay',['backgroundColor']);
- console.log('PASS 工具条、列表行、虚线按钮、物料、编号圆标、站位点、入口出口点、站行、输入框、按钮悬停都有变化');
+ console.log('PASS 工具条、列表行、虚线按钮、物品、编号圆标、站位点、入口出口点、站行、输入框、按钮悬停都有变化');
 
  // 18 进入路线编辑：顶栏方案标签、三模式标签、导入导出都在，只是左侧栏收起；点「展台」退出
  await p.evaluate(()=>{localStorage.removeItem('ces-route-panel-w');});
@@ -156,7 +156,7 @@ try{
  await p.locator('#rtLeft .rt-row.r').nth(2).click();assert.equal(await segsOf(),await p.evaluate(()=>editor.tourPlan.analysisOf(editor.tourPlan.state().selRoute).segments.length));
  await p.locator('#rtLeft .rt-row.g').first().click();assert.equal(await segsOf(),0,'没选子方案就不画路线');
  const corner=async()=>{const r=await p.locator('#rtRight').boundingBox(),b=await p.locator('#rtRight .rt-foot button.primary').boundingBox();return [Math.round(r.x+r.width-(b.x+b.width)),Math.round(r.y+r.height-(b.y+b.height))];};
- await p.evaluate(()=>{editor.tour().pois.pop();editor.tourPlan.refresh();});   // 取消一个兴趣点，留一个普通物料可点
+ await p.evaluate(()=>{editor.tour().pois.pop();editor.tourPlan.refresh();});   // 取消一个兴趣点，留一个普通物品可点
  const plain=await p.evaluate(()=>{const used=new Set(editor.tour().pois.map(x=>x.objectId));return editor.snapshot().find(o=>!used.has(o.id)&&o.visible!==false)?.id;});
  await p.locator('#rtLeft .rt-row.r').first().click();await p.locator(`#rtPlan [data-o="${plain}"]`).last().dispatchEvent('pointerdown');const c1=await corner();assert.ok(c1[0]<=16&&c1[1]<=16,'主按钮在右下角：'+c1);
  assert.equal((await p.locator('#rtRight .rt-foot button.primary').textContent()).trim(),'设为兴趣点');

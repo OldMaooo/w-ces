@@ -199,6 +199,12 @@ function create(onMode){
   return el('div',{class:'dk-row'},el('label',{},label),r,out);}
  const iconBtn=(name,title,fn,cls='')=>{const b=el('button',{class:'dk-btn dk-icon '+cls,title,'aria-label':title,onclick:fn});b.append(icon(name));return b;};
  const btn=(text,fn,attrs={})=>el('button',{class:'dk-btn',onclick:fn,...attrs},text);
+ // 把这一面的尺寸复制成 SVG：粘进 Figma 就是一个同比例的空画框
+ async function copyFrame(name,size,b){
+  const svg=M.frameSvg(name,size);
+  try{await navigator.clipboard.writeText(svg);}catch(e){const ta=el('textarea',{style:'position:fixed;opacity:0'});ta.value=svg;document.body.append(ta);ta.select();document.execCommand('copy');ta.remove();} // file:// 等拿不到剪贴板接口时
+  b.replaceChildren(icon('check'),'已复制，去 Figma ⌘V');setTimeout(()=>{if(b.isConnected)b.replaceChildren(icon('copy'),'复制到 Figma');},1500);
+ }
  function renderPanel(){
   const t=S.owner&&target(S.owner);
   if(S.owner&&(!t||!facesOn(t).includes(S.face)))Object.assign(S,{owner:null,face:null,error:''});
@@ -206,9 +212,12 @@ function create(onMode){
   document.body.classList.toggle('decaling',S.mode);side.hidden=!S.mode;side.replaceChildren();if(!S.mode)return;
   if(!S.owner){renderList();return;}
   const panel=side,{owner,face}=S,faces=panelFaces(t,face),d=decalOf(t,face);
-  panel.append(el('div',{class:'dk-head'},el('strong',{},t.name(face)),el('small',{},M.sizeText(t.spec(face).size)),iconBtn('x','返回贴面列表（Esc）',close,'dk-x')));
+  const size=t.spec(face).size;
+  panel.append(el('div',{class:'dk-head'},el('strong',{},t.name(face)),iconBtn('x','返回贴面列表（Esc）',close,'dk-x')));
   if(faces.length>1)panel.append(el('div',{class:'dk-faces'},...faces.map(f=>el('button',{class:'dk-face'+(f===face?' on':''),onclick:()=>open(owner,f)},...(decalOf(t,f)?[el('i')]:[]),NAMES[f]))));
   if(S.error)panel.append(el('div',{class:'dk-note err',role:'alert'},S.error));
+  const copy=el('button',{class:'dk-btn',title:'复制为 Figma 画框（'+size.map(v=>Math.round(v*1000)).join(' × ')+' 像素），到 Figma 里 ⌘V',onclick:()=>copyFrame(owner==='room'?t.name(face):t.name(face)+' '+NAMES[face],size,copy)});copy.append(icon('copy'),'复制到 Figma');
+  panel.append(el('div',{class:'dk-size'},el('span',{},'尺寸 '+M.sizeText(size)),copy));
   if(!d||S.relink||S.needToken){emptyState(t,face,d);return;}
   const [fw,fh]=t.spec(face).size,img=el('img',{alt:''});
   const thumb=el('div',{class:'dk-thumb',style:`height:${Math.round(Math.max(48,Math.min(150,216*fh/fw)))}px`},img);

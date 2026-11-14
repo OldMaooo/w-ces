@@ -95,6 +95,9 @@ const DecalModel=(()=>{
   }
   return out;
  }
- return {FACE_NAMES,WALL_H,facesFor,faceSpec,wallSpec,sizeText,defaults,cleanDecal,cleanDecals,placeImage,parseFigmaUrl,usedAssetIds,validateAssets};
+ // 复制到 Figma 后是一个同比例的空画框：1 米 = 1000 像素
+ const xml=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+ const frameSvg=(name,size)=>{const [w,h]=size.map(v=>Math.max(1,Math.round(v*1000)));return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><title>${xml(name)}</title><rect width="${w}" height="${h}" fill="#FFFFFF"/></svg>`;};
+ return {FACE_NAMES,frameSvg,WALL_H,facesFor,faceSpec,wallSpec,sizeText,defaults,cleanDecal,cleanDecals,placeImage,parseFigmaUrl,usedAssetIds,validateAssets};
 })();
 if(typeof module!=='undefined'&&module.exports)module.exports=DecalModel;

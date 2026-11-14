@@ -61,15 +61,15 @@ function applyDraft(wsIn,draft,opts={}){
  const ws=JSON.parse(JSON.stringify(wsIn)),plan=pickPlan(ws,opts.plan??draft.plan),layout=plan.layout,c=context(layout);
  const tour=draft.replace||!layout.tour?M.emptyTour():M.cloneTour(layout.tour);
  const objById=id=>{
-  const o=c.objects.find(x=>x.id===id);if(!o)throw Error('找不到物料编号 '+id);
-  if(hidden(o))throw Error('物料 '+id+'（'+objName(o)+'）是隐藏的，不能当停留点');
-  if(o.type==='fascia')throw Error('物料 '+id+' 是吊楣，不能当停留点');return o;
+  const o=c.objects.find(x=>x.id===id);if(!o)throw Error('找不到物品编号 '+id);
+  if(hidden(o))throw Error('物品 '+id+'（'+objName(o)+'）是隐藏的，不能当停留点');
+  if(o.type==='fascia')throw Error('物品 '+id+' 是吊楣，不能当停留点');return o;
  };
  const poiFor=(o,spec={})=>{
   let p=tour.pois.find(x=>x.objectId===o.id);
   if(!p){
    const st=spec.standAt?M.worldToLocal(o,spec.standAt):findStand(o,c.nav,spec.side);
-   if(!st)throw Error('物料 '+o.id+'（'+objName(o)+'）四周找不到能站的位置，请在 pois 里给 standAt:[x,z]');
+   if(!st)throw Error('物品 '+o.id+'（'+objName(o)+'）四周找不到能站的位置，请在 pois 里给 standAt:[x,z]');
    p=ops.addPoi(tour,o,{name:spec.name||objName(o),dwell:spec.dwell});if(!p)throw Error('兴趣点太多');p.stand=st;
   }else{
    if(spec.name)p.name=spec.name;if(spec.dwell!=null)p.dwell=spec.dwell;
@@ -78,11 +78,11 @@ function applyDraft(wsIn,draft,opts={}){
   return p;
  };
  for(const spec of draft.pois||[])poiFor(objById(spec.object),spec);
- const resolve=ref=>{ // number = object id; text = 兴趣点名字 or 物料用途名
+ const resolve=ref=>{ // number = object id; text = 兴趣点名字 or 物品用途名
   if(typeof ref==='number')return poiFor(objById(ref));
   const byPoi=tour.pois.filter(p=>p.name===ref);if(byPoi.length===1)return byPoi[0];
   const byObj=c.objects.filter(o=>!hidden(o)&&objName(o)===ref);
-  if(byPoi.length>1||byObj.length>1)throw Error('「'+ref+'」不止一个，请改用物料编号');
+  if(byPoi.length>1||byObj.length>1)throw Error('「'+ref+'」不止一个，请改用物品编号');
   if(!byObj.length)throw Error('找不到「'+ref+'」，用 list 看可用的名字和编号');
   return poiFor(byObj[0]);
  };

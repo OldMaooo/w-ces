@@ -1,0 +1,387 @@
+{
+  "format": "ces-booth-plans",
+  "version": 2,
+  "activeId": "7f944d95-1cb2-4b91-b8fb-2a72172b61e5",
+  "plans": [
+    {
+      "id": "7f944d95-1cb2-4b91-b8fb-2a72172b61e5",
+      "name": "02",
+      "layout": {
+        "room": {
+          "width": 6.1,
+          "depth": 5.5,
+          "wallA": true,
+          "wallB": true
+        },
+        "objects": [
+          {
+            "type": "tv",
+            "id": 1,
+            "size": [
+              1.4389712117926308,
+              0.8094213066333548,
+              0.09
+            ],
+            "wallSnap": false,
+            "inches": 65,
+            "position": [
+              -3.000000000000001,
+              1.3,
+              1.4999999999999996
+            ],
+            "rotation": 1.5707963267948966,
+            "visible": true,
+            "portrait": false,
+            "purpose": "机器人拍照演示"
+          },
+          {
+            "type": "desk",
+            "id": 2,
+            "size": [
+              1.6,
+              1,
+              0.65
+            ],
+            "wallSnap": false,
+            "position": [
+              -1.6,
+              0,
+              -0.6000000000000001
+            ],
+            "rotation": 0.7853981633974483,
+            "visible": false
+          },
+          {
+            "type": "robot",
+            "id": 3,
+            "size": [
+              0.65,
+              1.5,
+              0.5
+            ],
+            "wallSnap": false,
+            "position": [
+              2.050609665440988,
+              0,
+              2.1920310216782966
+            ],
+            "rotation": -5.497787143782138,
+            "visible": true
+          },
+          {
+            "type": "tv",
+            "id": 4,
+            "size": [
+              1.4389712117926308,
+              0.8094213066333548,
+              0.09
+            ],
+            "wallSnap": false,
+            "inches": 65,
+            "position": [
+              -3,
+              1.3,
+              -0.6000000000000005
+            ],
+            "rotation": 1.5707963267948966,
+            "visible": true,
+            "portrait": false,
+            "purpose": "虚拟大脑"
+          },
+          {
+            "type": "tv",
+            "id": 5,
+            "size": [
+              1.4389712117926308,
+              0.8094213066333548,
+              0.09
+            ],
+            "wallSnap": false,
+            "inches": 65,
+            "position": [
+              -0.30000000000000004,
+              1.3,
+              -2.7
+            ],
+            "rotation": 0,
+            "visible": true,
+            "portrait": false,
+            "purpose": "平行宇宙"
+          },
+          {
+            "type": "tv",
+            "id": 6,
+            "size": [
+              0.84,
+              1.45,
+              0.09
+            ],
+            "wallSnap": false,
+            "inches": 65.9739623270227,
+            "position": [
+              -0.8999999999999982,
+              0,
+              2.3
+            ],
+            "rotation": -18.84955592153876,
+            "visible": true,
+            "portrait": false,
+            "purpose": "试衣镜/虚拟人"
+          },
+          {
+            "type": "display",
+            "id": 8,
+            "size": [
+              0.46,
+              1.531363251680008,
+              0.46
+            ],
+            "wallSnap": false,
+            "inches": 27,
+            "portrait": true,
+            "position": [
+              2.6,
+              0,
+              -1.2000000000000002
+            ],
+            "rotation": -4.71238898038469,
+            "visible": true,
+            "purpose": "Readify"
+          },
+          {
+            "type": "ldesk",
+            "id": 9,
+            "size": [
+              0.9,
+              1,
+              1.5
+            ],
+            "wallSnap": false,
+            "lengthA": 0.9,
+            "widthA": 0.5,
+            "lengthB": 1.5,
+            "widthB": 0.5,
+            "position": [
+              -2.1,
+              0,
+              -1.7000000000000002
+            ],
+            "rotation": -3.141592653589793,
+            "visible": true
+          },
+          {
+            "type": "fascia",
+            "id": 10,
+            "size": [
+              3,
+              0.8,
+              3
+            ],
+            "wallSnap": false,
+            "shape": "square",
+            "position": [
+              0.275,
+              3.8,
+              0
+            ],
+            "rotation": 0,
+            "visible": false
+          },
+          {
+            "type": "table",
+            "id": 11,
+            "size": [
+              0.6,
+              0.9,
+              0.6
+            ],
+            "wallSnap": false,
+            "position": [
+              2.4000000000000004,
+              0,
+              -0.6000000000000001
+            ],
+            "rotation": 0,
+            "visible": true
+          },
+          {
+            "type": "desk",
+            "id": 12,
+            "size": [
+              2.7,
+              1,
+              0.4
+            ],
+            "wallSnap": false,
+            "position": [
+              0.9000000000000001,
+              0,
+              -2.3000000000000003
+            ],
+            "rotation": 0,
+            "visible": true
+          },
+          {
+            "type": "desk",
+            "id": 13,
+            "size": [
+              1,
+              1,
+              0.4
+            ],
+            "wallSnap": false,
+            "position": [
+              -2.6,
+              0,
+              1.299999999999999
+            ],
+            "rotation": 1.5707963267948966,
+            "visible": true
+          },
+          {
+            "type": "table",
+            "id": 14,
+            "size": [
+              0.6,
+              0.9,
+              0.6
+            ],
+            "wallSnap": false,
+            "position": [
+              -0.1,
+              0,
+              2.2
+            ],
+            "rotation": 0,
+            "visible": true
+          },
+          {
+            "type": "webcam",
+            "id": 15,
+            "size": [
+              0.1,
+              0.08,
+              0.06
+            ],
+            "wallSnap": false,
+            "position": [
+              -0.1,
+              2.1,
+              -2.7
+            ],
+            "rotation": 0,
+            "visible": true
+          },
+          {
+            "type": "laptop",
+            "id": 16,
+            "size": [
+              0.34,
+              0.24,
+              0.25
+            ],
+            "wallSnap": false,
+            "position": [
+              0.807254168530464,
+              0.9999999997138986,
+              -2.2855251923328015
+            ],
+            "rotation": 0,
+            "visible": true
+          },
+          {
+            "type": "laptop",
+            "id": 18,
+            "size": [
+              0.34,
+              0.24,
+              0.25
+            ],
+            "wallSnap": false,
+            "position": [
+              -2.6,
+              1,
+              1.2999999999999998
+            ],
+            "rotation": -4.71238898038469,
+            "visible": true
+          },
+          {
+            "type": "acrylicA4",
+            "id": 19,
+            "size": [
+              0.21,
+              0.297,
+              0.07
+            ],
+            "wallSnap": false,
+            "position": [
+              2.515945264696487,
+              0.8999999993522464,
+              -0.5873374388650332
+            ],
+            "rotation": -4.71238898038469,
+            "visible": true
+          },
+          {
+            "type": "staff",
+            "id": 20,
+            "size": [
+              0.5153425372097441,
+              1.7499999999999998,
+              0.3006422067683207
+            ],
+            "wallSnap": false,
+            "personScale": 1,
+            "animation": "Idle",
+            "clothesColor": "#165DFF",
+            "position": [
+              0.275,
+              0,
+              1.6000000000000003
+            ],
+            "rotation": 0,
+            "visible": true
+          },
+          {
+            "type": "visitor",
+            "id": 21,
+            "size": [
+              0.5153425372097441,
+              1.7499999999999998,
+              0.3006422067683207
+            ],
+            "wallSnap": false,
+            "personScale": 1,
+            "animation": "Idle",
+            "clothesColor": "#f3f3ef",
+            "position": [
+              -0.6999999999999987,
+              0,
+              3.6
+            ],
+            "rotation": -9.42477796076938,
+            "visible": true
+          },
+          {
+            "type": "rollup",
+            "id": 22,
+            "size": [
+              0.84,
+              2.08,
+              0.35
+            ],
+            "wallSnap": false,
+            "position": [
+              2,
+              0,
+              2.5
+            ],
+            "rotation": 0,
+            "visible": false
+          }
+        ]
+      }
+    }
+  ]
+}

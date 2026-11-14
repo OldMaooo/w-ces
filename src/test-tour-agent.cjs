@@ -18,7 +18,7 @@ test('场馆尺寸公式和 venue.js 一致',()=>{
   assert.deepEqual(A.venueFor(room),ref);
  }
 });
-test('清单：列出可停留物料（名字、站位世界坐标、能不能站），隐藏的标不可用',()=>{
+test('清单：列出可停留物品（名字、站位世界坐标、能不能站），隐藏的标不可用',()=>{
  const inv=A.inventory(ces());
  assert.equal(inv.plan.name,'02');
  const tv5=inv.objects.find(o=>o.id===5);
@@ -28,7 +28,7 @@ test('清单：列出可停留物料（名字、站位世界坐标、能不能�
  assert.ok(inv.approaches.find(a=>a.approach==='west-sn').entry.length===2);
  assert.ok(inv.walkArea.length===3);
 });
-test('套用草稿：按物料编号 / 名字指定停留点，自动建兴趣点、校验通过、能算出时长',()=>{
+test('套用草稿：按物品编号 / 名字指定停留点，自动建兴趣点、校验通过、能算出时长',()=>{
  const ws=ces(),{workspace,report}=A.applyDraft(ws,draft());
  assert.equal(report.ok,true,JSON.stringify(report));
  const tour=workspace.plans[0].layout.tour;
@@ -48,7 +48,7 @@ test('同一大方案里的多条子方案：group 字段相同就归在一起',
  assert.equal(report.ok,true);const gs=workspace.plans[0].layout.tour.groups;
  assert.equal(gs.length,2);assert.deepEqual(gs[0].routes.map(r=>r.name),['A','B']);
 });
-test('引用隐藏物料 / 不存在 / 重名：报错说清楚，不写出',()=>{
+test('引用隐藏物品 / 不存在 / 重名：报错说清楚，不写出',()=>{
  assert.throws(()=>A.applyDraft(ces(),{routes:[{name:'x',approach:'north-ew',stops:[2]}]}),/2.*隐藏/);
  assert.throws(()=>A.applyDraft(ces(),{routes:[{name:'x',approach:'north-ew',stops:['不存在的东西']}]}),/找不到/);
  assert.throws(()=>A.applyDraft(ces(),{routes:[{name:'x',approach:'nowhere',stops:[5]}]}),/来向/);
@@ -59,7 +59,7 @@ test('走不通（路径点放在桌子里）：report.ok=false 并说明哪段'
  const {report}=A.applyDraft(ces(),{routes:[{name:'x',approach:'north-ew',stops:[5,{pos:[0.9,-2.3]}]}]});
  assert.equal(report.ok,false);assert.ok(report.routes[0].issues.length>0);
 });
-test('追加模式：保留已有路线，同一物料复用已有兴趣点；replace 才清空',()=>{
+test('追加模式：保留已有路线，同一物品复用已有兴趣点；replace 才清空',()=>{
  const first=A.applyDraft(ces(),draft()).workspace;
  const {workspace}=A.applyDraft(first,{routes:[{name:'第二条',approach:'west-sn',stops:[5,8]}]});
  const tour=workspace.plans[0].layout.tour;

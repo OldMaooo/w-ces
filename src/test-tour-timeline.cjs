@@ -37,7 +37,7 @@ test('停留：到站后原地不动 dwell 秒，阶段 hold，stopIndex 对',()
 test('停留 0 秒：站仍然记录，但没有 hold 段',()=>{
  const c=T.compileRoute([[[0,0],[0,6]],[[0,6],[0,12]]],[0],[null],1);near(c.total,12/V);assert.equal(c.stops.length,1);near(c.stops[0].t0,c.stops[0].t1);
 });
-test('停留时看向目标：身体和视线转向物料，俯仰按眼高算',()=>{
+test('停留时看向目标：身体和视线转向物品，俯仰按眼高算',()=>{
  const c=T.compileRoute([[[0,0],[0,6]],[[0,6],[0,12]]],[5],[{x:3,z:6,y:1.2}],1);
  const mid=c.stops[0].t1-2;const s=T.sampleRoute(c,mid,1.75);
  assert.equal(s.phase,'hold');near(s.lookYaw,Math.PI/2);near(s.bodyYaw,Math.PI/2);near(s.lookPitch,Math.atan2(1.2-1.75,3));

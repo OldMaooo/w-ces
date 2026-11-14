@@ -85,7 +85,7 @@ test('绕旋转 45° 的矩形',()=>{
  const objs=[obj('desk',0,0,45,{size:[2.4,1,.5]})];const s=plan1(objs,[-2,-.6],[2,.6]);
  assert.equal(s.ok,true);assertPathValid(s.points,objs,room,'45°矩形');assert.ok(s.points.length>=3);
 });
-test('不切角：斜边物料的角，路径始终离它 ≥0.3m（逐点复检）',()=>{
+test('不切角：斜边物品的角，路径始终离它 ≥0.3m（逐点复检）',()=>{
  for(const rot of [20,45,70]){const objs=[obj('desk',0,0,rot,{size:[1.8,1,.7]})];const s=plan1(objs,[-2.2,-.9],[2.2,.9]);
   assert.equal(s.ok,true);assertPathValid(s.points,objs,room,'转'+rot+'°');}
 });
@@ -111,7 +111,7 @@ test('绕 L 台：旋转 90° 后依然按真实形状',()=>{
 });
 // 西过道里 z=10 处：两侧都是能走区域之外，只能从两个前台中间的缝过
 const slit=gap=>{const x1=5.0,x2=x1+gap;return [obj('desk',(2.5+x1)/2,10,0,{size:[x1-2.5,1,.5]}),obj('desk',(x2+10)/2,10,0,{size:[10-x2,1,.5]})];};
-test('窄缝 0.5m：人宽 0.6 走不过，报走不通，并指出挡住的物料',()=>{
+test('窄缝 0.5m：人宽 0.6 走不过，报走不通，并指出挡住的物品',()=>{
  const objs=slit(.5);const s=plan1(objs,[5.3,8],[5.3,12]);
  assert.equal(s.ok,false);assert.equal(s.reason,'unreachable');assert.equal(s.blockedBy,'前台');assert.equal(s.points.length,2);
 });
@@ -122,7 +122,7 @@ test('窄缝 0.7m：有 0.1m 余量，能过',()=>{
 test('窄缝：0.7m 的缝不在格子线上也要能过（斜着绕再回到缝中心）',()=>{
  const objs=slit(.7);const s=plan1(objs,[4.0,8],[6.5,12]);assert.equal(s.ok,true);assertPathValid(s.points,objs,room,'0.7缝斜');
 });
-test('站位在障碍里：单独报，指出是哪件物料；相邻两段都标走不通',()=>{
+test('站位在障碍里：单独报，指出是哪件物品；相邻两段都标走不通',()=>{
  const objs=[obj('desk',0,0)];const n=nav(objs);
  const res=P.planRoute(n,[-2,2],[[0,.1],[2,2]],[2,-2]);
  assert.equal(res.ok,false);assert.deepEqual(res.standIssues.map(s=>s.index),[0]);assert.equal(res.standIssues[0].blockedBy,'前台');
@@ -140,19 +140,19 @@ test('出口在障碍里：报出口不可走',()=>{
  const res=P.planRoute(nav([obj('desk',0,0)]),[0,N+1.8],[],[0,0]);
  assert.equal(res.exitOk,false);assert.equal(res.segments[0].reason,'exit-blocked');
 });
-test('拉直：绕一个物料的路径只有几个拐点，没有多余的小折',()=>{
+test('拉直：绕一个物品的路径只有几个拐点，没有多余的小折',()=>{
  const objs=[obj('desk',0,0)];const s=plan1(objs,[-2,0],[2,0]);assert.ok(s.points.length<=4,'点数 '+s.points.length);
 });
 test('拉直：相邻三点的首尾若能直连就不应该保留中间点',()=>{
  const objs=[obj('desk',0,0),obj('table',1.5,-1.5,0,{size:[.8,.75,.8]}),obj('ldesk',-1.5,1.5,30)];
- const s=plan1(objs,[-2.6,-2],[2.6,2]);assert.equal(s.ok,true);assertPathValid(s.points,objs,room,'多物料');
+ const s=plan1(objs,[-2.6,-2],[2.6,2]);assert.equal(s.ok,true);assertPathValid(s.points,objs,room,'多物品');
  const n=nav(objs);for(let i=1;i<s.points.length-1;i++)assert.equal(n.segmentClear(s.points[i-1],s.points[i+1]),false,`第 ${i} 个点是多余的`);
 });
 test('不挡路：悬空吊楣、桌上小件（笔记本/摄像头/亚克力牌）',()=>{
  const objs=[obj('fascia',0,0),obj('laptop',0,0),obj('webcam',.5,0),obj('acrylic',-.5,0),obj('acrylicA4',0,.3),obj('acrylicA5',0,-.3)];
  const s=plan1(objs,[-2,0],[2,0]);assert.deepEqual(s.points,[[-2,0],[2,0]]);
 });
-test('不挡路：隐藏的物料（visible:false 或 hidden:true）',()=>{
+test('不挡路：隐藏的物品（visible:false 或 hidden:true）',()=>{
  for(const flag of [{visible:false},{hidden:true}]){const s=plan1([obj('desk',0,0,0,flag)],[-2,0],[2,0]);assert.deepEqual(s.points,[[-2,0],[2,0]]);}
 });
 test('墙：可见的 A/B 墙是障碍物（有名字），隐藏的不进障碍表',()=>{
@@ -168,7 +168,7 @@ test('墙：寻路报“被墙挡住”时用墙的名字',()=>{
 test('人物（工作人员/游客摆件）是半径 0.3 的圆，外加身宽 0.3',()=>{
  const n=nav([obj('staff',0,0)]);assert.equal(n.isWalkable(.55,0),false);assert.equal(n.isWalkable(.65,0),true);
 });
-test('物料很多时仍然正确：12 件随机摆放，所有成功的路线逐点复检',()=>{
+test('物品很多时仍然正确：12 件随机摆放，所有成功的路线逐点复检',()=>{
  let seed=7;const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647;
  const types=['desk','table','tv','robot','chair','ldesk','rollup','staff'];
  const objs=Array.from({length:12},()=>obj(types[Math.floor(rnd()*types.length)],(rnd()-.5)*5,(rnd()-.5)*4.4,Math.floor(rnd()*8)*45));

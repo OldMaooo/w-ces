@@ -50,13 +50,13 @@ try{
  await tab(0).dblclick();await p.locator('#tabs input.tab-edit').fill('');await p.keyboard.press('Enter');assert.notEqual((await names())[0],'','空名字不保存');
  console.log('PASS 单个方案没有 ×；另存；双击改名（高度不跳、Esc 放弃、空名不存）');
 
- // 6 右键复制：复制品紧挨着原标签、带同样的物料
+ // 6 右键复制：复制品紧挨着原标签、带同样的物品
  const objs=await p.evaluate(()=>editor.objects().length);
  await tab(1).click({button:'right'});assert.deepEqual(await p.locator('.ctx-menu button').allTextContents(),['复制','重命名','删除']);await p.locator('.ctx-menu [data-key=copy]').click();
  assert.deepEqual((await names()).slice(1,3),['展区 A','展区 A 副本']);assert.equal(await tab(2).getAttribute('aria-selected'),'true');assert.equal(await p.evaluate(()=>editor.objects().length),objs);
  await p.evaluate(()=>{editor.checkpoint();editor.objects()[0].position.x=1.23;editor.persist();});await tab(1).click();assert.notEqual(await p.evaluate(()=>editor.objects()[0].position.x),1.23,'复制品和原方案互不影响');
  await tab(1).click({button:'right'});await p.keyboard.press('Escape');assert.equal(await p.locator('.ctx-menu').count(),0,'Esc 收起菜单');
- console.log('PASS 右键「复制」：副本紧跟原标签、物料一样、互不影响');
+ console.log('PASS 右键「复制」：副本紧跟原标签、物品一样、互不影响');
 
  // 7 拖动排序：把第一个标签拖到最后；点击不误触发切换；刷新后顺序还在
  const before=await names();const a=await tab(0).boundingBox(),z=await tab(before.length-1).boundingBox();
@@ -103,7 +103,7 @@ try{
  for(const v of ['venue','perspective','top','front']){await p.locator('#walk').click();assert.deepEqual(await p.evaluate(()=>[editor.walking(),!!document.pointerLockElement]),[true,false]);
   await p.locator('[data-view='+v+']').click();assert.deepEqual(await p.evaluate(()=>[editor.walking(),document.querySelector('#walk').textContent]),[false,'游客视图']);assert.equal(await p.locator('[data-view='+v+']').evaluate(e=>e.classList.contains('active')),true);}
  console.log('PASS 游客视图下点会场全景 / 透视 / 俯视 / 正视都能切回并高亮');
- // 14 物料模式：没有物料入口；左栏换成贴面面板（无图层 / 场地），画布里没有「管理贴面」按钮
+ // 14 物料模式：没有物品入口；左栏换成贴面面板（无图层 / 场地），画布里没有「管理贴面」按钮
  await p.locator('#modeBooth').click();assert.equal(await p.locator('#libraryToggle').isVisible(),true);assert.equal(await p.locator('#layers').isVisible(),true);
  await p.locator('#decalMode').click();assert.equal(await p.locator('#libraryToggle').isVisible(),false);assert.equal(await p.locator('#library').isVisible(),false);
  assert.equal(await p.locator('#layers').isVisible(),false);assert.equal(await p.locator('#roomPanel').isVisible(),false);assert.equal(await p.locator('#decalSide').isVisible(),true);
@@ -115,6 +115,6 @@ try{
  await p.keyboard.press('Escape');assert.equal(await p.locator('#decalSide .dk-item').count(),rows.length);assert.equal(await p.evaluate(()=>editor.decals.debug().current),null);
  console.log('  左栏说明：',(await p.locator('#decalSide .dk-explain').first().textContent()));
  await p.locator('#modeBooth').click();assert.equal(await p.locator('#libraryToggle').isVisible(),true);assert.equal(await p.locator('#layers').isVisible(),true);
- console.log('PASS 物料模式：无物料入口，左栏换成贴面面板，切回展台恢复');
+ console.log('PASS 物料模式：无物品入口，左栏换成贴面面板，切回展台恢复');
  assert.deepEqual(errors,[]);console.log('PASS 全程无页面异常');
 }finally{await b.close()}})().catch(e=>{console.error(e);process.exitCode=1});

@@ -13,7 +13,7 @@ const TourPlan=(()=>{
  const clone=v=>JSON.parse(JSON.stringify(v));
  const find=(list,id)=>list.find(x=>x.id===id);
  const routeIds=tour=>new Set(tour.groups.flatMap(g=>g.routes.map(r=>r.id)));
- const STALE_TEXT={'poi-removed':'兴趣点已取消','object-missing':'物料已删除','object-hidden':'物料已隐藏'};
+ const STALE_TEXT={'poi-removed':'兴趣点已取消','object-missing':'物品已删除','object-hidden':'物品已隐藏'};
 
  const ops={
   numLabel,fmtDuration,
@@ -304,7 +304,7 @@ const TourPlan=(()=>{
    mutate(()=>{const r=ops.newRoute(g,'子方案 '+(g.routes.length+1),c.tour);selGroup=g.id;selRoute=r.id;ordering=true;insAt=0;});
   }
 
-  // ----- right: 物料 / 子方案 / 大方案 -----
+  // ----- right: 物品 / 子方案 / 大方案 -----
   const field=(label,input,unit)=>h('div',{class:'rt-field'},h('label',null,label),h('span',null,input,unit?' '+unit:''));
   const numberInput=(value,min,max,step,on)=>{
    const i=h('input',{type:'number',min,max,step,value});
@@ -319,7 +319,7 @@ const TourPlan=(()=>{
    const g=curGroup(c),r=curRoute(g),o=selObj!=null?c.objects.find(x=>x.id===selObj):null,acts=[];
    if(g&&r)body.append(routeSection(c,g,r,acts));else if(g)body.append(groupSection(c,g));
    if(o)body.append(objectSection(c,o,acts));
-   if(!body.children.length)body.append(h('div',{class:'rt-empty'},'点图上的物料，设为兴趣点'));
+   if(!body.children.length)body.append(h('div',{class:'rt-empty'},'点图上的物品，设为兴趣点'));
    // 最主要的按钮固定在右下角，最右边的那个是主按钮
    const main=acts.find(x=>x.key==='poi');
    for(const x of acts)foot.append(h('button',{class:x===main?'primary':'',disabled:x.disabled,title:x.title,onclick:x.on},host.icon(x.icon),x.text));
@@ -420,7 +420,7 @@ const TourPlan=(()=>{
    for(const o of vis)if(!solid.has(o.id)&&o.type==='fascia')s+=soft(o);
    for(const sh of shapes){
     const po=sh.kind==='circle'&&vis.find(o=>o.id===sh.id&&(o.type==='staff'||o.type==='visitor'));
-    if(po){ // 地图上的接待员、游客等人物：顶视人形（肩膀胶囊 + 头 + 两只脚尖），朝向跟物料朝向一致；样式同普通物料
+    if(po){ // 地图上的接待员、游客等人物：顶视人形（肩膀胶囊 + 头 + 两只脚尖），朝向跟物品朝向一致；样式同普通物品
      const [a,bb]=toS(po.position[0],po.position[2]),fx=Math.sin(po.rotation),fz=Math.cos(po.rotation),deg=Math.atan2(-fz,-fx)*180/Math.PI,u=Math.max(k,24);
      s+=`<g class="${cls(po.id)} rt-person" data-o="${po.id}" transform="translate(${f(a)} ${f(bb)}) rotate(${f(deg)}) scale(${f(u)})"><rect x=".04" y="-.14" width=".2" height=".1" rx=".05"/><rect x=".04" y=".04" width=".2" height=".1" rx=".05"/><rect x="-.08" y="-.25" width=".16" height=".5" rx=".08"/><circle cx="0" cy="0" r=".12"/></g>`;
     }else if(sh.kind==='circle'){const [a,bb]=toS(sh.cx,sh.cz);s+=`<circle class="${cls(sh.id)}" data-o="${sh.id}" cx="${f(a)}" cy="${f(bb)}" r="${f(sh.r*k)}"/>`;}
@@ -439,7 +439,7 @@ const TourPlan=(()=>{
      });
     }
    }
-   // 兴趣点：站位点（虚线连到物料）+ 编号圆标
+   // 兴趣点：站位点（虚线连到物品）+ 编号圆标
    const inRoute=new Set(r?r.stops.map(x=>x.poiId):[]);
    for(const poi of tour.pois){
     const o=vis.find(x=>x.id===poi.objectId);if(!o)continue;
@@ -486,7 +486,7 @@ const TourPlan=(()=>{
   }
   function addStopFor(c,id){
    const g=curGroup(c),r=curRoute(g),poi=c.tour.pois.find(p=>p.objectId===id);if(!r)return;
-   if(!poi){selObj=id;renderRight(c);drawPlan();flash('这个物料还不是兴趣点：右栏点「设为兴趣点」');return;}
+   if(!poi){selObj=id;renderRight(c);drawPlan();flash('这个物品还不是兴趣点：右栏点「设为兴趣点」');return;}
    if(r.stops.length>=M.LIMITS.stops){flash('一条路线最多 50 站');return;}
    mutate(()=>{ops.addStop(r,poi.id,insAt);ordering=false;});
   }

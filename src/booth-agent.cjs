@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// Agent 统一入口：读方案文件 → 列出能放什么、已有什么 → 套用「展台草稿」（物料 + 游客路线）→ 另存新文件。
-// 路线部分直接复用 tour-agent.cjs（同一套校验）；物料部分在这里按编辑器 validateLayout 的规则检查。
+// Agent 统一入口：读方案文件 → 列出能放什么、已有什么 → 套用「展台草稿」（物品 + 游客路线）→ 另存新文件。
+// 路线部分直接复用 tour-agent.cjs（同一套校验）；物品部分在这里按编辑器 validateLayout 的规则检查。
 // 格式说明：doc/Agent入口.md。用法：
 //   node src/booth-agent.cjs list  <plans.json> [--plan 名称或id]
 //   node src/booth-agent.cjs apply <plans.json> <draft.json> -o <新文件.json> [--plan 名称或id] [--allow-issues]
@@ -35,7 +35,7 @@ const num=(v,what)=>{if(!Number.isFinite(v))throw Error(what+' 要是数字');re
 function screenSize(inches,portrait){const w=inches*.0254*16/Math.sqrt(337),h=w*9/16;return portrait?[h,w]:[w,h];}
 
 function newObject(spec,id){
- const c=CATALOG[spec.type];if(!c)throw Error('不认识的物料类型「'+spec.type+'」，可选：'+Object.keys(CATALOG).join(', '));
+ const c=CATALOG[spec.type];if(!c)throw Error('不认识的物品类型「'+spec.type+'」，可选：'+Object.keys(CATALOG).join(', '));
  const o={type:spec.type,id,size:[...c.size],position:[0,c.lift||0,0],rotation:0,visible:true,wallSnap:false};
  if(spec.type==='tv'){o.inches=Math.hypot(c.size[0],c.size[1])/.0254;o.portrait=false;o.purpose='';}
  if(spec.type==='display'){o.inches=27;o.portrait=false;o.purpose='';}
@@ -46,8 +46,8 @@ function newObject(spec,id){
 }
 function patch(o,spec){
  const c=CATALOG[o.type],ok=new Set([...ALLOWED,...(c.extra||[])]);
- for(const k of Object.keys(spec))if(!ok.has(k)&&k!=='purpose')throw Error('物料 '+o.id+'（'+c.name+'）不支持字段「'+k+'」，可用：'+[...ok].join(', '));
- if('purpose' in spec&&!(c.extra||[]).includes('purpose'))throw Error('只有电视和闺蜜机能写 purpose（用途名）；其他物料用编号当名字');
+ for(const k of Object.keys(spec))if(!ok.has(k)&&k!=='purpose')throw Error('物品 '+o.id+'（'+c.name+'）不支持字段「'+k+'」，可用：'+[...ok].join(', '));
+ if('purpose' in spec&&!(c.extra||[]).includes('purpose'))throw Error('只有电视和闺蜜机能写 purpose（用途名）；其他物品用编号当名字');
  if(spec.at){if(!Array.isArray(spec.at)||spec.at.length!==2)throw Error('at 要写 [x, z]（米）');o.position[0]=num(spec.at[0],'at[0]');o.position[2]=num(spec.at[1],'at[1]');}
  if('y' in spec)o.position[1]=num(spec.y,'y');
  if('rotate' in spec)o.rotation=num(spec.rotate,'rotate')*Math.PI/180;
@@ -66,18 +66,18 @@ function patch(o,spec){
 }
 // 和编辑器同样的硬规则：编辑器导入会因为这些整份拒绝，所以这里先挡住
 function check(o){
- const bad=(m)=>{throw Error('物料 '+o.id+'（'+CATALOG[o.type].name+'）'+m);};
+ const bad=(m)=>{throw Error('物品 '+o.id+'（'+CATALOG[o.type].name+'）'+m);};
  if(!o.size.every(n=>Number.isFinite(n)&&n>=.01&&n<=10))bad('尺寸要在 0.01–10 米之间');
  if(!o.position.every(n=>Number.isFinite(n)&&Math.abs(n)<=100))bad('位置超出 ±100 米');
  if(!Number.isFinite(o.rotation))bad('角度无效');
 }
-// 超出场地的只警告不拦（有人故意把物料放到场外）
+// 超出场地的只警告不拦（有人故意把物品放到场外）
 function warnings(layout){
  const hw=layout.room.width/2,hd=layout.room.depth/2,out=[];
  for(const o of layout.objects){
   if(o.visible===false)continue;
   const [x,,z]=o.position,[sx,,sz]=o.size,c=Math.abs(Math.cos(o.rotation)),s=Math.abs(Math.sin(o.rotation)),ex=(sx*c+sz*s)/2,ez=(sx*s+sz*c)/2;
-  if(x-ex<-hw-.01||x+ex>hw+.01||z-ez<-hd-.01||z+ez>hd+.01)out.push('物料 '+o.id+'（'+CATALOG[o.type].name+'）有一部分在场地外');
+  if(x-ex<-hw-.01||x+ex>hw+.01||z-ez<-hd-.01||z+ez>hd+.01)out.push('物品 '+o.id+'（'+CATALOG[o.type].name+'）有一部分在场地外');
  }
  return out;
 }
@@ -104,23 +104,23 @@ function applyDraft(wsIn,draft,opts={}){
  if(draft.replaceObjects){layout.objects=[];delete layout.tour;}
  const used=new Set((layout.tour?.pois||[]).map(p=>p.objectId));
  for(const id of draft.remove||[]){
-  const i=layout.objects.findIndex(o=>o.id===id);if(i<0)throw Error('要删的物料 '+id+' 不存在');
-  if(used.has(id))throw Error('物料 '+id+' 已是游客路线的停留点，不能直接删；先用 replaceObjects/去掉路线，或改成 visible:false');
+  const i=layout.objects.findIndex(o=>o.id===id);if(i<0)throw Error('要删的物品 '+id+' 不存在');
+  if(used.has(id))throw Error('物品 '+id+' 已是游客路线的停留点，不能直接删；先用 replaceObjects/去掉路线，或改成 visible:false');
   layout.objects.splice(i,1);report.removed.push(id);
  }
  let nextId=Math.max(0,...layout.objects.map(o=>o.id))+1;
  for(const spec of draft.objects||[]){
   if(!spec||typeof spec!=='object')throw Error('objects 里每项要是对象');
   if(spec.id!=null){
-   const o=layout.objects.find(x=>x.id===spec.id);if(!o)throw Error('要改的物料 '+spec.id+' 不存在');
-   if(spec.type&&spec.type!==o.type)throw Error('物料 '+spec.id+' 的类型不能改（删掉重加）');
+   const o=layout.objects.find(x=>x.id===spec.id);if(!o)throw Error('要改的物品 '+spec.id+' 不存在');
+   if(spec.type&&spec.type!==o.type)throw Error('物品 '+spec.id+' 的类型不能改（删掉重加）');
    patch(o,spec);check(o);report.updated.push(o.id);
   }else{
-   if(!spec.type)throw Error('新增物料要写 type');
+   if(!spec.type)throw Error('新增物品要写 type');
    const o=newObject(spec,nextId++);patch(o,spec);check(o);layout.objects.push(o);report.added.push({id:o.id,type:o.type,name:CATALOG[o.type].name,...(o.purpose?{purpose:o.purpose}:{})});
   }
  }
- if(layout.objects.length>500)throw Error('物料超过 500 个');
+ if(layout.objects.length>500)throw Error('物品超过 500 个');
  report.warnings=warnings(layout);
  if(hasRoutes){
   const planKey=ws.plans.find(p=>p.layout===layout);

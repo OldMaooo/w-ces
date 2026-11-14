@@ -62,7 +62,7 @@ try{
  assert.equal(await p.locator('#tpTime').textContent(),`${Math.floor(Math.round((await st()).t)/60)}:${String(Math.round((await st()).t)%60).padStart(2,'0')} / ${Math.floor(Math.round(total)/60)}:${String(Math.round(total)%60).padStart(2,'0')}`);
  console.log('PASS 平面：播放、暂停、拖进度，小人和扇形跟着走');
 
- // 4 停留：点刻度跳到那一站的停留；平面里小人朝向物料
+ // 4 停留：点刻度跳到那一站的停留；平面里小人朝向物品
  await ticks.nth(1).click();let d=await st();const stops=await p.evaluate(()=>editor.tourPlan.previewOf('r3').stops);
  assert.ok(d.t>=stops[1].t0&&d.t<stops[1].t1,'点刻度跳到第 2 站');
  console.log('PASS 点停留刻度跳到那一站');
@@ -83,18 +83,18 @@ try{
  assert.equal(await p.locator('#rtTools button[title="适应画面"]').count(),0,'3D 里不显示适应画面');
  const vb=await p.locator('#view').boundingBox(),cb=await p.locator('#rtCanvas').boundingBox();assert.ok(near(vb.x,cb.x,1.5)&&near(vb.y,cb.y,1.5)&&near(vb.width,cb.width,1.5)&&near(vb.height,cb.height,1.5),'3D 画面正好铺满画布');
  for(const id of ['#viewbar','#libraryToggle'])assert.equal(await p.locator(id).isHidden(),true,id+' 3D 里收起');
- assert.equal(await p.evaluate(()=>editor.selected()),null,'3D 里不选中物料');
- await p.mouse.click(vb.x+vb.width/2,vb.y+vb.height/2);assert.equal(await p.evaluate(()=>editor.selected()),null,'点 3D 画面不会选中物料');
+ assert.equal(await p.evaluate(()=>editor.selected()),null,'3D 里不选中物品');
+ await p.mouse.click(vb.x+vb.width/2,vb.y+vb.height/2);assert.equal(await p.evaluate(()=>editor.selected()),null,'点 3D 画面不会选中物品');
  await cam('plan').click();
  assert.equal((await st()).view,'plan');assert.equal(await p.evaluate(()=>editor.tourPlayer.isOpen()),false);assert.equal(await p.locator('#rtPlan').isVisible(),true);assert.deepEqual(await mapBack(),{canvas:false,main:true},'3D 画面放回原位');
  assert.equal(await p.evaluate(()=>editor.scene.children.some(o=>o.name==='tour-visitor'||o.name==='tour-path')),false,'游客和地面路线收掉');
  assert.equal(await p.evaluate(()=>document.body.classList.contains('touring')),false);
  const af=await p.evaluate(()=>({pos:editor.camera.position.toArray(),fov:editor.camera.fov,sel:editor.selected()?.userData.id}));let bf=await p.evaluate(()=>window.__before);
- assert.ok(af.pos.every((v,i)=>near(v,bf.pos[i])),'编辑视角恢复');assert.equal(af.fov,bf.fov);assert.equal(af.sel,bf.sel,'选中物料恢复');
+ assert.ok(af.pos.every((v,i)=>near(v,bf.pos[i])),'编辑视角恢复');assert.equal(af.fov,bf.fov);assert.equal(af.sel,bf.sel,'选中物品恢复');
  assert.equal((await st()).t,tBefore,'回到平面进度还在');
  console.log('PASS 透视：画布换成 3D、进度和游客位置对得上；回平面后 3D 收干净、编辑视角和选中恢复');
 
- // 7 第一人称：相机在眼高、隐藏游客、FOV 65；拖动转头；视线归位 / 拖进度清零；停留时看向物料
+ // 7 第一人称：相机在眼高、隐藏游客、FOV 65；拖动转头；视线归位 / 拖进度清零；停留时看向物品
  await cam('fp').click();d=await dbg();s=await sampleAt(d.t);
  assert.equal(d.visitor.visible,false);const c0=await p.evaluate(()=>({p:editor.camera.position.toArray(),fov:editor.camera.fov}));
  assert.ok(near(c0.p[1],1.6)&&near(c0.p[0],s.x)&&near(c0.p[2],s.z),'相机 = 游客位置 + 眼高 1.6');assert.equal(c0.fov,65);
@@ -114,13 +114,13 @@ try{
  await p.mouse.move(mx,my);await p.mouse.down();await p.mouse.move(mx-60,my+50,{steps:4});await p.mouse.up();assert.ok((await dbg()).yawOff!==0);
  await p.locator('#tpPlay').click();assert.equal((await dbg()).yawOff,0,'重新播放视角恢复');await p.locator('#tpPlay').click();
  await ticks.nth(1).click();s=await sampleAt((await st()).t);
- const e=await p.evaluate(()=>{const r=new THREE.Euler().setFromQuaternion(editor.camera.quaternion,'YXZ');return [r.x,r.y];});assert.ok(near(e[0],s.lookPitch,1e-3),'停留时俯仰看向物料');
- const look=await p.evaluate(()=>{const v=new THREE.Vector3();editor.camera.getWorldDirection(v);return v.toArray();});assert.ok(near(Math.atan2(look[0],look[2]),s.lookYaw,1e-3),'停留时朝向物料');
+ const e=await p.evaluate(()=>{const r=new THREE.Euler().setFromQuaternion(editor.camera.quaternion,'YXZ');return [r.x,r.y];});assert.ok(near(e[0],s.lookPitch,1e-3),'停留时俯仰看向物品');
+ const look=await p.evaluate(()=>{const v=new THREE.Vector3();editor.camera.getWorldDirection(v);return v.toArray();});assert.ok(near(Math.atan2(look[0],look[2]),s.lookYaw,1e-3),'停留时朝向物品');
  assert.equal(await p.locator('#tpPhase').count(),0,'右上角没有阶段标签');
  // 第一人称 → 透视：视角回到切换前的透视位置；→ 平面：FOV 恢复
  await cam('orbit').click();assert.equal(await p.evaluate(()=>editor.camera.fov),bf.fov);assert.equal((await dbg()).visitor.visible,true);
  await cam('fp').click();await cam('plan').click();assert.equal(await p.evaluate(()=>editor.camera.fov),bf.fov);
- console.log('PASS 第一人称：眼高、隐藏游客、拖动转头、视线归位和拖进度清零、停留看物料；在三种视角间来回切 FOV 都能恢复');
+ console.log('PASS 第一人称：眼高、隐藏游客、拖动转头、视线归位和拖进度清零、停留看物品；在三种视角间来回切 FOV 都能恢复');
 
  // 8 游客只是临时的：不进方案数据
  await cam('orbit').click();d=await dbg();assert.equal(await p.evaluate(()=>editor.layout().objects.length),3,'游客不进方案数据');
@@ -174,9 +174,9 @@ try{
  await cam('fp').click();await p.locator('#modeBooth').click();
  const after=await p.evaluate(()=>({pos:editor.camera.position.toArray(),fov:editor.camera.fov,sel:editor.selected()?.userData.id,touring:document.body.classList.contains('touring'),plan:editor.tourPlan.isOpen(),aside:!document.querySelector('aside').hidden&&getComputedStyle(document.querySelector('aside')).display!=='none',open:editor.tourPlayer.isOpen(),home:document.querySelector('#view').parentNode===document.querySelector('main')}));
  assert.equal(after.touring,false);assert.equal(after.plan,false);assert.equal(after.aside,true);assert.equal(after.open,false);assert.equal(after.home,true);
- assert.ok(after.pos.every((v,i)=>near(v,bf.pos[i])),'相机位置恢复');assert.equal(after.fov,bf.fov);assert.equal(after.sel,bf.sel,'选中物料恢复');
+ assert.ok(after.pos.every((v,i)=>near(v,bf.pos[i])),'相机位置恢复');assert.equal(after.fov,bf.fov);assert.equal(after.sel,bf.sel,'选中物品恢复');
  assert.equal(await p.evaluate(()=>editor.scene.children.some(o=>o.name==='tour-visitor'||o.name==='tour-path')),false);assert.equal(await p.evaluate(()=>document.pointerLockElement),null);
- console.log('PASS 在 3D 里退出路线：相机、FOV、选中物料恢复，游客和地面路线清掉');
+ console.log('PASS 在 3D 里退出路线：相机、FOV、选中物品恢复，游客和地面路线清掉');
  // 重新进入还是平面
  await p.locator('#routeBtn').click();assert.equal((await st()).view,'plan','重新进入路线从平面开始');await routeRow('三站').click();
 

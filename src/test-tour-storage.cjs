@@ -12,9 +12,9 @@ try{
  assert.equal(old.hasKeyBefore,false);assert.equal(old.hasKey,false);assert.ok(old.n>=3);console.log('PASS 旧数据没有 tour 照常读，空 tour 不写进 layout');
  // 2 好 tour：校验后保留
  const good=await p.evaluate(s=>{const l=editor.layout();return editor.validateLayout({room:l.room,objects:l.objects,tour:s}).tour;},S);assert.deepEqual(good,S);console.log('PASS validateLayout 保留合法 tour');
- // 3 坏 tour：丢弃，物料不丢，有提示
+ // 3 坏 tour：丢弃，物品不丢，有提示
  const bad=await p.evaluate(s=>{const l=editor.layout(),t=JSON.parse(JSON.stringify(s));t.groups[0].routes[1].speed=-1;const v=editor.validateLayout({room:l.room,objects:l.objects,tour:t});return {hasTour:'tour' in v,n:v.objects.length,want:l.objects.length,notice:editor.tourNotice()};},S);
- assert.equal(bad.hasTour,false);assert.equal(bad.n,bad.want);assert.ok(bad.notice.includes('路线'),'应提示路线数据无效：'+bad.notice);console.log('PASS 坏 tour 被丢弃、物料不丢、有提示');
+ assert.equal(bad.hasTour,false);assert.equal(bad.n,bad.want);assert.ok(bad.notice.includes('路线'),'应提示路线数据无效：'+bad.notice);console.log('PASS 坏 tour 被丢弃、物品不丢、有提示');
  const evil=await p.evaluate(()=>{const l=editor.layout();return [null,'x',5,[],{pois:1,groups:[]},{pois:[],groups:[{}]}].map(t=>{try{const v=editor.validateLayout({room:l.room,objects:l.objects,tour:t});return !('tour' in v)&&v.objects.length===l.objects.length;}catch(e){return 'throw:'+e.message;}});});
  assert.deepEqual(evil,[true,true,true,true,true,true]);console.log('PASS 各种乱七八糟的 tour 都只是被丢弃，不抛错');
  // 4 restore：带 tour / 不带 tour 都对
@@ -29,16 +29,16 @@ try{
  await p.evaluate(()=>editor.undo());assert.equal(await p.evaluate(()=>editor.tour().groups[0].name),'北过道·东→西');
  await p.evaluate(()=>editor.redo());assert.equal(await p.evaluate(()=>editor.tour().groups[0].name),'改过的名字');
  await p.evaluate(()=>editor.undo());console.log('PASS 撤销重做带 tour');
- // 7 删物料 → tour 原样（站变失效，不丢）→ 撤销恢复
+ // 7 删物品 → tour 原样（站变失效，不丢）→ 撤销恢复
  const del=await p.evaluate(()=>{const o=editor.objects().find(x=>x.userData.id===2);editor.checkpoint?.();return !!o;});
  assert.ok(del);
  await p.evaluate(()=>{window.__before=JSON.stringify(editor.tour());});
  await p.evaluate(()=>{const o=editor.objects().find(x=>x.userData.id===2);o&&editor.select(o);});await p.locator('#delete').click();
- assert.equal(await p.evaluate(()=>JSON.stringify(editor.tour())),await p.evaluate(()=>window.__before),'删物料不改 tour');
- await p.evaluate(()=>editor.undo());assert.ok(await p.evaluate(()=>editor.objects().some(x=>x.userData.id===2)));assert.equal(await p.evaluate(()=>JSON.stringify(editor.tour())),await p.evaluate(()=>window.__before));console.log('PASS 删物料不丢 tour，撤销后物料回来');
- // 8 复制物料不带兴趣点
+ assert.equal(await p.evaluate(()=>JSON.stringify(editor.tour())),await p.evaluate(()=>window.__before),'删物品不改 tour');
+ await p.evaluate(()=>editor.undo());assert.ok(await p.evaluate(()=>editor.objects().some(x=>x.userData.id===2)));assert.equal(await p.evaluate(()=>JSON.stringify(editor.tour())),await p.evaluate(()=>window.__before));console.log('PASS 删物品不丢 tour，撤销后物品回来');
+ // 8 复制物品不带兴趣点
  const pc=await p.evaluate(()=>{const o=editor.objects().find(x=>x.userData.id===1);editor.select(o);return editor.tour().pois.length;});
- await p.locator('#copy').click();assert.equal(await p.evaluate(()=>editor.tour().pois.length),pc);console.log('PASS 复制物料不复制兴趣点');await p.evaluate(()=>editor.undo());
+ await p.locator('#copy').click();assert.equal(await p.evaluate(()=>editor.tour().pois.length),pc);console.log('PASS 复制物品不复制兴趣点');await p.evaluate(()=>editor.undo());
  // 9 导出 → 导入：tour 还在，且是独立副本
  const exp=await p.evaluate(()=>JSON.stringify(editor.exportData('current')));
  assert.ok(JSON.parse(exp).plans[0].layout.tour,'导出文件里要有 tour');
@@ -53,11 +53,11 @@ try{
  assert.equal(await p.evaluate(()=>editor.tour().groups[0].name),'只改第二个方案');
  await p.evaluate(()=>{editor.checkpoint();editor.tour().groups[0].name='第三个';editor.persist();});
  await p.locator('#tabs [role=tab]').nth(1).click();assert.equal(await p.evaluate(()=>editor.tour().groups[0].name),'只改第二个方案');console.log('PASS 另存方案带 tour 且互不串');
- // 11 导入一个带坏 tour 的文件：物料导入成功，提示路线被忽略
+ // 11 导入一个带坏 tour 的文件：物品导入成功，提示路线被忽略
  const badFile=JSON.parse(exp);badFile.plans[0].layout.tour.groups[0].approach='乱写';
  let dialogText='';p.removeAllListeners('dialog');p.on('dialog',d=>{dialogText=d.message();d.dismiss();});
  await p.locator('#importFile').setInputFiles({name:'b.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(badFile))});
  await p.waitForFunction(()=>document.querySelectorAll('#tabs [role=tab]').length===4);
- assert.ok(await p.evaluate(()=>editor.objects().length)>=3);assert.equal(await p.evaluate(()=>editor.tour().groups.length+editor.tour().pois.length),0);assert.ok(dialogText.includes('路线'),'导入时要提示路线被忽略：'+dialogText);console.log('PASS 导入坏 tour：物料照常进来，提示路线已忽略');
+ assert.ok(await p.evaluate(()=>editor.objects().length)>=3);assert.equal(await p.evaluate(()=>editor.tour().groups.length+editor.tour().pois.length),0);assert.ok(dialogText.includes('路线'),'导入时要提示路线被忽略：'+dialogText);console.log('PASS 导入坏 tour：物品照常进来，提示路线已忽略');
  assert.deepEqual(errors,[],'页面不应有报错：'+errors.join('\n'));console.log('PASS 全程无页面异常');
 }finally{await b.close()}})().catch(e=>{console.error(e);process.exitCode=1});

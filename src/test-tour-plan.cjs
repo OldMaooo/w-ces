@@ -16,13 +16,13 @@ const obj=(type,x,z,rotDeg=0,extra={})=>({type,id:nid++,size:[...sizes[type]],po
 const ctxFor=(tour,objects)=>({tour,objects,room,nav:P.buildNav(objects,room,venue)});
 const freshTour=()=>M.emptyTour();
 
-test('兴趣点：编号递增、默认名字、站位在物料正面外 1 米',()=>{
+test('兴趣点：编号递增、默认名字、站位在物品正面外 1 米',()=>{
  const tour=freshTour(),a=obj('tv',0,-2),b=obj('robot',1,1);
  const p1=ops.addPoi(tour,a,{name:'电视'}),p2=ops.addPoi(tour,b,{name:'机器人'});
  assert.equal(p1.num,1);assert.equal(p2.num,2);assert.equal(tour.pois.length,2);assert.equal(p1.name,'电视');assert.equal(p1.objectId,a.id);
  near(p1.stand[1],.045+1);near(p1.stand[0],0);
 });
-test('兴趣点：同一物料不能重复标；取消后留下的站只是失效，不被删',()=>{
+test('兴趣点：同一物品不能重复标；取消后留下的站只是失效，不被删',()=>{
  const tour=freshTour(),a=obj('tv',0,-2);
  const p=ops.addPoi(tour,a,{name:'电视'});assert.equal(ops.addPoi(tour,a,{name:'电视'}),null);assert.equal(tour.pois.length,1);
  const g=ops.newGroup(tour,'g','north-ew',room,venue),r=ops.newRoute(g,'r');ops.addStop(r,p.id);

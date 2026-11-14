@@ -10,8 +10,8 @@ const venueFor=r=>{const sx=r.width/67,sz=r.depth/60,north=r.depth/2,west=r.widt
 const poi=(id,objectId,num,extra={})=>({id,objectId,num,name:'展品'+num,dwell:5,stand:[0,1.5],...extra});
 const goodTour=()=>({pois:[poi('p1',1,1),poi('p2',2,2)],groups:[{id:'g1',name:'北过道',approach:'north-ew',entry:[-6,5],exit:[6,5],routes:[{id:'r1',name:'子方案 1',speed:1,eyeHeight:1.75,stops:[{poiId:'p2'},{poiId:'p1',dwell:8}]}]}]});
 
-// ---- 坐标：北 +Z，西 +X；旋转物料的 stand 本地↔世界 ----
-test('坐标：未旋转物料，本地 +Z 就是世界北（+Z）',()=>{
+// ---- 坐标：北 +Z，西 +X；旋转物品的 stand 本地↔世界 ----
+test('坐标：未旋转物品，本地 +Z 就是世界北（+Z）',()=>{
  const [x,z]=M.localToWorld(obj('desk',1,2,3),[0,1]);near(x,2);near(z,4);
 });
 test('坐标：本地 +X 在未旋转时是世界西（+X）',()=>{
@@ -29,7 +29,7 @@ test('坐标：转 45° 的本地 (1,1) 在世界里落在正西偏…√2 处',
 test('坐标：本地→世界→本地来回一致（任意旋转、平移）',()=>{
  for(const r of [0,30,45,90,135,200,-70]){const o=obj('desk',1,3.3,-2.2,r);const w=M.localToWorld(o,[.7,-1.3]);const l=M.worldToLocal(o,w);near(l[0],.7);near(l[1],-1.3);}
 });
-test('坐标：站位跟着物料走（物料平移后站位世界坐标同步平移）',()=>{
+test('坐标：站位跟着物品走（物品平移后站位世界坐标同步平移）',()=>{
  const p=poi('p1',1,1,{stand:[0,1.5]});const a=M.poiWorldStand(p,obj('desk',1,0,0));const b=M.poiWorldStand(p,obj('desk',1,2,-1));
  near(b[0]-a[0],2);near(b[1]-a[1],-1);
 });
@@ -51,7 +51,7 @@ test('默认站位：正面不可走就依次试 左→右→背面',()=>{
 test('默认站位：四面都不行就放正面并标记 blocked',()=>{
  const s=M.defaultStand(obj('desk',1,0,0),()=>false);assert.equal(s.side,'front');assert.equal(s.blocked,true);
 });
-test('默认站位：旋转物料的站位按世界坐标判断可走',()=>{
+test('默认站位：旋转物品的站位按世界坐标判断可走',()=>{
  const o=obj('desk',1,0,0,90,[1,1,1]);const seen=[];M.defaultStand(o,(x,z)=>{seen.push([x,z]);return true;});
  near(seen[0][0],1.5);near(seen[0][1],0);
 });
@@ -77,13 +77,13 @@ test('兴趣点：makePoi 取新编号、默认停留 5 秒、默认名',()=>{
 });
 
 // ---- 失效判断 ----
-test('失效：物料被删除→站失效；撤销（物料回来）→恢复',()=>{
+test('失效：物品被删除→站失效；撤销（物品回来）→恢复',()=>{
  const t=goodTour();const stop=t.groups[0].routes[0].stops[1];
  assert.equal(M.staleReason(t,stop,[obj('desk',1,0,0),obj('tv',2,1,1)]),null);
  assert.equal(M.staleReason(t,stop,[obj('tv',2,1,1)]),'object-missing');
  assert.equal(M.staleReason(t,stop,[obj('desk',1,0,0),obj('tv',2,1,1)]),null);
 });
-test('失效：物料隐藏→失效（hidden 或 visible:false 都算）',()=>{
+test('失效：物品隐藏→失效（hidden 或 visible:false 都算）',()=>{
  const t=goodTour();const stop=t.groups[0].routes[0].stops[1];
  assert.equal(M.staleReason(t,stop,[obj('desk',1,0,0,0,[1,1,1],{hidden:true})]),'object-hidden');
  assert.equal(M.staleReason(t,stop,[obj('desk',1,0,0,0,[1,1,1],{visible:false})]),'object-hidden');
@@ -97,7 +97,7 @@ test('停留：站自带 dwell 优先，否则取兴趣点默认',()=>{
  assert.equal(M.stopDwell(t,a),5);assert.equal(M.stopDwell(t,b),8);
  assert.equal(M.stopDwell(t,{poiId:'nope'}),0);
 });
-test('复制物料不带兴趣点：新物料 id 没有对应兴趣点',()=>{
+test('复制物品不带兴趣点：新物品 id 没有对应兴趣点',()=>{
  const t=goodTour();assert.ok(t.pois.some(p=>p.objectId===1));assert.ok(!t.pois.some(p=>p.objectId===99));
 });
 test('复制方案：cloneTour 深拷贝，改副本不串改原件',()=>{

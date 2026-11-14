@@ -57,19 +57,18 @@ try{
  await p.locator('#rtTools button[title="撤销"]').click();   // 回到拖前，后面的断言按原位置
  console.log('PASS 拖站位点：松手记一步，撤销 / 重做各一次');
  // 没动就不记步
- // 7 右栏站列表：改单站停留、拖动排序、删站
+ // 7 右栏站列表：拖动排序、删站
  await p.locator('#rtLeft .rt-row.r').nth(2).click();
  const stopNames=()=>p.locator('#rtRight .rt-stop:not(.fixed) .rt-sname').allTextContents();
  assert.deepEqual((await stopNames()).map(t=>t.slice(0,1)),['前','电','机']);
- const d0=p.locator('#rtRight .rt-stop:not(.fixed) input.rt-dwell').first();await d0.fill('20');await d0.press('Enter');
- assert.equal(await p.evaluate(()=>editor.tour().groups[0].routes[2].stops[0].dwell),20);
+ assert.equal(await p.locator('#rtRight .rt-stop input').count(),0,'右栏路径点没有停留时间输入框');
  await p.locator('#rtRight .rt-stop:not(.fixed)').nth(0).locator('.rt-grip').dragTo(p.locator('#rtRight .rt-stop:not(.fixed)').nth(2),{targetPosition:{x:40,y:24}});   // 落在第三行下半部分 = 插到它后面
  await p.waitForTimeout(100);
  assert.deepEqual((await stopNames()).map(t=>t.slice(0,1)),['电','机','前']);assert.deepEqual(await seqs(),['入口 → 出口','入口 → 电视 → 机器人 → 出口','入口 → 电视 → 机器人 → 前台洽谈 → 出口']);
  await p.locator('#rtRight .rt-stop:not(.fixed)').nth(1).hover();await p.locator('#rtRight .rt-stop:not(.fixed)').nth(1).locator('.rt-del').click();
  assert.deepEqual((await stopNames()).map(t=>t.slice(0,1)),['电','前']);
  await p.locator('#rtTools button[title="撤销"]').click();assert.deepEqual((await stopNames()).map(t=>t.slice(0,1)),['电','机','前']);
- console.log('PASS 单站停留、拖动排序、删站、撤销');
+ console.log('PASS 无停留输入框、拖动排序、删站、撤销');
  // 8 走不通：造一圈前台围住笔记本，把它排进路线 → 红色虚线 + 文字提示
  await p.evaluate(()=>{editor.checkpoint();const l=editor.layout();const cx=-1.2,cz=-.2,mk=(type,id,x,z,rot,size)=>({type,id,size,position:[x,0,z],rotation:rot,visible:true,wallSnap:false});
   l.objects.push(mk('laptop',4,cx,cz,0,[.34,.24,.25]),mk('desk',5,cx,cz+.95,0,[1.6,1,.65]),mk('desk',6,cx,cz-.95,0,[1.6,1,.65]),mk('desk',7,cx+.95,cz,Math.PI/2,[1.6,1,.65]),mk('desk',8,cx-.95,cz,Math.PI/2,[1.6,1,.65]));

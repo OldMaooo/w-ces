@@ -180,6 +180,7 @@ const TourPlan=(()=>{
    bar={
     restart:bh({id:'tpRestart',class:'ghost',title:'从头','aria-label':'从头',onclick:()=>{pb.t=0;frame(true);}},'skip-back'),
     play:bh({id:'tpPlay',class:'primary',onclick:togglePlay}),
+    next:bh({id:'tpNext',class:'ghost',title:'下一个停留点','aria-label':'下一个停留点',onclick:nextStop},'skip-forward'),
     seek:h('input',{type:'range',id:'tpSeek',min:'0',step:'0.01','aria-label':'进度'}),
     ticks:h('div',{class:'tp-ticks'}),
     time:h('span',{class:'tp-time',id:'tpTime'}),
@@ -188,9 +189,12 @@ const TourPlan=(()=>{
     recenter:bh({id:'tpRecenter',class:'ghost',title:'视线归位','aria-label':'视线归位',onclick:()=>host.view3d.recenter()},'rotate-ccw'),
    };
    bar.cams=h('div',{class:'tp-seg'},...VIEWS.map(([k,ic,txt])=>bh({'data-cam':k,'aria-label':txt,onclick:()=>setView(k)},ic)));
-   bar.seek.onpointerdown=pausePlay;
+   let seekWas=false;
+   bar.seek.onpointerdown=()=>{seekWas=!pb.paused;pausePlay();};
+   const seekEnd=()=>{if(!seekWas)return;seekWas=false;resumePlay();};
+   bar.seek.onpointerup=seekEnd;bar.seek.onpointercancel=seekEnd;
    bar.seek.oninput=()=>{pb.t=Number(bar.seek.value);frame(true);};
-   return h('div',{id:'rtBar',class:'tp-bar'},bar.restart,bar.play,h('div',{class:'tp-track'},bar.seek,bar.ticks),bar.time,bar.rate,bar.dwell,bar.recenter,bar.cams);
+   return h('div',{id:'rtBar',class:'tp-bar'},bar.restart,bar.play,bar.next,h('div',{class:'tp-track'},bar.seek,bar.ticks),bar.time,bar.rate,bar.dwell,bar.recenter,bar.cams);
   }
   // 停留刻度画在进度条里面：每次停留的起点，点一下跳到那一站
   function refreshTicks(){
@@ -225,8 +229,24 @@ const TourPlan=(()=>{
    if(pb.paused){if(pb.t>=pb.total-.01)pb.t=0;pb.paused=false;pb.started=true;pb.last=performance.now();if(vw!=='plan')host.view3d.recenter();syncBar();tick();}
    else pausePlay();
   }
+  // 跳到下一个停留点（没有了就到终点）；播放中继续播，暂停中仍暂停
+  function nextStop(){
+   if(!pb.comp)return;
+   const nx=pb.comp.stops.find(x=>x.t0>pb.t-.001+.011);
+   pb.t=nx?Math.min(nx.t0+.01,pb.total):pb.total;
+   if(pb.t>=pb.total-.01&&!pb.paused){pb.paused=true;cancelAnimationFrame(pb.raf);}
+   pb.last=performance.now();frame(true);
+  }
+  function resumePlay(){if(!pb.paused||!pb.comp||pb.t>=pb.total-.01)return;pb.paused=false;pb.last=performance.now();syncBar();tick();}
   function pausePlay(){if(pb.paused)return;pb.paused=true;cancelAnimationFrame(pb.raf);syncBar();}
   // 选中的子方案 → 时间线。没变就不动（点选兴趣点之类不打断播放）；换了子方案从头；走不通就没有时间线。
+  // 预览里每站固定停 PREVIEW_DWELL 秒（只示意，不用设置）；勾掉「停留」则完全不停。方案里存的真实秒数不变。
+  const PREVIEW_DWELL=3;
+  function previewCompile(a,r){
+   if(settings.skipDwell)return T.compileRoute(a.legs,a.live.map(()=>0),a.live.map(()=>null),r.speed);
+   const looks=a.live.map(s=>s.obj?{x:s.obj.position[0],z:s.obj.position[2],y:s.obj.position[1]+s.obj.size[1]/2}:null);
+   return T.compileRoute(a.legs,a.live.map(s=>PREVIEW_DWELL),looks,r.speed);
+  }
   function syncPlayback(c){
    const g=curGroup(c),r=curRoute(g),a=r?analysis(c,g,r):null;
    if(!a||!a.ok||!a.compiled){
@@ -235,7 +255,7 @@ const TourPlan=(()=>{
    }
    if(pb.src===a&&pb.skip===settings.skipDwell)return;
    const same=pb.routeId===r.id,skipFlip=pb.skip!==null&&pb.skip!==settings.skipDwell,frac=pb.total?pb.t/pb.total:0;
-   pb.comp=settings.skipDwell?T.compileRoute(a.legs,a.live.map(()=>0),a.live.map(()=>null),r.speed):a.compiled;
+   pb.comp=previewCompile(a,r);
    pb.total=pb.comp.total;pb.t=!same?0:skipFlip?frac*pb.total:Math.min(pb.t,pb.total);
    if(!same){pausePlay();pb.started=false;}
    Object.assign(pb,{src:a,skip:settings.skipDwell,routeId:r.id,why:'',legs:a.legs,live:a.live,eye:r.eyeHeight});
@@ -366,13 +386,7 @@ const TourPlan=(()=>{
    row.ondragend=()=>{dragFrom=null;dragGap=null;row.draggable=false;render();};
    row.onclick=e=>{if(e.target.closest('input,button,.rt-grip'))return;selStop=i;if(stale){render();return;}const poi=c.tour.pois.find(p=>p.id===s.poiId);if(s.waypoint){selWp=i;selObj=null;render();}else if(poi){selObj=poi.objectId;selWp=null;render();}};
    const name=stale?h('span',{class:'rt-sname warn',title:stale},'已失效'):h('span',{class:'rt-sname',title:s.name},s.name);
-   const dwell=h('input',{type:'number',min:0,max:3600,step:1,class:'rt-dwell',title:'停留秒数（清空 = 用兴趣点默认值）',value:s.customDwell?s.dwell:'',placeholder:stale?'':String(s.dwell)});
-   dwell.onchange=()=>{
-    const raw=dwell.value.trim(),st=r.stops[i];
-    if(raw===''){if(st.dwell!==undefined)mutate(()=>{delete st.dwell;});return;}
-    const v=parseFloat(raw);if(Number.isFinite(v)&&v>=0&&v<=3600){if(v!==st.dwell)mutate(()=>{st.dwell=v;});}else dwell.value=st.dwell??'';
-   };
-   row.append(grip,name,stale?null:h('span',{class:'rt-dwell-wrap'},dwell,'秒'),addBtn(i+1),h('button',{class:'ghost rt-del',title:'删除这一站','aria-label':'删除这一站',onclick:()=>mutate(()=>ops.removeStop(r,i))},host.icon('x')));
+   row.append(grip,name,addBtn(i+1),h('button',{class:'ghost rt-del',title:'删除这一站','aria-label':'删除这一站',onclick:()=>mutate(()=>ops.removeStop(r,i))},host.icon('x')));
    return row;
   }
 
@@ -405,7 +419,11 @@ const TourPlan=(()=>{
    };
    for(const o of vis)if(!solid.has(o.id)&&o.type==='fascia')s+=soft(o);
    for(const sh of shapes){
-    if(sh.kind==='circle'){const [a,bb]=toS(sh.cx,sh.cz);s+=`<circle class="${cls(sh.id)}" data-o="${sh.id}" cx="${f(a)}" cy="${f(bb)}" r="${f(sh.r*k)}"/>`;}
+    const po=sh.kind==='circle'&&vis.find(o=>o.id===sh.id&&(o.type==='staff'||o.type==='visitor'));
+    if(po){ // 地图上的接待员、游客等人物：顶视人形（肩膀胶囊 + 头 + 两只脚尖），朝向跟物料朝向一致；样式同普通物料
+     const [a,bb]=toS(po.position[0],po.position[2]),fx=Math.sin(po.rotation),fz=Math.cos(po.rotation),deg=Math.atan2(-fz,-fx)*180/Math.PI,u=Math.max(k,24);
+     s+=`<g class="${cls(po.id)} rt-person" data-o="${po.id}" transform="translate(${f(a)} ${f(bb)}) rotate(${f(deg)}) scale(${f(u)})"><rect x=".04" y="-.14" width=".2" height=".1" rx=".05"/><rect x=".04" y=".04" width=".2" height=".1" rx=".05"/><rect x="-.08" y="-.25" width=".16" height=".5" rx=".08"/><circle cx="0" cy="0" r=".12"/></g>`;
+    }else if(sh.kind==='circle'){const [a,bb]=toS(sh.cx,sh.cz);s+=`<circle class="${cls(sh.id)}" data-o="${sh.id}" cx="${f(a)}" cy="${f(bb)}" r="${f(sh.r*k)}"/>`;}
     else s+=`<polygon class="${cls(sh.id)}" data-o="${sh.id}" points="${poly(sh.pts)}"/>`;
    }
    for(const o of vis)if(!solid.has(o.id)&&o.type!=='fascia')s+=soft(o);
@@ -540,6 +558,7 @@ const TourPlan=(()=>{
    isOpen:()=>open,
    refresh:render,
    state:()=>({selGroup,selRoute,selObj,ordering,view:vw,t:pb.t,total:pb.total,playing:!pb.paused,rate:pb.rate,skipDwell:settings.skipDwell}),
+   previewOf(id){const c=ctx();for(const g of c.tour.groups){const r=g.routes.find(x=>x.id===id);if(r){const a=analysis(c,g,r);return a&&a.ok?previewCompile(a,r):null;}}return null;},
    analysisOf(id){const c=ctx();for(const g of c.tour.groups){const r=g.routes.find(x=>x.id===id);if(r)return analysis(c,g,r);}return null;},
   };
  }

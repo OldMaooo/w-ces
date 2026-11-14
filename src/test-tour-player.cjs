@@ -25,7 +25,7 @@ try{
  const routeRow=name=>p.locator('#rtLeft .rt-row.r',{hasText:name});
  const cam=k=>p.locator(`#rtBar [data-cam="${k}"]`);
  const seek=t=>p.evaluate(t=>{const s=document.querySelector('#tpSeek');s.value=String(t);s.dispatchEvent(new Event('input',{bubbles:true}));},t);
- const sampleAt=t=>p.evaluate(t=>{const s=editor.tourPlan.state(),a=editor.tourPlan.analysisOf(s.selRoute);return TourTimeline.sampleRoute(a.compiled,t,editor.tourPlayer.debug().eyeHeight||1.75);},t);
+ const sampleAt=t=>p.evaluate(t=>{const s=editor.tourPlan.state(),a=editor.tourPlan.previewOf(s.selRoute);return TourTimeline.sampleRoute(a,t,editor.tourPlayer.debug().eyeHeight||1.75);},t);
  const mapBack=()=>p.evaluate(()=>({canvas:!!document.querySelector('#rtCanvas #view'),main:document.querySelector('#view').parentNode===document.querySelector('main')}));
 
  // 1 播放条在画布最下方；没选子方案 / 走不通的不能播，也不能切到 3D；能走的可以
@@ -63,7 +63,7 @@ try{
  console.log('PASS 平面：播放、暂停、拖进度，小人和扇形跟着走');
 
  // 4 停留：点刻度跳到那一站的停留；平面里小人朝向物料
- await ticks.nth(1).click();let d=await st();const stops=await p.evaluate(()=>editor.tourPlan.analysisOf('r3').compiled.stops);
+ await ticks.nth(1).click();let d=await st();const stops=await p.evaluate(()=>editor.tourPlan.previewOf('r3').stops);
  assert.ok(d.t>=stops[1].t0&&d.t<stops[1].t1,'点刻度跳到第 2 站');
  console.log('PASS 点停留刻度跳到那一站');
 
@@ -193,6 +193,36 @@ try{
 
  // 18 悬停：播放条所有按钮、刻度、设置按钮、开关都有变化
  await p.evaluate(()=>document.querySelector('#tabs button').click());await p.waitForFunction(()=>document.querySelector('#rtLeft .rt-row.r'));await routeRow('两站').click();
+ // 8 预览里每站停留最多 3 秒（真实停留几十秒，预览太长）；「下一站」按钮；拖进度不改变播放/暂停状态；平面小人是顶视人形
+ await routeRow('两站').click();
+ {
+  const real=await p.evaluate(()=>editor.tourPlan.analysisOf(editor.tourPlan.state().selRoute).compiled.items.filter(x=>x.type==='hold').map(x=>x.t1-x.t0));
+  const prev=await p.evaluate(()=>editor.tourPlan.previewOf(editor.tourPlan.state().selRoute).items.filter(x=>x.type==='hold').map(x=>x.t1-x.t0));
+  assert.ok(prev.length>0&&prev.every(x=>near(x,3,1e-6)),'预览每站固定停 3 秒：'+prev);
+  assert.ok(near((await st()).total,await p.evaluate(()=>editor.tourPlan.previewOf(editor.tourPlan.state().selRoute).total),1e-6),'播放条总时长用预览时间');
+  assert.equal(await p.locator('#rtBar #tpNext').count(),1,'有下一站按钮');
+  const order=await p.evaluate(()=>{const b=document.querySelector('#rtBar');return [...b.children].map(e=>e.id||e.className);});
+  assert.ok(order.indexOf('tpNext')===order.indexOf('tpPlay')+1,'下一站在播放按钮右边：'+order);
+  const stops=await p.evaluate(()=>editor.tourPlan.previewOf(editor.tourPlan.state().selRoute).stops);
+  await seek(0);await p.locator('#tpNext').click();assert.ok(near((await st()).t,stops[0].t0+.01,.05),'跳到第 1 站');
+  assert.equal((await st()).playing,false,'暂停时点下一站仍暂停');
+  await p.locator('#tpNext').click();assert.ok(near((await st()).t,stops[1].t0+.01,.05),'再跳到第 2 站');
+  await seek(0);await p.locator('#tpPlay').click();assert.equal((await st()).playing,true);
+  await p.locator('#tpNext').click();assert.ok((await st()).t>=stops[0].t0,'播放中也能跳');assert.equal((await st()).playing,true,'播放中点下一站继续播放');
+  await p.locator('#tpPlay').click();
+  // 拖进度：真实指针按下→拖→松开
+  const sb=await p.locator('#tpSeek').boundingBox(),y=sb.y+sb.height/2;
+  await p.mouse.move(sb.x+20,y);await p.mouse.down();await p.mouse.move(sb.x+sb.width*.3,y,{steps:4});assert.equal((await st()).playing,false,'拖动中暂停');await p.mouse.up();
+  assert.equal((await st()).playing,false,'拖之前是暂停，拖完仍暂停');
+  await p.locator('#tpPlay').click();assert.equal((await st()).playing,true);
+  await p.mouse.move(sb.x+20,y);await p.mouse.down();await p.mouse.move(sb.x+sb.width*.4,y,{steps:4});await p.mouse.up();
+  assert.equal((await st()).playing,true,'拖之前在播放，拖完继续播放');
+  const t1=(await st()).t;await p.waitForTimeout(300);assert.ok((await st()).t>t1,'确实在往前走');
+  await p.locator('#tpPlay').click();
+  assert.equal(await p.evaluate(()=>document.querySelectorAll('#rtPlan .rt-walker circle').length),1,'游览小人仍是原来的圆点');
+ }
+ console.log('PASS 预览停留≤3秒、下一站按钮、拖进度保持播放状态、顶视人形');
+
  for(const sel of ['#tpRestart','#tpPlay','#tpRate','#rtBar [data-cam="fp"]','#rtBar .tp-dwell']){
   const loc=p.locator(sel).first();await p.mouse.move(5,890);const s0=await loc.evaluate(e=>{const c=getComputedStyle(e);return c.backgroundColor+c.borderColor;});
   await loc.hover();const s1=await loc.evaluate(e=>{const c=getComputedStyle(e);return c.backgroundColor+c.borderColor;});assert.notEqual(s1,s0,sel+' 悬停无变化');

@@ -1,0 +1,30 @@
+{
+  "plan": "02",
+  "replace": true,
+  "pois": [
+    {"object": 3, "name": "机器人", "dwell": 10},
+    {"object": 1, "name": "机器人拍照", "dwell": 15},
+    {"object": 4, "name": "虚拟大脑", "dwell": 20},
+    {"object": 5, "name": "平行宇宙", "dwell": 20},
+    {"object": 6, "name": "试衣镜/虚拟人", "dwell": 15},
+    {"object": 8, "name": "Readify", "dwell": 15},
+    {"object": 12, "name": "后台电脑演示", "dwell": 30},
+    {"object": 9, "name": "洽谈 L 台", "dwell": 90},
+    {"object": 20, "name": "接待员", "dwell": 10}
+  ],
+  "routes": [
+    {"group": "北过道来·东→西", "approach": "north-ew", "name": "快速看亮点（1分钟内）",
+     "stops": [{"name": "试衣镜/虚拟人", "dwell": 8}, {"name": "平行宇宙", "dwell": 10}, {"name": "机器人", "dwell": 8}]},
+    {"group": "北过道来·东→西", "approach": "north-ew", "name": "深度体验（全部演示）",
+     "stops": [{"name": "机器人拍照", "dwell": 40}, {"name": "虚拟大脑", "dwell": 45}, {"name": "平行宇宙", "dwell": 45},
+               {"name": "后台电脑演示", "dwell": 40}, {"name": "Readify", "dwell": 40}, {"name": "机器人", "dwell": 30},
+               {"name": "试衣镜/虚拟人", "dwell": 40}]},
+    {"group": "VIP 接待·西过道南来", "approach": "west-sn", "name": "VIP 接待（引导+洽谈）",
+     "stops": [{"name": "接待员", "dwell": 15}, {"name": "平行宇宙", "dwell": 60}, {"name": "虚拟大脑", "dwell": 60},
+               {"name": "机器人拍照", "dwell": 30}, {"name": "洽谈 L 台", "dwell": 300}]},
+    {"group": "西过道路过·北→南", "approach": "west-ns", "name": "路过引流（不深入）",
+     "stops": [{"name": "机器人", "dwell": 10}, {"name": "Readify", "dwell": 12}]},
+    {"group": "北过道来·西→东", "approach": "north-we", "name": "拍照打卡",
+     "stops": [{"name": "机器人", "dwell": 15}, {"name": "机器人拍照", "dwell": 30}, {"name": "试衣镜/虚拟人", "dwell": 20}]}
+  ]
+}

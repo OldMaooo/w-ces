@@ -83,5 +83,6 @@
 - **已知代价**：旧版下载的编辑器打开含路线的新文件会丢路线（不报错）；旧版导出的文件在新版正常打开、无路线。
 - 默认方案：浏览器没存过方案时载入 `doc/Files/CES-02.json`（构建时内嵌到 `index.html`），存过则载入上次的；测试用 `?builtin` 回到 3 件物料的旧起点。
 - 模块：`src/tour-model.js`（数据）、`tour-path.js`（寻路）、`tour-timeline.js`（时间轴）、`tour-plan.js`（图纸界面）、`tour-player.js`（3D 播放）；入口接在 `src/app.js`。
-- 作废：手画路线、外部 Agent 文件往返。界面对照样品 doc/mock/route-demo/；技术计划见[计划](plans/2026-11-13-游客路线模拟-计划.md)，派工见[派工 prompt](plans/2026-11-13-游客路线模拟-派工prompt.md)。
+- 作废：手画路线。
+- Agent 批量写路线（2026-11-14）：`node src/tour-agent.cjs list|apply`，Agent 用物料编号/名字写草稿，脚本算站位、用编辑器同一套校验和寻路检查，另存新方案文件，人导入后在界面里改。不改数据格式。格式见[路线草稿-Agent格式](路线草稿-Agent格式.md)；例子 `doc/Files/CES-02-导览路线.json`（5 条）。界面对照样品 doc/mock/route-demo/；技术计划见[计划](plans/2026-11-13-游客路线模拟-计划.md)，派工见[派工 prompt](plans/2026-11-13-游客路线模拟-派工prompt.md)。
 - 未做：路线与物料联动移动、多游客同场、真 Safari 与鼠标锁定手感的真人验收。

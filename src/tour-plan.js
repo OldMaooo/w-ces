@@ -240,12 +240,12 @@ const TourPlan=(()=>{
   function resumePlay(){if(!pb.paused||!pb.comp||pb.t>=pb.total-.01)return;pb.paused=false;pb.last=performance.now();syncBar();tick();}
   function pausePlay(){if(pb.paused)return;pb.paused=true;cancelAnimationFrame(pb.raf);syncBar();}
   // 选中的子方案 → 时间线。没变就不动（点选兴趣点之类不打断播放）；换了子方案从头；走不通就没有时间线。
-  // 预览里每站最多停 PREVIEW_DWELL_MAX 秒（真实停留几十秒，预览太长）；勾掉「停留」则完全不停。方案里存的真实秒数不变。
-  const PREVIEW_DWELL_MAX=3;
+  // 预览里每站固定停 PREVIEW_DWELL 秒（只示意，不用设置）；勾掉「停留」则完全不停。方案里存的真实秒数不变。
+  const PREVIEW_DWELL=3;
   function previewCompile(a,r){
    if(settings.skipDwell)return T.compileRoute(a.legs,a.live.map(()=>0),a.live.map(()=>null),r.speed);
    const looks=a.live.map(s=>s.obj?{x:s.obj.position[0],z:s.obj.position[2],y:s.obj.position[1]+s.obj.size[1]/2}:null);
-   return T.compileRoute(a.legs,a.live.map(s=>Math.min(s.dwell,PREVIEW_DWELL_MAX)),looks,r.speed);
+   return T.compileRoute(a.legs,a.live.map(s=>PREVIEW_DWELL),looks,r.speed);
   }
   function syncPlayback(c){
    const g=curGroup(c),r=curRoute(g),a=r?analysis(c,g,r):null;
@@ -386,13 +386,7 @@ const TourPlan=(()=>{
    row.ondragend=()=>{dragFrom=null;dragGap=null;row.draggable=false;render();};
    row.onclick=e=>{if(e.target.closest('input,button,.rt-grip'))return;selStop=i;if(stale){render();return;}const poi=c.tour.pois.find(p=>p.id===s.poiId);if(s.waypoint){selWp=i;selObj=null;render();}else if(poi){selObj=poi.objectId;selWp=null;render();}};
    const name=stale?h('span',{class:'rt-sname warn',title:stale},'已失效'):h('span',{class:'rt-sname',title:s.name},s.name);
-   const dwell=h('input',{type:'number',min:0,max:3600,step:1,class:'rt-dwell',title:'停留秒数（清空 = 用兴趣点默认值）',value:s.customDwell?s.dwell:'',placeholder:stale?'':String(s.dwell)});
-   dwell.onchange=()=>{
-    const raw=dwell.value.trim(),st=r.stops[i];
-    if(raw===''){if(st.dwell!==undefined)mutate(()=>{delete st.dwell;});return;}
-    const v=parseFloat(raw);if(Number.isFinite(v)&&v>=0&&v<=3600){if(v!==st.dwell)mutate(()=>{st.dwell=v;});}else dwell.value=st.dwell??'';
-   };
-   row.append(grip,name,stale?null:h('span',{class:'rt-dwell-wrap'},dwell,'秒'),addBtn(i+1),h('button',{class:'ghost rt-del',title:'删除这一站','aria-label':'删除这一站',onclick:()=>mutate(()=>ops.removeStop(r,i))},host.icon('x')));
+   row.append(grip,name,addBtn(i+1),h('button',{class:'ghost rt-del',title:'删除这一站','aria-label':'删除这一站',onclick:()=>mutate(()=>ops.removeStop(r,i))},host.icon('x')));
    return row;
   }
 
@@ -425,7 +419,11 @@ const TourPlan=(()=>{
    };
    for(const o of vis)if(!solid.has(o.id)&&o.type==='fascia')s+=soft(o);
    for(const sh of shapes){
-    if(sh.kind==='circle'){const [a,bb]=toS(sh.cx,sh.cz);s+=`<circle class="${cls(sh.id)}" data-o="${sh.id}" cx="${f(a)}" cy="${f(bb)}" r="${f(sh.r*k)}"/>`;}
+    const po=sh.kind==='circle'&&vis.find(o=>o.id===sh.id&&(o.type==='staff'||o.type==='visitor'));
+    if(po){ // 地图上的接待员、游客等人物：顶视人形（肩膀胶囊 + 头 + 两只脚尖），朝向跟物料朝向一致；样式同普通物料
+     const [a,bb]=toS(po.position[0],po.position[2]),fx=Math.sin(po.rotation),fz=Math.cos(po.rotation),deg=Math.atan2(-fz,-fx)*180/Math.PI,u=Math.max(k,24);
+     s+=`<g class="${cls(po.id)} rt-person" data-o="${po.id}" transform="translate(${f(a)} ${f(bb)}) rotate(${f(deg)}) scale(${f(u)})"><rect x=".04" y="-.14" width=".2" height=".1" rx=".05"/><rect x=".04" y=".04" width=".2" height=".1" rx=".05"/><rect x="-.12" y="-.25" width=".24" height=".5" rx=".12"/><circle cx="0" cy="0" r=".12"/></g>`;
+    }else if(sh.kind==='circle'){const [a,bb]=toS(sh.cx,sh.cz);s+=`<circle class="${cls(sh.id)}" data-o="${sh.id}" cx="${f(a)}" cy="${f(bb)}" r="${f(sh.r*k)}"/>`;}
     else s+=`<polygon class="${cls(sh.id)}" data-o="${sh.id}" points="${poly(sh.pts)}"/>`;
    }
    for(const o of vis)if(!solid.has(o.id)&&o.type!=='fascia')s+=soft(o);
@@ -459,7 +457,7 @@ const TourPlan=(()=>{
     const mark=(which,pt,txt)=>{const [x,y]=toS(pt[0],pt[1]);return `<g class="rt-ep ${which}${bad(which)?' bad':''}" data-ep="${which}"><circle cx="${f(x)}" cy="${f(y)}" r="11"/><text x="${f(x)}" y="${f(y)}">${txt}</text></g>`;};
     s+=mark('entry',g.entry,'入')+mark('exit',g.exit,'出');
    }
-   if(pb.comp&&pb.started&&vw==='plan'){const p=T.sampleRoute(pb.comp,pb.t),[px,py]=toS(p.x,p.z),dx=-Math.sin(p.lookYaw),dy=-Math.cos(p.lookYaw);const R=1.5*k,ang=Math.atan2(dy,dx),pts=Array.from({length:9},(_,i)=>{const a=ang-Math.PI/4+i*Math.PI/18;return f(px+R*Math.cos(a))+','+f(py+R*Math.sin(a));});s+=`<g class="rt-walker"><path class="fov" d="M${f(px)},${f(py)} L${pts.join(' L')}Z"/><g transform="translate(${f(px)} ${f(py)}) rotate(${f(ang*180/Math.PI)}) scale(${f(Math.max(k,30)*1.4)})"><rect class="ft" x=".1" y="-.2" width=".26" height=".12" rx=".06"/><rect class="ft" x=".1" y=".08" width=".26" height=".12" rx=".06"/><rect class="sh" x="-.11" y="-.25" width=".22" height=".5" rx=".11"/></g><circle cx="${f(px)}" cy="${f(py)}" r="${f(Math.max(k,30)*1.4*.12)}"/></g>`;}
+   if(pb.comp&&pb.started&&vw==='plan'){const p=T.sampleRoute(pb.comp,pb.t),[px,py]=toS(p.x,p.z),dx=-Math.sin(p.lookYaw),dy=-Math.cos(p.lookYaw);const R=1.5*k,ang=Math.atan2(dy,dx),pts=Array.from({length:9},(_,i)=>{const a=ang-Math.PI/4+i*Math.PI/18;return f(px+R*Math.cos(a))+','+f(py+R*Math.sin(a));});s+=`<g class="rt-walker"><path class="fov" d="M${f(px)},${f(py)} L${pts.join(' L')}Z"/><circle cx="${f(px)}" cy="${f(py)}" r="7"/></g>`;}
    s+=`<g class="rt-compass" transform="translate(${W-52},52)"><circle r="38"/><path d="M0 -22 L5 -5 L0 -8 L-5 -5Z" fill="#c45143"/><path d="M0 22 L5 5 L0 8 L-5 5Z" fill="#80968a"/><text y="-30" class="n">北</text><text y="30">南</text><text x="29" font-size="11">东</text><text x="-29" font-size="11">西</text></g>`;
    s+=`<g class="rt-scale" transform="translate(${f(W-24-k)},${H-24})"><line x1="0" x2="${f(k)}" /><line x1="0" x2="0" y1="-4" y2="4"/><line x1="${f(k)}" x2="${f(k)}" y1="-4" y2="4"/><text x="${f(k/2)}" y="-8">1 米</text></g>`;
    svg.setAttribute('viewBox',`0 0 ${W} ${H}`);svg.classList.toggle('picking',ordering);svg.innerHTML=s;

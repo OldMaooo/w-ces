@@ -198,7 +198,7 @@ try{
  {
   const real=await p.evaluate(()=>editor.tourPlan.analysisOf(editor.tourPlan.state().selRoute).compiled.items.filter(x=>x.type==='hold').map(x=>x.t1-x.t0));
   const prev=await p.evaluate(()=>editor.tourPlan.previewOf(editor.tourPlan.state().selRoute).items.filter(x=>x.type==='hold').map(x=>x.t1-x.t0));
-  assert.ok(real.some(x=>x>3.01),'真实停留超过 3 秒（'+real+'）');assert.ok(prev.every(x=>x<=3.001)&&prev.some(x=>x>2.9),'预览停留 ≤3 秒：'+prev);
+  assert.ok(prev.length>0&&prev.every(x=>near(x,3,1e-6)),'预览每站固定停 3 秒：'+prev);
   assert.ok(near((await st()).total,await p.evaluate(()=>editor.tourPlan.previewOf(editor.tourPlan.state().selRoute).total),1e-6),'播放条总时长用预览时间');
   assert.equal(await p.locator('#rtBar #tpNext').count(),1,'有下一站按钮');
   const order=await p.evaluate(()=>{const b=document.querySelector('#rtBar');return [...b.children].map(e=>e.id||e.className);});
@@ -219,8 +219,7 @@ try{
   assert.equal((await st()).playing,true,'拖之前在播放，拖完继续播放');
   const t1=(await st()).t;await p.waitForTimeout(300);assert.ok((await st()).t>t1,'确实在往前走');
   await p.locator('#tpPlay').click();
-  const walker=await p.evaluate(()=>({head:document.querySelectorAll('#rtPlan .rt-walker circle').length,caps:document.querySelectorAll('#rtPlan .rt-walker rect').length}));
-  assert.deepEqual(walker,{head:1,caps:3},'人形：1 个头 + 肩膀胶囊 + 两只脚胶囊');
+  assert.equal(await p.evaluate(()=>document.querySelectorAll('#rtPlan .rt-walker circle').length),1,'游览小人仍是原来的圆点');
  }
  console.log('PASS 预览停留≤3秒、下一站按钮、拖进度保持播放状态、顶视人形');
 

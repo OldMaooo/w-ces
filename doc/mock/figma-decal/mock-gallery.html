@@ -9,94 +9,86 @@ p.d{color:#688176;margin:0 0 12px;font-size:13px}
 .grid{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start}
 .cell{display:flex;flex-direction:column;gap:6px}
 .cell>small{color:#688176;font-size:12px}
-.cell .dk-panel,.cell .dk-tip,.cell .dk-hint{position:static;transform:none;max-height:none}
+.cell .dk-panel,.cell .dk-hint{position:static;transform:none;max-height:none}
 .top{position:sticky;top:0;background:#eef0ef;padding:10px 0;display:flex;gap:6px;z-index:9;border-bottom:1px solid #d7dfdc}
-.thumbimg{width:100%;height:100px;object-fit:contain}
+.side{width:230px;background:#fff;border:1px solid #d7dfdc;border-radius:8px;padding:10px 12px;font-size:13px}
+.side .sub{color:#688176;font-size:12px;margin-bottom:4px}
+.side .check{display:inline-flex;gap:4px;align-items:center}
+.thumbimg{max-width:100%;max-height:100%}
+.ico{width:15px;height:15px}
 ul.chk{list-style:none;padding:0}ul.chk li{margin:6px 0}
 </style></head><body>
 <div class="top"><span style="color:#688176;font-size:12px;align-self:center">字号</span><button class="dk-btn" onclick="document.body.classList.remove('big')">标准</button><button class="dk-btn" onclick="document.body.classList.add('big')">大一号</button><a href="index.html" class="dk-btn" style="text-decoration:none;margin-left:auto">回到可点 demo</a></div>
 <h1>Figma 贴图 · 组件全景</h1>
-<p class="d">把贴图功能会出现的所有小部件和状态平铺在这一页，滚一遍就能看完。样式和 demo 共用一份。</p>
+<p class="d">贴图功能会出现的所有小部件和状态平铺在这一页。样式和 demo 共用一份。</p>
 
-<h2>1. 拖进画布时跟着鼠标的提示牌（方式 A）</h2>
-<p class="d">拖着图片在 3D 场景里移动时出现，告诉你松手会贴到哪。</p>
+<h2>1. 左栏：勾选可贴图的面（常规模式）</h2>
+<p class="d">选中物体后出现在左栏；墙面在「场地」里勾。没勾的面进贴图模式也点不了、拖不上。</p>
 <div class="grid">
- <div class="cell"><div class="dk-tip">前台 12 · 正面<small>2.7 × 1 米</small></div><small>悬停在能贴的面上</small></div>
- <div class="cell"><div class="dk-tip">B 后墙 · 内侧<small>6.1 × 2.8 米 · 松手替换</small></div><small>这面已经有图</small></div>
- <div class="cell"><div class="dk-tip no">这个物件暂不能贴图</div><small>悬停在电视、机器人等</small></div>
- <div class="cell"><div class="dk-tip no">移到前台、墙、易拉宝或立牌上</div><small>悬停在空地</small></div>
- <div class="cell"><div class="dk-tip no">请先点要贴的面，在右侧面板里放图</div><small>方式 B/C 下往画布拖</small></div>
+ <div class="cell"><div class="side"><div class="sub">可贴图的面</div><div class="dk-pick"><label class="check"><input type="checkbox" checked>正面</label><label class="check"><input type="checkbox" checked>背面</label><label class="check"><input type="checkbox">左侧</label><label class="check"><input type="checkbox">右侧</label><label class="check"><input type="checkbox">台面</label></div></div><small>前台（5 个面可选）</small></div>
+ <div class="cell"><div class="side"><div class="sub">可贴图的面</div><div class="dk-pick"><label class="check"><input type="checkbox" checked>正面</label></div></div><small>易拉宝 / 亚克力立牌（只有正面）</small></div>
+ <div class="cell"><div class="side"><div class="sub">可贴图的墙面</div><div class="dk-pick"><label class="check"><input type="checkbox">A 墙内侧</label><label class="check"><input type="checkbox" checked>B 墙内侧</label></div></div><small>场地区</small></div>
+ <div class="cell"><div class="side" style="color:#688176">（不出现这一块）</div><small>电视、机器人等不能贴的物件</small></div>
 </div>
 
-<h2>2. 顶部引导条</h2>
-<p class="d">还一张都没贴时出现，贴上第一张后消失。</p>
+<h2>2. 贴图模式提示</h2>
+<p class="d">点视图条上的「贴图」进入，按钮变成选中色；没打开面板时顶部显示一行提示。</p>
 <div class="grid">
- <div class="cell"><div class="dk-hint">把设计稿图片直接拖到展台的某一面上（前台、墙、易拉宝、立牌）</div><small>方式 A</small></div>
- <div class="cell"><div class="dk-hint">点前台、墙、易拉宝或立牌，右侧出现贴图面板</div><small>方式 B / C</small></div>
+ <div class="cell"><div class="dk-hint">贴图模式 · 点亮着的面添加设计图 · Esc 退出</div><small>已有可贴面</small></div>
+ <div class="cell"><div class="dk-hint">还没有可贴图的面：退出贴图模式，选中物体后在左栏勾选</div><small>一个都没勾</small></div>
 </div>
 
 <h2>3. 贴图面板 · 还没贴</h2>
-<p class="d">点了一个能贴的面、但这面还没图时。</p>
+<p class="d">贴图模式下点了一个亮着的面。Figma 链接是主路，上传图片在下面一行。</p>
 <div class="grid">
  <div class="cell"><div class="dk-panel"><div class="dk-head"><strong>前台 12</strong><small>2.7 × 1 米</small><button class="dk-x">×</button></div>
-  <div class="dk-faces"><button class="dk-face on">正面</button><button class="dk-face">背面</button><button class="dk-face">左侧</button><button class="dk-face">右侧</button><button class="dk-face">台面</button></div>
-  <div class="dk-drop"><b>拖图片到这里</b><br>或 ⌘V 粘贴 · 点这里选文件</div>
-  <div style="margin-top:8px;color:var(--muted);font-size:12px;line-height:1.6">Figma 导出 PNG / SVG 都行。建议画框 <b>2700 × 1000</b>（1 像素 = 1 毫米），贴上去正好铺满。</div></div><small>方式 A / B：放图区，默认</small></div>
+  <div class="dk-faces"><button class="dk-face on">正面</button><button class="dk-face">背面</button></div>
+  <div class="dk-link"><input placeholder="粘贴 Figma 画框链接"><button class="dk-btn primary">贴上</button></div>
+  <div class="dk-drop small">或拖图片到这里 · ⌘V · 选文件</div></div><small>默认（同一物体勾了多个面时，顶部可切换）</small></div>
  <div class="cell"><div class="dk-panel"><div class="dk-head"><strong>易拉宝 22</strong><small>0.8 × 2 米</small><button class="dk-x">×</button></div>
-  <div class="dk-drop over"><b>拖图片到这里</b><br>或 ⌘V 粘贴 · 点这里选文件</div></div><small>拖着图片悬停在放图区上（只有一个面，不显示面切换）</small></div>
+  <div class="dk-link"><input placeholder="粘贴 Figma 画框链接"><button class="dk-btn primary">贴上</button></div>
+  <div class="dk-drop small over">或拖图片到这里 · ⌘V · 选文件</div></div><small>拖着图片悬停在上传区</small></div>
  <div class="cell"><div class="dk-panel"><div class="dk-head"><strong>前台 12</strong><small>2.7 × 1 米</small><button class="dk-x">×</button></div>
-  <div class="dk-note err">这个文件不是图片。请从 Figma 导出 PNG、JPG 或 SVG 再拖进来。</div>
-  <div class="dk-drop"><b>拖图片到这里</b><br>或 ⌘V 粘贴 · 点这里选文件</div></div><small>拖进来的不是图片</small></div>
- <div class="cell"><div class="dk-panel"><div class="dk-head"><strong>机器人 3</strong><small></small><button class="dk-x">×</button></div>
-  <div class="dk-note warn">这个物件暂时不能贴图。能贴的有：前台、A/B 墙、易拉宝、亚克力立牌。</div></div><small>点了不能贴的物件</small></div>
-</div>
-
-<h2>4. 贴图面板 · Figma 链接（方式 C 专属）</h2>
-<p class="d">只有选方式 C 才有。链接方式需要先给一次 Figma 令牌。</p>
-<div class="grid">
+  <div class="dk-link"><input value="https://www.figma.com/design/hkTh…?node-id=1-3"><button class="dk-btn primary" disabled><span class="dk-spin"></span>取图中</button></div>
+  <div class="dk-drop small">或拖图片到这里 · ⌘V · 选文件</div></div><small>取图中</small></div>
  <div class="cell"><div class="dk-panel"><div class="dk-head"><strong>前台 12</strong><small>2.7 × 1 米</small><button class="dk-x">×</button></div>
   <div class="dk-note warn">第一次用要先连上 Figma：在 Figma「设置 → 安全 → 个人令牌」生成一串字，贴到下面。只存在这台电脑。</div>
-  <div class="dk-link" style="margin-top:8px"><input placeholder="figd_…" type="password"><button class="dk-btn primary">连接</button></div></div><small>第一次用</small></div>
- <div class="cell"><div class="dk-panel"><div class="dk-head"><strong>前台 12</strong><small>2.7 × 1 米</small><button class="dk-x">×</button></div>
-  <div class="dk-link"><input placeholder="粘贴 Figma 里某个画框的链接"><button class="dk-btn primary">贴上</button></div>
-  <div class="dk-note ok">Figma 里选中画框 → 右键「复制链接」。改稿后点「从 Figma 取最新」即可同步。</div></div><small>已连上，等你贴链接</small></div>
- <div class="cell"><div class="dk-panel"><div class="dk-head"><strong>前台 12</strong><small>2.7 × 1 米</small><button class="dk-x">×</button></div>
-  <div class="dk-link"><input value="https://www.figma.com/design/hkTh…?node-id=1-3"><button class="dk-btn primary" disabled><span class="dk-spin"></span>取图中</button></div></div><small>取图中</small></div>
+  <div class="dk-link" style="margin-top:8px"><input placeholder="figd_…" type="password"><button class="dk-btn primary">连接</button></div></div><small>第一次用 Figma 链接</small></div>
  <div class="cell"><div class="dk-panel"><div class="dk-head"><strong>前台 12</strong><small>2.7 × 1 米</small><button class="dk-x">×</button></div>
   <div class="dk-note err">Figma 里找不到这个画框。请在 Figma 选中画框 → 右键「复制链接」再贴。</div>
-  <div class="dk-link" style="margin-top:8px"><input placeholder="粘贴 Figma 里某个画框的链接"><button class="dk-btn primary">贴上</button></div></div><small>链接取不到</small></div>
+  <div class="dk-link" style="margin-top:8px"><input placeholder="粘贴 Figma 画框链接"><button class="dk-btn primary">贴上</button></div>
+  <div class="dk-drop small">或拖图片到这里 · ⌘V · 选文件</div></div><small>链接取不到</small></div>
+ <div class="cell"><div class="dk-panel"><div class="dk-head"><strong>前台 12</strong><small>2.7 × 1 米</small><button class="dk-x">×</button></div>
+  <div class="dk-note err">这个文件不是图片。请从 Figma 导出 PNG、JPG 或 SVG。</div>
+  <div class="dk-link" style="margin-top:8px"><input placeholder="粘贴 Figma 画框链接"><button class="dk-btn primary">贴上</button></div>
+  <div class="dk-drop small">或拖图片到这里 · ⌘V · 选文件</div></div><small>拖进来的不是图片</small></div>
 </div>
 
-<h2>5. 贴图面板 · 已贴上（三种方式共用）</h2>
-<p class="d">贴上后在这里改：换图、摆法、大小、位置、方向、挪到别的面、删除。</p>
+<h2>4. 贴图面板 · 已贴上</h2>
+<p class="d">贴上后在这里改。最后一行按来源不同：Figma 链接的是「取最新 / 换链接 / 删除」，上传的是「换图 / 删除」。</p>
 <div class="grid">
  <div class="cell"><div class="dk-panel"><div class="dk-head"><strong>前台 12</strong><small>2.7 × 1 米</small><button class="dk-x">×</button></div>
-  <div class="dk-faces"><button class="dk-face on"><i></i>正面</button><button class="dk-face">背面</button><button class="dk-face">左侧</button><button class="dk-face">右侧</button><button class="dk-face">台面</button></div>
-  <div class="dk-thumb" style="height:99px"><img class="thumbimg" src="sample-desk.png"><span>换图</span></div>
-  <div class="dk-row"><label>摆法</label><div class="dk-seg"><button class="on">完整显示</button><button>铺满（可能裁边）</button></div></div>
+  <div class="dk-faces"><button class="dk-face on"><i></i>正面</button><button class="dk-face">背面</button></div>
+  <div class="dk-thumb" style="height:102px"><img class="thumbimg" src="sample-desk.png"></div>
+  <div class="dk-row"><label>摆法</label><div class="dk-seg"><button class="on">完整显示</button><button>铺满</button></div></div>
   <div class="dk-row"><label>大小</label><input type="range" value="100" min="30" max="200"><output>100%</output></div>
   <div class="dk-row"><label>左右</label><input type="range" value="0" min="-50" max="50"><output>0</output></div>
   <div class="dk-row"><label>上下</label><input type="range" value="0" min="-50" max="50"><output>0</output></div>
   <div class="dk-row"><label>方向</label><button class="dk-btn">⟲ 90°</button><button class="dk-btn">⟳ 90°</button><button class="dk-btn">复位</button></div>
   <div class="dk-row"><label>挪到</label><select><option>正面</option><option>背面</option></select></div>
-  <div class="dk-foot"><button class="dk-btn">正对这个面</button><button class="dk-btn danger">删除贴图</button></div></div><small>比例正好（圆点 = 这面已有图）</small></div>
- <div class="cell"><div class="dk-panel"><div class="dk-head"><strong>前台 12</strong><small>2.7 × 1 米</small><button class="dk-x">×</button></div>
-  <div class="dk-thumb" style="height:99px"><span>换图</span></div>
-  <div class="dk-note warn">图片比例 0.67:1，这个面是 2.7:1，两边会留空。Figma 里按 <b>2700 × 1000</b> 画框正好贴满（1 像素 = 1 毫米）。</div>
-  <div class="dk-row"><label>摆法</label><div class="dk-seg"><button class="on">完整显示</button><button>铺满（可能裁边）</button></div></div></div><small>比例不对（只截了上半部分）</small></div>
- <div class="cell"><div class="dk-panel"><div class="dk-head"><strong>B 后墙</strong><small>6.1 × 2.8 米</small><button class="dk-x">×</button></div>
-  <div class="dk-thumb" style="height:123px"><span>换图</span></div>
-  <div class="dk-row"><label>原稿</label><button class="dk-btn">从 Figma 取最新</button><button class="dk-btn">换链接</button></div>
-  <div class="dk-foot"><button class="dk-btn">正对这个面</button><button class="dk-btn danger">删除贴图</button></div></div><small>方式 C 贴的图：多一行「原稿」</small></div>
+  <div class="dk-row"><label>原稿</label><button class="dk-btn">取最新</button><button class="dk-btn">换链接</button><button class="dk-btn dk-icon danger" title="删除贴图"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button></div></div><small>Figma 链接贴的（圆点 = 这面已有图）</small></div>
+ <div class="cell"><div class="dk-panel"><div class="dk-head"><strong>易拉宝 22</strong><small>0.8 × 2 米</small><button class="dk-x">×</button></div>
+  <div class="dk-thumb" style="height:150px"></div>
+  <div class="dk-row"><label>摆法</label><div class="dk-seg"><button>完整显示</button><button class="on">铺满</button></div></div>
+  <div class="dk-row"><label>图片</label><button class="dk-btn">换图</button><button class="dk-btn dk-icon danger" title="删除贴图"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button></div></div><small>上传图片贴的（只有一个面，不显示面切换和「挪到」）</small></div>
 </div>
 
-<h2>6. 你都看过了吗</h2>
+<h2>5. 你都看过了吗</h2>
 <ul class="chk">
- <li><label><input type="checkbox"> 拖进画布时的提示牌，能看懂会贴到哪</label></li>
- <li><label><input type="checkbox"> 还没贴时的放图区</label></li>
- <li><label><input type="checkbox"> 坏文件 / 不能贴的物件提示</label></li>
- <li><label><input type="checkbox"> Figma 链接方式的 4 个状态</label></li>
- <li><label><input type="checkbox"> 已贴上后的编辑面板，控件够不够、多不多</label></li>
- <li><label><input type="checkbox"> 比例不对时的提醒和建议画框尺寸</label></li>
+ <li><label><input type="checkbox"> 左栏勾「可贴图的面」的位置和写法</label></li>
+ <li><label><input type="checkbox"> 贴图模式的进入按钮和顶部提示</label></li>
+ <li><label><input type="checkbox"> 链接为主、上传为辅的空面板</label></li>
+ <li><label><input type="checkbox"> Figma 第一次连接 / 取图中 / 取不到</label></li>
+ <li><label><input type="checkbox"> 已贴上后的面板：两种来源最后一行不同，删除是图标</label></li>
 </ul>
 </body></html>

@@ -1,10 +1,10 @@
 {
   "format": "ces-booth-plans",
   "version": 2,
-  "activeId": "7f944d95-1cb2-4b91-b8fb-2a72172b61e5",
+  "activeId": "fa406946-16d9-4ad3-98fd-9f2dda344403",
   "plans": [
     {
-      "id": "7f944d95-1cb2-4b91-b8fb-2a72172b61e5",
+      "id": "fa406946-16d9-4ad3-98fd-9f2dda344403",
       "name": "02",
       "layout": {
         "room": {
@@ -380,7 +380,292 @@
             "rotation": 0,
             "visible": false
           }
-        ]
+        ],
+        "tour": {
+          "pois": [
+            {
+              "id": "po3ki9m",
+              "objectId": 3,
+              "num": 1,
+              "name": "机器人",
+              "dwell": 10,
+              "stand": [
+                0,
+                1.25
+              ]
+            },
+            {
+              "id": "p00x84l",
+              "objectId": 1,
+              "num": 2,
+              "name": "机器人拍照",
+              "dwell": 15,
+              "stand": [
+                0,
+                1.045
+              ]
+            },
+            {
+              "id": "pfbm5v9",
+              "objectId": 4,
+              "num": 3,
+              "name": "虚拟大脑",
+              "dwell": 20,
+              "stand": [
+                0,
+                1.045
+              ]
+            },
+            {
+              "id": "p5yp8hm",
+              "objectId": 5,
+              "num": 4,
+              "name": "平行宇宙",
+              "dwell": 20,
+              "stand": [
+                0,
+                1.045
+              ]
+            },
+            {
+              "id": "p1k3mv4",
+              "objectId": 6,
+              "num": 5,
+              "name": "试衣镜/虚拟人",
+              "dwell": 15,
+              "stand": [
+                -1.42,
+                0
+              ]
+            },
+            {
+              "id": "plpaedm",
+              "objectId": 8,
+              "num": 6,
+              "name": "Readify",
+              "dwell": 15,
+              "stand": [
+                0,
+                1.23
+              ]
+            },
+            {
+              "id": "pvr16ow",
+              "objectId": 12,
+              "num": 7,
+              "name": "后台电脑演示",
+              "dwell": 30,
+              "stand": [
+                0,
+                1.2
+              ]
+            },
+            {
+              "id": "p5bcgyx",
+              "objectId": 9,
+              "num": 8,
+              "name": "洽谈 L 台",
+              "dwell": 90,
+              "stand": [
+                -1.45,
+                0
+              ]
+            },
+            {
+              "id": "p4vzdma",
+              "objectId": 20,
+              "num": 9,
+              "name": "接待员",
+              "dwell": 10,
+              "stand": [
+                0,
+                1.1503211033841603
+              ]
+            }
+          ],
+          "groups": [
+            {
+              "id": "gcqso3x",
+              "name": "北过道来·东→西",
+              "approach": "north-ew",
+              "entry": [
+                -6.05,
+                4.5788
+              ],
+              "exit": [
+                6.05,
+                4.5788
+              ],
+              "routes": [
+                {
+                  "id": "rx7rq7g",
+                  "name": "快速看亮点（1分钟内）",
+                  "speed": 1,
+                  "eyeHeight": 1.75,
+                  "stops": [
+                    {
+                      "poiId": "p1k3mv4",
+                      "dwell": 8
+                    },
+                    {
+                      "poiId": "p5yp8hm",
+                      "dwell": 10
+                    },
+                    {
+                      "poiId": "po3ki9m",
+                      "dwell": 8
+                    }
+                  ]
+                },
+                {
+                  "id": "rjxrufp",
+                  "name": "深度体验（全部演示）",
+                  "speed": 1,
+                  "eyeHeight": 1.75,
+                  "stops": [
+                    {
+                      "poiId": "p00x84l",
+                      "dwell": 40
+                    },
+                    {
+                      "poiId": "pfbm5v9",
+                      "dwell": 45
+                    },
+                    {
+                      "poiId": "p5yp8hm",
+                      "dwell": 45
+                    },
+                    {
+                      "poiId": "pvr16ow",
+                      "dwell": 40
+                    },
+                    {
+                      "poiId": "plpaedm",
+                      "dwell": 40
+                    },
+                    {
+                      "poiId": "po3ki9m",
+                      "dwell": 30
+                    },
+                    {
+                      "poiId": "p1k3mv4",
+                      "dwell": 40
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "g0iaomd",
+              "name": "VIP 接待·西过道南来",
+              "approach": "west-sn",
+              "entry": [
+                6.098,
+                -5.75
+              ],
+              "exit": [
+                6.098,
+                5.75
+              ],
+              "routes": [
+                {
+                  "id": "r10v06r",
+                  "name": "VIP 接待（引导+洽谈）",
+                  "speed": 1,
+                  "eyeHeight": 1.75,
+                  "stops": [
+                    {
+                      "poiId": "p4vzdma",
+                      "dwell": 45
+                    },
+                    {
+                      "poiId": "p5yp8hm",
+                      "dwell": 60
+                    },
+                    {
+                      "poiId": "pfbm5v9",
+                      "dwell": 60
+                    },
+                    {
+                      "poiId": "p00x84l",
+                      "dwell": 30
+                    },
+                    {
+                      "poiId": "p5bcgyx",
+                      "dwell": 300
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "ginkmk2",
+              "name": "西过道路过·北→南",
+              "approach": "west-ns",
+              "entry": [
+                6.098,
+                5.75
+              ],
+              "exit": [
+                6.098,
+                -5.75
+              ],
+              "routes": [
+                {
+                  "id": "rfoojso",
+                  "name": "路过引流（不深入）",
+                  "speed": 1,
+                  "eyeHeight": 1.75,
+                  "stops": [
+                    {
+                      "poiId": "po3ki9m",
+                      "dwell": 10
+                    },
+                    {
+                      "poiId": "plpaedm",
+                      "dwell": 12
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "g8tufyy",
+              "name": "北过道来·西→东",
+              "approach": "north-we",
+              "entry": [
+                6.05,
+                4.5788
+              ],
+              "exit": [
+                -6.05,
+                4.5788
+              ],
+              "routes": [
+                {
+                  "id": "rdie9m8",
+                  "name": "拍照打卡",
+                  "speed": 1,
+                  "eyeHeight": 1.75,
+                  "stops": [
+                    {
+                      "poiId": "po3ki9m",
+                      "dwell": 15
+                    },
+                    {
+                      "poiId": "p00x84l",
+                      "dwell": 30
+                    },
+                    {
+                      "poiId": "p1k3mv4",
+                      "dwell": 20
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
       }
     }
   ]

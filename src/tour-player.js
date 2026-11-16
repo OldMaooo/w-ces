@@ -35,7 +35,7 @@ const TourPlayer=(()=>{
    const nose=new THREE.Mesh(new THREE.BoxGeometry(.06,.06,.14),new THREE.MeshStandardMaterial({color:'#176b55'}));nose.position.set(0,1.6,.17);g.add(body,head,nose);g.name='tour-placeholder';return g;
   }
   function makeVisitor(){
-   const g=new THREE.Group();g.name='tour-visitor';g.userData={type:'visitor',driven:true,personScale:1,animation:'Idle',clothesColor:'#3b82f6',size:[.55,1.75,.35]};
+   const g=new THREE.Group();g.name='tour-visitor';g.userData={type:'visitor',driven:true,personScale:1,animation:'Idle',clothesColor:'#f3f3ef',size:[.55,1.75,.35]};
    if(people.ready())people.build(g);else g.add(placeholder());return g;
   }
   function release(o){o.traverse(c=>{c.geometry?.dispose();for(const m of [].concat(c.material||[]))m.dispose();});}

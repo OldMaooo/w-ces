@@ -389,7 +389,7 @@ function setWalking(value){cancelPlacement();if(value===walking)return;if(value)
  $('walk').classList.toggle('active',value);$('walk').textContent=value?'退出游客视图':'游客视图';$('helpText').textContent=value?'WASD 行走 · 空格退出游客视图':'WASD 行走 · 空格切换视角';
 }
 $('walk').onclick=()=>setWalking(!walking);
-const typing=e=>e.target.isContentEditable||['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName);
+const typing=e=>e.target.isContentEditable||(['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)&&e.target.type!=='range');
 window.addEventListener('keydown',e=>{if(typing(e)||e.isComposing||e.metaKey||e.ctrlKey||e.altKey||tourPlan?.isOpen()||tourPlayer?.isOpen())return;if(e.key==='Delete'||e.key==='Backspace'){if(selected&&!walking&&!e.repeat){e.preventDefault();$('delete').click();}}else if(e.code==='Space'){e.preventDefault();if(!e.repeat)setWalking(!walking);}else if(e.code==='Escape'){showLibrary(false);cancelPlacement();setWalking(false);}else if(['KeyW','KeyA','KeyS','KeyD'].includes(e.code)){e.preventDefault();if(!walking)setWalking(true);keys.add(e.code);}});
 window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>{keys.clear();lookDrag=null;});document.addEventListener('visibilitychange',()=>{if(document.hidden)keys.clear();});document.addEventListener('focusin',e=>{if(typing(e))keys.clear();});
 document.getElementById('flipCreator').onclick=()=>{creatorFlipped=!creatorFlipped;venueGroup.getObjectByName('creator-set').rotation.y=creatorFlipped?Math.PI:0;};

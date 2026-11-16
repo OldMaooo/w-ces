@@ -62,7 +62,7 @@ const TourPlan=(()=>{
   // "入口 → ③ → ① → 出口"; stops that can't be used right now read 已失效. `objects` is optional (without it only removed 兴趣点 count as stale).
   routeLabel(tour,r,objects){
    const mid=r.stops.map(s=>{if(s.pos)return '路径点';const poi=find(tour.pois,s.poiId);return !poi||(objects&&M.staleReason(tour,s,objects))?'已失效':poi.name;});
-   return ['入口',...mid,'出口'].join(' → ');
+   return ['入口',...mid,'出口'].join(' · ');
   },
   // ctx = {tour, objects, nav}. Never mutates its inputs.
   analyzeRoute(ctx,g,r){

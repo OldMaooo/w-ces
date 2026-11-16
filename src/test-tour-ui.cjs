@@ -37,7 +37,7 @@ try{
  await addRoute();await p.keyboard.press('Enter');                                      // 只路过
  await addRoute();await p.locator('#rtPlan g.rt-badge[data-o="1"]').click();await p.locator('#rtRight .rt-stop:not(.fixed) .rt-add').last().click();await p.locator('#rtPlan g.rt-badge[data-o="3"]').click();   // ①→②
  await addRoute();for(const id of [2,1,3]){if(id!==2)await p.locator('#rtRight .rt-stop:not(.fixed) .rt-add').last().click();await p.locator(`#rtPlan g.rt-badge[data-o="${id}"]`).click();}   // 3 站
- assert.deepEqual(await seqs(),['入口 → 出口','入口 → 电视 → 机器人 → 出口','入口 → 前台洽谈 → 电视 → 机器人 → 出口']);
+ assert.deepEqual(await seqs(),['入口 · 出口','入口 · 电视 · 机器人 · 出口','入口 · 前台洽谈 · 电视 · 机器人 · 出口']);
  const lt=await p.locator('#rtLeft').textContent();assert.ok(!/\d+:\d\d/.test(lt),'列表里不显示时间：'+lt);assert.equal(await p.locator('#rtLeft .rt-meta').count(),0,'大方案右边没有统计项');
  console.log('PASS 大方案（北过道·东→西）+ 3 个子方案，编号串正确；列表不显示时间、大方案右边没有统计：',(await seqs()).join(' | '));
  // 5 路线不穿模：逐点量到每件障碍的距离 ≥ 0.3m
@@ -64,7 +64,7 @@ try{
  assert.equal(await p.locator('#rtRight .rt-stop input').count(),0,'右栏路径点没有停留时间输入框');
  await p.locator('#rtRight .rt-stop:not(.fixed)').nth(0).locator('.rt-grip').dragTo(p.locator('#rtRight .rt-stop:not(.fixed)').nth(2),{targetPosition:{x:40,y:24}});   // 落在第三行下半部分 = 插到它后面
  await p.waitForTimeout(100);
- assert.deepEqual((await stopNames()).map(t=>t.slice(0,1)),['电','机','前']);assert.deepEqual(await seqs(),['入口 → 出口','入口 → 电视 → 机器人 → 出口','入口 → 电视 → 机器人 → 前台洽谈 → 出口']);
+ assert.deepEqual((await stopNames()).map(t=>t.slice(0,1)),['电','机','前']);assert.deepEqual(await seqs(),['入口 · 出口','入口 · 电视 · 机器人 · 出口','入口 · 电视 · 机器人 · 前台洽谈 · 出口']);
  await p.locator('#rtRight .rt-stop:not(.fixed)').nth(1).hover();await p.locator('#rtRight .rt-stop:not(.fixed)').nth(1).locator('.rt-del').click();
  assert.deepEqual((await stopNames()).map(t=>t.slice(0,1)),['电','前']);
  await p.locator('#rtTools button[title="撤销"]').click();assert.deepEqual((await stopNames()).map(t=>t.slice(0,1)),['电','机','前']);
@@ -96,7 +96,7 @@ try{
  await p.keyboard.press('Space');await p.keyboard.press('KeyW');await p.keyboard.press('Delete');
  assert.equal(await p.evaluate(()=>editor.walking()),false);assert.equal(await p.evaluate(()=>editor.objects().length),3);console.log('PASS 路线模式下空格 / W / Delete 不影响 3D 编辑');
  // 12 刷新后都在
- await p.reload();await ready();await open();assert.deepEqual(await seqs(),['入口 → 出口','入口 → 电视 → 机器人 → 出口','入口 → 电视 → 机器人 → 前台洽谈 → 出口']);
+ await p.reload();await ready();await open();assert.deepEqual(await seqs(),['入口 · 出口','入口 · 电视 · 机器人 · 出口','入口 · 电视 · 机器人 · 前台洽谈 · 出口']);
  assert.equal((await seqs()).length,3);console.log('PASS 刷新后大方案、子方案、兴趣点都在：',(await seqs()).join(' | '));
  // 13 导出 → 导入：tour 在新方案里，且图纸能打开
  const exp=await p.evaluate(()=>JSON.stringify(editor.exportData('current')));await p.locator('#modeBooth').click();

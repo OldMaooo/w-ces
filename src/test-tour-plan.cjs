@@ -78,12 +78,12 @@ test('站顺序：加站（同一兴趣点可多次）、删站、挪站、上�
  for(let i=r.stops.length;i<M.LIMITS.stops;i++)assert.ok(ops.addStop(r,'z'));assert.equal(ops.addStop(r,'z'),false);assert.equal(r.stops.length,M.LIMITS.stops);
  ops.moveStop(r,-1,0);ops.moveStop(r,0,999);assert.equal(r.stops.length,M.LIMITS.stops);
 });
-test('名称串：入口 → ③ → ① → 出口；失效的站显示「已失效」；没有站就是入口 → 出口',()=>{
+test('名称串：入口 · ③ · ① · 出口；失效的站显示「已失效」；没有站就是入口 · 出口',()=>{
  const tour=freshTour(),os=[obj('tv',0,-2),obj('robot',1,1),obj('table',-1,1)];
  const ps=os.map((o,i)=>ops.addPoi(tour,o,{name:'甲乙丙'[i]}));const g=ops.newGroup(tour,'A','other',room,venue),r=ops.newRoute(g,'r');
- assert.equal(ops.routeLabel(tour,r,os),'入口 → 出口');
- ops.addStop(r,ps[2].id);ops.addStop(r,ps[0].id);assert.equal(ops.routeLabel(tour,r,os),'入口 → 丙 → 甲 → 出口');
- ops.removePoi(tour,ps[0].id);assert.equal(ops.routeLabel(tour,r,os),'入口 → 丙 → 已失效 → 出口');
+ assert.equal(ops.routeLabel(tour,r,os),'入口 · 出口');
+ ops.addStop(r,ps[2].id);ops.addStop(r,ps[0].id);assert.equal(ops.routeLabel(tour,r,os),'入口 · 丙 · 甲 · 出口');
+ ops.removePoi(tour,ps[0].id);assert.equal(ops.routeLabel(tour,r,os),'入口 · 丙 · 已失效 · 出口');
  assert.equal(ops.numLabel(1),'①');assert.equal(ops.numLabel(20),'⑳');assert.equal(ops.numLabel(21),'21');
 });
 test('时长显示：mm:ss',()=>{assert.equal(ops.fmtDuration(65),'1:05');assert.equal(ops.fmtDuration(0),'0:00');assert.equal(ops.fmtDuration(59.6),'1:00');assert.equal(ops.fmtDuration(null),'—');});
@@ -158,7 +158,7 @@ test('路径点：能插在指定位置，不挂兴趣点也算站，路线能�
  const g=ops.newGroup(tour,'A','north-ew',room,venue),r=ops.newRoute(g,'r');
  ops.addStop(r,pa.id);ops.addStop(r,pb.id);ops.addWaypoint(r,[0.5,0.5],1);
  assert.deepEqual(r.stops.map(s=>s.pos?'wp':s.poiId),[pa.id,'wp',pb.id]);
- assert.equal(ops.routeLabel(tour,r,[a,b]),'入口 → 电视 → 路径点 → 机器人 → 出口');
+ assert.equal(ops.routeLabel(tour,r,[a,b]),'入口 · 电视 · 路径点 · 机器人 · 出口');
  const res=ops.analyzeRoute(ctxFor(tour,[a,b]),g,r);
  assert.equal(res.stops[1].waypoint,true);assert.equal(res.stops[1].name,'路径点 1');assert.deepEqual(res.stops[1].stand,[0.5,0.5]);assert.equal(res.stops[1].stale,null);
  assert.equal(res.ok,true,JSON.stringify(res.issues));assert.equal(res.compiled.stops.length,3);

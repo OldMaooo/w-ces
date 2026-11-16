@@ -70,7 +70,7 @@ const TOKEN='figd_test_TOKEN_123';
  await page.locator('button[title="顺时针转 90°"]').click();assert.equal((await desk()).decals.front.rot,90);await page.locator('button[title="逆时针转 90°"]').click();await page.locator('button[title="逆时针转 90°"]').click();assert.equal((await desk()).decals.front.rot,270);
  await page.locator('.dk-row button',{hasText:'复位'}).click();d=await desk();assert.deepEqual([d.decals.front.scale,d.decals.front.ox,d.decals.front.oy,d.decals.front.rot],[1,0,0,0]);
  // 一次拖动滑块只记一次撤销
- await page.locator('.dk-row:has-text("大小") input[type=range]').fill('120');await page.evaluate(()=>editor.undo());d=await desk();near(d.decals.front.scale,1);
+ await page.locator('.dk-row:has-text("大小") input[type=range]').fill('120');await page.locator('.dk-row:has-text("大小") input[type=range]').focus();await page.keyboard.press('Meta+z');d=await desk();near(d.decals.front.scale,1);await page.locator('.dk-row:has-text("大小") input[type=range]').focus();await page.keyboard.press('Meta+Shift+z');d=await desk();near(d.decals.front.scale,1.2);await page.locator('.dk-row:has-text("大小") input[type=range]').focus();await page.keyboard.press('Meta+z');d=await desk();near(d.decals.front.scale,1);
  assert.equal(await page.locator('#decalSide .dk-head').isVisible(),true,'撤销后面板还在');
  // 挪到台面
  await page.locator('.dk-row:has-text("挪到") select').selectOption('top');await settle();d=await desk();assert.equal(d.decals.front,undefined);assert.equal(d.decals.top.assetId,redId);
